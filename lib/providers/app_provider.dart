@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
+// 确保这些路径是正确的
 import '../models/transaction.dart';
 import '../models/budget.dart';
 import '../models/goal.dart';
@@ -26,7 +27,7 @@ class AppProvider extends ChangeNotifier {
   // Constructor
   AppProvider() {
     _loadData();
-    _initializeSampleData();
+    initializeSampleData();
   }
 
   // Loading state management
@@ -107,7 +108,7 @@ class AppProvider extends ChangeNotifier {
   }
 
   // Initialize with sample data if empty
-  void _initializeSampleData() {
+  void initializeSampleData() {
     if (_budgets.isEmpty) {
       // Calculate dates for monthly period
       final now = DateTime.now();
@@ -121,7 +122,7 @@ class AppProvider extends ChangeNotifier {
           category: 'Food & Dining',
           amount: 500.0,
           spent: 450.0,
-          period: BudgetPeriod.monthly,
+          period: BudgetPeriod.monthly, // <-- 来自 budget.dart
           startDate: startDate,
           endDate: endDate,
           createdAt: now,
@@ -132,7 +133,7 @@ class AppProvider extends ChangeNotifier {
           category: 'Transportation',
           amount: 300.0,
           spent: 280.0,
-          period: BudgetPeriod.monthly,
+          period: BudgetPeriod.monthly, // <-- 来自 budget.dart
           startDate: startDate,
           endDate: endDate,
           createdAt: now,
@@ -263,9 +264,9 @@ class AppProvider extends ChangeNotifier {
   }
 
   void _updateBudgetSpending(Transaction transaction) {
-    if (transaction.type == TransactionType.expense) {
+    if (transaction.type == TransactionType.expense) { // <-- 来自 transaction.dart
       final budgetIndex = _budgets.indexWhere(
-        (b) => b.category.toLowerCase() == transaction.category.toLowerCase(),
+            (b) => b.category.toLowerCase() == transaction.category.toLowerCase(),
       );
 
       if (budgetIndex != -1) {
@@ -316,7 +317,7 @@ class AppProvider extends ChangeNotifier {
           currentAmount: isCompleted ? goal.targetAmount : newAmount,
           isCompleted: isCompleted,
           completedAt:
-              isCompleted ? DateTime.now().toIso8601String() : goal.completedAt,
+          isCompleted ? DateTime.now().toIso8601String() : goal.completedAt,
         );
 
         // Award points for completing goal
@@ -375,8 +376,8 @@ class AppProvider extends ChangeNotifier {
 
     return _transactions
         .where((t) =>
-            t.type == TransactionType.expense &&
-            DateTime.parse(t.date).isAfter(currentMonth))
+    t.type == TransactionType.expense &&
+        DateTime.parse(t.date).isAfter(currentMonth))
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
@@ -386,9 +387,9 @@ class AppProvider extends ChangeNotifier {
 
     return _transactions
         .where((t) =>
-            t.type == TransactionType.expense &&
-            t.category.toLowerCase() == category.toLowerCase() &&
-            DateTime.parse(t.date).isAfter(currentMonth))
+    t.type == TransactionType.expense &&
+        t.category.toLowerCase() == category.toLowerCase() &&
+        DateTime.parse(t.date).isAfter(currentMonth))
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
@@ -397,8 +398,8 @@ class AppProvider extends ChangeNotifier {
     final currentMonth = DateTime(now.year, now.month);
     final expenses = _transactions
         .where((t) =>
-            t.type == TransactionType.expense &&
-            DateTime.parse(t.date).isAfter(currentMonth))
+    t.type == TransactionType.expense &&
+        DateTime.parse(t.date).isAfter(currentMonth))
         .toList();
 
     final Map<String, double> breakdown = {};
@@ -414,7 +415,7 @@ class AppProvider extends ChangeNotifier {
   List<Transaction> getRecentTransactions({int limit = 10}) {
     final sortedTransactions = List<Transaction>.from(_transactions);
     sortedTransactions.sort(
-        (a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
+            (a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
 
     return sortedTransactions.take(limit).toList();
   }
@@ -449,7 +450,7 @@ class AppProvider extends ChangeNotifier {
       await prefs.remove('sfms_goals');
       await prefs.remove('sfms_reward_points');
 
-      _initializeSampleData();
+      initializeSampleData();
       notifyListeners();
     } catch (e) {
       _setError('Failed to clear data: $e');

@@ -1,111 +1,80 @@
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AuthProvider with ChangeNotifier {
-  final SharedPreferences _prefs;
-  bool _isAuthenticated = false;
-  String _currentView = 'login';
-  String _activeTab = 'dashboard';
-  bool _isDarkMode = false;
 
-  AuthProvider(this._prefs) {
-    _loadAuthState();
-    _loadThemeState();
-  }
+class AuthProvider extends ChangeNotifier {
+  User? _user;
 
-  // Getters
-  bool get isAuthenticated => _isAuthenticated;
-  String get currentView => _currentView;
-  String get activeTab => _activeTab;
-  bool get isDarkMode => _isDarkMode;
+  User? get user => _user;
 
-  void _loadAuthState() {
-    _isAuthenticated = _prefs.getBool('sfms_demo_authenticated') ?? false;
-    if (_isAuthenticated) {
-      _currentView = 'dashboard';
-      _activeTab = 'dashboard';
-    }
+  void setUser(User user) {
+    _user = user;
     notifyListeners();
   }
 
-  void _loadThemeState() {
-    _isDarkMode = _prefs.getBool('sfms_dark_mode') ?? false;
+  void clearUser() {
+    _user = null;
     notifyListeners();
   }
 
-  Future<void> login() async {
-    _isAuthenticated = true;
-    _currentView = 'dashboard';
-    _activeTab = 'dashboard';
-    await _prefs.setBool('sfms_demo_authenticated', true);
-    notifyListeners();
-  }
+  Future<bool> signIn(String email, String password) async {
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
 
-  Future<void> logout() async {
-    _isAuthenticated = false;
-    _currentView = 'login';
-    _activeTab = 'dashboard';
-    await _prefs.setBool('sfms_demo_authenticated', false);
-    notifyListeners();
-  }
-
-  void setCurrentView(String view) {
-    _currentView = view;
-    notifyListeners();
-  }
-
-  void setActiveTab(String tab) {
-    _activeTab = tab;
-    notifyListeners();
-  }
-
-  Future<void> toggleTheme() async {
-    _isDarkMode = !_isDarkMode;
-    await _prefs.setBool('sfms_dark_mode', _isDarkMode);
-    notifyListeners();
-  }
-
-  // Navigation helpers
-  bool shouldShowBottomNav() {
-    return ['dashboard', 'budget', 'financial', 'insights', 'settings']
-        .contains(_currentView);
-  }
-
-  void navigateToFinancialSubPage(String subPage) {
-    final financialSubPages = {
-      'debts': 'financial-debts',
-      'accounts': 'financial-accounts',
-      'goals': 'financial-goals',
-      'tax': 'financial-tax',
-    };
-    
-    if (financialSubPages.containsKey(subPage)) {
-      setCurrentView(financialSubPages[subPage]!);
-    }
-  }
-
-  void navigateBack() {
-    if (_isAuthenticated) {
-      // Handle back navigation from financial sub-pages
-      if (['financial-debts', 'financial-accounts', 'financial-goals', 'financial-tax']
-          .contains(_currentView)) {
-        setCurrentView('financial');
-        setActiveTab('financial');
-      } else {
-        setCurrentView(_activeTab);
+      if (response.user != null) {
+        setUser(response.user!);
+        return true;
       }
-    } else {
-      setCurrentView('login');
+      return false;
+    } catch (e) {
+      print('Sign in error: $e');
+      return false;
     }
   }
 
-  // Auth flow navigation
-  void navigateToForgotPassword() => setCurrentView('forgot-password');
-  void navigateToOTP() => setCurrentView('otp');
-  void navigateToLogin() => setCurrentView('login');
+  Future<bool> signUp(String email, String password, String fullName) async {
+    try {
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+        data: {'full_name': fullName},
+      );
 
-  // Main app navigation
-  void navigateToAddExpense() => setCurrentView('add-expense');
-  void navigateToExpenseHistory() => setCurrentView('expense-history');
-  void navigateToReports() => setCurrentView('reports');
+      if (response.user != null) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      print('Sign up error: $e');
+      return false;
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      await Supabase.instance.client.auth.signOut();
+      clearUser();
+    } catch (e) {
+      print('Sign out error: $e');
+    }
+  }
+
+  Future<bool> demoLogin() async {
+    final mockUser = User(
+      id: 'demo-user-id',
+      appMetadata: {},
+      userMetadata: {
+        'full_name': 'Demo User',
+        'email': 'demo@sfms.app',
+      },
+      aud: 'demo',
+      createdAt: DateTime.now().toIso8601String(),
+    );
+
+    setUser(mockUser);
+    return true;
+  }
 }

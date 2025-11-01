@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../main.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/app_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -122,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen>
       final success = await context.read<AuthProvider>().demoLogin();
       if (success) {
         // Initialize demo data
-        context.read<AppProvider>().initializeDemoData();
+        context.read<AppProvider>().initializeSampleData();
         // Navigation will be handled by auth state change
       }
     } catch (e) {

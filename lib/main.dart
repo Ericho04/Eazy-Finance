@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-// import 'package:qr_code_scanner/qr_code_scanner.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-// import 'package:google_ml_kit/google_ml_kit.dart';
 import 'dart:math';
+
+//import providers
+import 'providers/app_provider.dart';
+import 'providers/auth_provider.dart';
+import 'providers/theme_provider.dart';
+
+//import widgets
+import 'widget/bottom_navigation.dart';
 
 // Import screens
 import 'screens/auth/login_screen.dart';
@@ -14,8 +18,25 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/otp_screen.dart';
 import 'screens/dashboard_screen.dart';
-// import 'screens/admin_app.dart'; // Admin panel is separate web app
-import 'screens/placeholder_screen.dart';
+//import 'screens/placeholder_screen.dart';
+import 'screens/budget_screen.dart';
+import 'screens/expense_entry_screen.dart';
+import 'screens/expense_history_screen.dart';
+import 'screens/financial_accounts_screen.dart';
+import 'screens/financial_debts_screen.dart';
+import 'screens/financial_goals_screen.dart';
+import 'screens/financial_screen.dart';
+import 'screens/financial_tax_screen.dart';
+import 'screens/goals_screen.dart';
+import 'screens/insights_screen.dart';
+import 'screens/lucky_draw_screen.dart';
+import 'screens/main_screen.dart';
+import 'screens/reports_screen.dart';
+import 'screens/rewards_shop_screen.dart';
+import 'screens/settings_screen.dart';
+
+
+
 
 // Main App Entry Point
 void main() async {
@@ -25,7 +46,7 @@ void main() async {
   await Supabase.initialize(
     url: 'https://ugrcqjjovugagaknjwoa.supabase.co',
     anonKey:
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVncmNxampvdnVnYWdha25qd29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MTk4NzEsImV4cCI6MjA3MDM5NTg3MX0.wsCAS216K86Y6RCR9PL5rJ57WQDFzfDFOR_4f7ePSe8',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVncmNxampvdnVnYWdha25qd29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ4MTk4NzEsImV4cCI6MjA3MDM5NTg3MX0.wsCAS216K86Y6RCR9PL5rJ57WQDFzfDFOR_4f7ePSe8',
   );
 
   runApp(
@@ -75,7 +96,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   // Admin panel is separate web app - not included in mobile
   bool loading = true;
   bool showConfigNotice = false;
-  Map<String, dynamic>? scanData;
+  // Map<String, dynamic>? scanData; // Removed scanData
 
   late AnimationController _backgroundController;
   late AnimationController _bounceController;
@@ -105,7 +126,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
       if (user != null) {
         context.read<AuthProvider>().setUser(user);
         setState(() {
-          currentView = 'dashboard';
+          currentView = 'app';
           activeTab = 'dashboard';
         });
       } else {
@@ -146,12 +167,8 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   void _handleBack() {
     if (context.read<AuthProvider>().user != null) {
       // Handle back navigation logic
-      if (['ocr-scan', 'qr-scan'].contains(currentView)) {
-        setState(() {
-          currentView = 'add-expense';
-          scanData = null;
-        });
-      } else if (['financial-debts', 'financial-tax'].contains(currentView)) {
+      // Removed 'ocr-scan' and 'qr-scan' block
+      if (['financial-debts', 'financial-tax'].contains(currentView)) {
         setState(() {
           currentView = 'financial';
           activeTab = 'financial';
@@ -177,12 +194,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
     }
   }
 
-  void _handleScanComplete(Map<String, dynamic> data) {
-    setState(() {
-      scanData = data;
-      currentView = 'add-expense';
-    });
-  }
+  // Removed _handleScanComplete method
 
   // Admin login removed - use web admin panel at /admin
 
@@ -290,22 +302,14 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
         return ExpenseEntryScreen(
           onBack: _handleBack,
           onNavigate: _handleNavigation,
-          prefilledData: scanData,
+          prefilledData: null, // Set prefilledData to null
         );
       case 'expense-history':
         return ExpenseHistoryScreen(onBack: _handleBack);
       case 'reports':
         return ReportsScreen(onBack: _handleBack);
-      case 'ocr-scan':
-        return OCRScannerScreen(
-          onBack: _handleBack,
-          onScanComplete: _handleScanComplete,
-        );
-      case 'qr-scan':
-        return QRScannerScreen(
-          onBack: _handleBack,
-          onScanComplete: _handleScanComplete,
-        );
+    // Removed 'ocr-scan' case
+    // Removed 'qr-scan' case
       default:
         return DashboardScreen(onNavigate: _handleNavigation);
     }
@@ -473,7 +477,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                             setState(() => currentView = 'settings'),
                         backgroundColor: Colors.white.withOpacity(0.9),
                         child:
-                            const Icon(Icons.settings, color: Colors.black87),
+                        const Icon(Icons.settings, color: Colors.black87),
                       ),
                     ),
                   )
@@ -514,14 +518,14 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
       // Bottom Navigation
       bottomNavigationBar: _shouldShowBottomNav()
           ? BottomNavigation(
-              activeTab: activeTab,
-              onTabChange: (tab) {
-                setState(() {
-                  activeTab = tab;
-                  currentView = tab;
-                });
-              },
-            )
+        activeTab: activeTab,
+        onTabChange: (tab) {
+          setState(() {
+            activeTab = tab;
+            currentView = tab;
+          });
+        },
+      )
           : null,
     );
   }
@@ -534,466 +538,4 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   }
 }
 
-// Theme Provider
-class ThemeProvider extends ChangeNotifier {
-  ThemeMode _themeMode = ThemeMode.light;
 
-  ThemeMode get themeMode => _themeMode;
-
-  void toggleTheme() {
-    _themeMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
-    notifyListeners();
-  }
-
-  ThemeData get lightTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      primaryColor: const Color(0xFF2E7D32),
-      colorScheme: const ColorScheme.light(
-        primary: Color(0xFF2E7D32),
-        secondary: Color(0xFF4CAF50),
-        surface: Color(0xFFFFFFFF),
-        background: Color(0xFFF8FAFF),
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Color(0xFF1A1A1A),
-        onBackground: Color(0xFF1A1A1A),
-      ),
-      cardTheme: CardThemeData(
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        shadowColor: Colors.black.withOpacity(0.12),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          elevation: 6,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade300),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
-        ),
-      ),
-    );
-  }
-
-  ThemeData get darkTheme {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      primaryColor: const Color(0xFF4CAF50),
-      colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF4CAF50),
-        secondary: Color(0xFF81C784),
-        surface: Color(0xFF1C2128),
-        background: Color(0xFF0F1419),
-        onPrimary: Colors.black,
-        onSecondary: Colors.black,
-        onSurface: Color(0xFFE6EDF3),
-        onBackground: Color(0xFFE6EDF3),
-      ),
-      cardTheme: CardThemeData(
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        color: const Color(0xFF1C2128),
-        shadowColor: Colors.black.withOpacity(0.3),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          elevation: 6,
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFF21262D),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF30363D)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF30363D)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 2),
-        ),
-      ),
-    );
-  }
-}
-
-// Auth Provider
-class AuthProvider extends ChangeNotifier {
-  User? _user;
-
-  User? get user => _user;
-
-  void setUser(User user) {
-    _user = user;
-    notifyListeners();
-  }
-
-  void clearUser() {
-    _user = null;
-    notifyListeners();
-  }
-
-  Future<bool> signIn(String email, String password) async {
-    try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        setUser(response.user!);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Sign in error: $e');
-      return false;
-    }
-  }
-
-  Future<bool> signUp(String email, String password, String fullName) async {
-    try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: email,
-        password: password,
-        data: {'full_name': fullName},
-      );
-
-      if (response.user != null) {
-        setUser(response.user!);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      print('Sign up error: $e');
-      return false;
-    }
-  }
-
-  Future<void> signOut() async {
-    try {
-      await Supabase.instance.client.auth.signOut();
-      clearUser();
-    } catch (e) {
-      print('Sign out error: $e');
-    }
-  }
-
-  Future<bool> demoLogin() async {
-    // Create a mock user for demo purposes
-    final mockUser = User(
-      id: 'demo-user-id',
-      appMetadata: {},
-      userMetadata: {
-        'full_name': 'Demo User',
-        'email': 'demo@sfms.app',
-      },
-      aud: 'demo',
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    setUser(mockUser);
-    return true;
-  }
-}
-
-// App Provider for global state
-class AppProvider extends ChangeNotifier {
-  List<Transaction> _transactions = [];
-  List<Budget> _budgets = [];
-  List<Goal> _goals = [];
-
-  List<Transaction> get transactions => _transactions;
-  List<Budget> get budgets => _budgets;
-  List<Goal> get goals => _goals;
-
-  void addTransaction(Transaction transaction) {
-    _transactions.add(transaction);
-    notifyListeners();
-  }
-
-  void addBudget(Budget budget) {
-    _budgets.add(budget);
-    notifyListeners();
-  }
-
-  void addGoal(Goal goal) {
-    _goals.add(goal);
-    notifyListeners();
-  }
-
-  // Demo data initialization
-  void initializeDemoData() {
-    _transactions = [
-      Transaction(
-        id: '1',
-        amount: 25.50,
-        description: 'Coffee & Pastry',
-        category: 'Food & Dining',
-        date: DateTime.now().subtract(const Duration(hours: 2)),
-        type: 'expense',
-      ),
-      Transaction(
-        id: '2',
-        amount: 1200.00,
-        description: 'Salary Deposit',
-        category: 'Income',
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        type: 'income',
-      ),
-      Transaction(
-        id: '3',
-        amount: 85.00,
-        description: 'Grocery Shopping',
-        category: 'Groceries',
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        type: 'expense',
-      ),
-    ];
-
-    _budgets = [
-      Budget(
-        id: '1',
-        name: 'Food & Dining',
-        amount: 500.0,
-        spent: 125.50,
-        color: const Color(0xFF4CAF50),
-        icon: '🍽️',
-      ),
-      Budget(
-        id: '2',
-        name: 'Transportation',
-        amount: 200.0,
-        spent: 45.0,
-        color: const Color(0xFF2196F3),
-        icon: '🚗',
-      ),
-    ];
-
-    _goals = [
-      Goal(
-        id: '1',
-        name: 'Emergency Fund',
-        targetAmount: 5000.0,
-        currentAmount: 2750.0,
-        targetDate: DateTime.now().add(const Duration(days: 180)),
-        color: const Color(0xFF4CAF50),
-        icon: '🏦',
-      ),
-      Goal(
-        id: '2',
-        name: 'Vacation Trip',
-        targetAmount: 2000.0,
-        currentAmount: 850.0,
-        targetDate: DateTime.now().add(const Duration(days: 90)),
-        color: const Color(0xFFFF9800),
-        icon: '✈️',
-      ),
-    ];
-
-    notifyListeners();
-  }
-}
-
-// Models
-class Transaction {
-  final String id;
-  final double amount;
-  final String description;
-  final String category;
-  final DateTime date;
-  final String type; // 'income' or 'expense'
-
-  Transaction({
-    required this.id,
-    required this.amount,
-    required this.description,
-    required this.category,
-    required this.date,
-    required this.type,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'amount': amount,
-      'description': description,
-      'category': category,
-      'date': date.toIso8601String(),
-      'type': type,
-    };
-  }
-
-  factory Transaction.fromJson(Map<String, dynamic> json) {
-    return Transaction(
-      id: json['id'],
-      amount: json['amount'].toDouble(),
-      description: json['description'],
-      category: json['category'],
-      date: DateTime.parse(json['date']),
-      type: json['type'],
-    );
-  }
-}
-
-class Budget {
-  final String id;
-  final String name;
-  final double amount;
-  final double spent;
-  final Color color;
-  final String icon;
-
-  Budget({
-    required this.id,
-    required this.name,
-    required this.amount,
-    required this.spent,
-    required this.color,
-    required this.icon,
-  });
-
-  double get remaining => amount - spent;
-  double get percentage => (spent / amount).clamp(0.0, 1.0);
-}
-
-class Goal {
-  final String id;
-  final String name;
-  final double targetAmount;
-  final double currentAmount;
-  final DateTime targetDate;
-  final Color color;
-  final String icon;
-
-  Goal({
-    required this.id,
-    required this.name,
-    required this.targetAmount,
-    required this.currentAmount,
-    required this.targetDate,
-    required this.color,
-    required this.icon,
-  });
-
-  double get progress => (currentAmount / targetAmount).clamp(0.0, 1.0);
-  double get remaining => targetAmount - currentAmount;
-
-  int get daysRemaining {
-    final now = DateTime.now();
-    return targetDate.difference(now).inDays;
-  }
-}
-
-// Bottom Navigation Widget
-class BottomNavigation extends StatelessWidget {
-  final String activeTab;
-  final Function(String) onTabChange;
-
-  const BottomNavigation({
-    Key? key,
-    required this.activeTab,
-    required this.onTabChange,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final tabs = [
-      {'id': 'dashboard', 'label': 'Home', 'icon': Icons.home_rounded},
-      {'id': 'budget', 'label': 'Budget', 'icon': Icons.pie_chart_rounded},
-      {
-        'id': 'financial',
-        'label': 'Finance',
-        'icon': Icons.account_balance_rounded
-      },
-      {'id': 'goals', 'label': 'Goals', 'icon': Icons.flag_rounded},
-      {'id': 'insights', 'label': 'Insights', 'icon': Icons.analytics_rounded},
-    ];
-
-    return Container(
-      height: 100 + MediaQuery.of(context).padding.bottom,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        child: BottomNavigationBar(
-          currentIndex: tabs.indexWhere((tab) => tab['id'] == activeTab),
-          onTap: (index) => onTabChange(tabs[index]['id'] as String),
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          selectedItemColor: const Color(0xFF2E7D32),
-          unselectedItemColor: Colors.grey,
-          selectedLabelStyle: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-          ),
-          items: tabs.map((tab) {
-            return BottomNavigationBarItem(
-              icon: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: activeTab == tab['id']
-                      ? const Color(0xFF2E7D32).withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Icon(
-                  tab['icon'] as IconData,
-                  size: activeTab == tab['id'] ? 28 : 24,
-                ),
-              ),
-              label: tab['label'] as String,
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}

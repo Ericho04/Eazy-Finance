@@ -143,7 +143,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             BudgetScreen(onNavigate: _handleNavigation),
             FinancialScreen(onNavigate: _handleNavigation),
             InsightsScreen(onNavigate: _handleNavigation),
-            const SettingsScreen(),
+            SettingsScreen(onNavigate: _handleNavigation,),
           ],
         ),
       ),

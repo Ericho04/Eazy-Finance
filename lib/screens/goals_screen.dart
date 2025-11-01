@@ -63,18 +63,8 @@ class _GoalsScreenState extends State<GoalsScreen>
     return math.min((current / target) * 100, 100);
   }
 
-  String _getPriorityColor(String priority) {
-    switch (priority) {
-      case 'high':
-        return 'high';
-      case 'medium':
-        return 'medium';
-      case 'low':
-        return 'low';
-      default:
-        return 'medium';
-    }
-  }
+
+
 
   String _getCategoryEmoji(String category) {
     const emojis = {

@@ -8,6 +8,7 @@ import '../utils/theme.dart';
 
 class ExpenseEntryScreen extends StatefulWidget {
   final VoidCallback onBack;
+  final Function(String) onNavigate;
   final String? preSelectedCategory;
   final TransactionType transactionType;
   final Map<String, dynamic>? prefilledData;
@@ -15,10 +16,12 @@ class ExpenseEntryScreen extends StatefulWidget {
   const ExpenseEntryScreen({
     Key? key,
     required this.onBack,
+    required this.onNavigate,
     this.preSelectedCategory,
     this.transactionType = TransactionType.expense,
     this.prefilledData,
   }) : super(key: key);
+// ...
 
   @override
   State<ExpenseEntryScreen> createState() => _ExpenseEntryScreenState();
