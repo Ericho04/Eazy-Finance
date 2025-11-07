@@ -18,7 +18,6 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/otp_screen.dart';
 import 'screens/dashboard_screen.dart';
-//import 'screens/placeholder_screen.dart';
 import 'screens/budget_screen.dart';
 import 'screens/expense_entry_screen.dart';
 import 'screens/expense_history_screen.dart';
@@ -70,7 +69,7 @@ class SFMSApp extends StatelessWidget {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
         return MaterialApp(
-          title: 'SFMS - Smart Finance Management System',
+          title: 'EFMS - Eazy Finance',
           debugShowCheckedModeBanner: false,
           theme: themeProvider.lightTheme,
           darkTheme: themeProvider.darkTheme,
@@ -194,10 +193,6 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
     }
   }
 
-  // Removed _handleScanComplete method
-
-  // Admin login removed - use web admin panel at /admin
-
   Widget _buildLoadingScreen() {
     return Scaffold(
       body: Container(
@@ -278,6 +273,17 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
 
   Widget _buildMainView() {
     switch (currentView) {
+    // --- 我帮你新增的 Auth 页面 ---
+      case 'login':
+        return LoginScreen(onNavigate: _handleNavigation);
+      case 'signup':
+        return SignupScreen(onNavigate: _handleNavigation);
+      case 'forgot_password':
+        return ForgotPasswordScreen(onNavigate: _handleNavigation);
+      case 'otp':
+        return OTPScreen(onNavigate: _handleNavigation);
+    // --- 结束新增 ---
+
       case 'dashboard':
         return DashboardScreen(onNavigate: _handleNavigation);
       case 'budget':
@@ -302,14 +308,12 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
         return ExpenseEntryScreen(
           onBack: _handleBack,
           onNavigate: _handleNavigation,
-          prefilledData: null, // Set prefilledData to null
+          prefilledData: null,
         );
       case 'expense-history':
         return ExpenseHistoryScreen(onBack: _handleBack);
       case 'reports':
         return ReportsScreen(onBack: _handleBack);
-    // Removed 'ocr-scan' case
-    // Removed 'qr-scan' case
       default:
         return DashboardScreen(onNavigate: _handleNavigation);
     }

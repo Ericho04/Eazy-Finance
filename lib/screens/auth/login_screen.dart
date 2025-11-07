@@ -21,8 +21,7 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _loading = false;
-  bool _demoLoading = false;
-  bool _isAdminTab = false;
+  // _isAdminTab 和 _demoLoading 已被移除
 
   late AnimationController _logoController;
   late AnimationController _cardController;
@@ -78,22 +77,11 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _loading = true);
 
     try {
-      // For admin access, users should use the web admin panel
-      if (_isAdminTab) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Admin access is via web panel at /admin'),
-            backgroundColor: Colors.blue,
-          ),
-        );
-        return;
-      }
-
-      // Regular user login with Supabase
+      // 简化的用户登录
       final success = await context.read<AuthProvider>().signIn(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
 
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -103,6 +91,8 @@ class _LoginScreenState extends State<LoginScreen>
           ),
         );
       }
+      // 成功后 AuthProvider 会自动导航，这里不需要处理
+
     } catch (e) {
       print('Login error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,22 +106,7 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
-  Future<void> _handleDemoLogin() async {
-    setState(() => _demoLoading = true);
-
-    try {
-      final success = await context.read<AuthProvider>().demoLogin();
-      if (success) {
-        // Initialize demo data
-        context.read<AppProvider>().initializeSampleData();
-        // Navigation will be handled by auth state change
-      }
-    } catch (e) {
-      print('Demo login error: $e');
-    } finally {
-      setState(() => _demoLoading = false);
-    }
-  }
+  // _handleDemoLogin 函数已被移除
 
   @override
   Widget build(BuildContext context) {
@@ -239,208 +214,27 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 32),
 
-                          // Tab Selection
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _isAdminTab = false),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: !_isAdminTab
-                                            ? Colors.white
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: !_isAdminTab
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.1),
-                                                  blurRadius: 8,
-                                                  spreadRadius: 0,
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.person,
-                                            size: 16,
-                                            color: !_isAdminTab
-                                                ? const Color(0xFF2E7D32)
-                                                : Colors.grey,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'User Login',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: !_isAdminTab
-                                                  ? const Color(0xFF2E7D32)
-                                                  : Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: GestureDetector(
-                                    onTap: () =>
-                                        setState(() => _isAdminTab = true),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 12),
-                                      decoration: BoxDecoration(
-                                        color: _isAdminTab
-                                            ? Colors.white
-                                            : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(16),
-                                        boxShadow: _isAdminTab
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withOpacity(0.1),
-                                                  blurRadius: 8,
-                                                  spreadRadius: 0,
-                                                ),
-                                              ]
-                                            : null,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.shield,
-                                            size: 16,
-                                            color: _isAdminTab
-                                                ? Colors.amber.shade700
-                                                : Colors.grey,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Admin Login',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: _isAdminTab
-                                                  ? Colors.amber.shade700
-                                                  : Colors.grey,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          // Tab Selection (已被移除)
 
-                          const SizedBox(height: 24),
-
-                          // Admin Notice
-                          if (_isAdminTab)
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.amber.shade50,
-                                borderRadius: BorderRadius.circular(12),
-                                border:
-                                    Border.all(color: Colors.amber.shade200),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(
-                                        Icons.shield,
-                                        size: 16,
-                                        color: Colors.amber.shade800,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Admin Access',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.amber.shade800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Use admin credentials to access the management panel for Lucky Draw and Rewards Shop.',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.amber.shade700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.shade100,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      'Demo: admin@sfms.app / admin123',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: Colors.amber.shade600,
-                                        fontFamily: 'monospace',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                          const SizedBox(height: 24),
+                          // Admin Notice (已被移除)
 
                           // Email Input
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
-                              labelText:
-                                  _isAdminTab ? 'Admin Email' : 'Email Address',
-                              prefixIcon: Icon(
-                                _isAdminTab ? Icons.shield : Icons.email,
-                                color:
-                                    _isAdminTab ? Colors.amber.shade700 : null,
-                              ),
+                              labelText: 'Email Address', // 已简化
+                              prefixIcon: Icon(Icons.email), // 已简化
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: _isAdminTab
-                                      ? Colors.amber.shade500
-                                      : Colors.grey.shade300,
+                                  color: Colors.grey.shade300,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: _isAdminTab
-                                      ? Colors.amber.shade500
-                                      : const Color(0xFF2E7D32),
+                                  color: const Color(0xFF2E7D32),
                                   width: 2,
                                 ),
                               ),
@@ -454,8 +248,7 @@ class _LoginScreenState extends State<LoginScreen>
                             controller: _passwordController,
                             obscureText: !_showPassword,
                             decoration: InputDecoration(
-                              labelText:
-                                  _isAdminTab ? 'Admin Password' : 'Password',
+                              labelText: 'Password', // 已简化
                               prefixIcon: const Icon(Icons.lock),
                               suffixIcon: IconButton(
                                 icon: Icon(
@@ -464,22 +257,18 @@ class _LoginScreenState extends State<LoginScreen>
                                       : Icons.visibility,
                                 ),
                                 onPressed: () => setState(
-                                    () => _showPassword = !_showPassword),
+                                        () => _showPassword = !_showPassword),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: _isAdminTab
-                                      ? Colors.amber.shade500
-                                      : Colors.grey.shade300,
+                                  color: Colors.grey.shade300,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
                                 borderSide: BorderSide(
-                                  color: _isAdminTab
-                                      ? Colors.amber.shade500
-                                      : const Color(0xFF2E7D32),
+                                  color: const Color(0xFF2E7D32),
                                   width: 2,
                                 ),
                               ),
@@ -492,9 +281,7 @@ class _LoginScreenState extends State<LoginScreen>
                           ElevatedButton(
                             onPressed: _loading ? null : _handleLogin,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: _isAdminTab
-                                  ? Colors.amber.shade500
-                                  : const Color(0xFF2E7D32),
+                              backgroundColor: const Color(0xFF2E7D32), // 已简化
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               shape: RoundedRectangleBorder(
@@ -503,103 +290,31 @@ class _LoginScreenState extends State<LoginScreen>
                             ),
                             child: _loading
                                 ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                                 : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(_isAdminTab
-                                          ? Icons.shield
-                                          : Icons.person),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        _isAdminTab
-                                            ? 'Access Admin Panel'
-                                            : 'Sign In to SFMS',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                          ),
-
-                          // Demo login for user tab only
-                          if (!_isAdminTab) ...[
-                            const SizedBox(height: 16),
-
-                            // Divider
-                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Expanded(
-                                    child:
-                                        Divider(color: Colors.grey.shade300)),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
-                                  child: Text(
-                                    'OR CONTINUE WITH',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                Icon(Icons.person), // 已简化
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Sign In to SFMS', // 已简化
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Expanded(
-                                    child:
-                                        Divider(color: Colors.grey.shade300)),
                               ],
                             ),
+                          ),
 
-                            const SizedBox(height: 16),
+                          // Demo Button 和 "OR" Divider (已被移除)
 
-                            // Demo Button
-                            OutlinedButton(
-                              onPressed: _demoLoading ? null : _handleDemoLogin,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF4FFBDF),
-                                side: const BorderSide(
-                                    color: Color(0xFF4FFBDF), width: 2),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: _demoLoading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Color(0xFF4FFBDF),
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Text('✨',
-                                            style: TextStyle(fontSize: 18)),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Try Demo Account',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                            ),
-                          ],
                         ],
                       ),
                     ),
@@ -608,43 +323,41 @@ class _LoginScreenState extends State<LoginScreen>
 
                 const SizedBox(height: 24),
 
-                // Footer Links - Only for user login
-                if (!_isAdminTab) ...[
-                  TextButton(
-                    onPressed: () => widget.onNavigate('forgot-password'),
-                    child: const Text(
-                      'Forgot your password?',
-                      style: TextStyle(
-                        color: Color(0xFF845EC2),
-                        fontWeight: FontWeight.w500,
-                      ),
+                // Footer Links
+                TextButton(
+                  onPressed: () => widget.onNavigate('forgot-password'),
+                  child: const Text(
+                    'Forgot your password?',
+                    style: TextStyle(
+                      color: Color(0xFF845EC2),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Don\'t have an account? ',
-                        style: TextStyle(color: Color(0xFF6B7280)),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Don\'t have an account? ',
+                      style: TextStyle(color: Color(0xFF6B7280)),
+                    ),
+                    TextButton(
+                      onPressed: () => widget.onNavigate('signup'),
+                      style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
                       ),
-                      TextButton(
-                        onPressed: () => widget.onNavigate('signup'),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                        ),
-                        child: const Text(
-                          'Sign up here',
-                          style: TextStyle(
-                            color: Color(0xFF4E8EF7),
-                            fontWeight: FontWeight.w600,
-                          ),
+                      child: const Text(
+                        'Sign up here',
+                        style: TextStyle(
+                          color: Color(0xFF4E8EF7),
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 40),
 

@@ -35,10 +35,11 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+// ✅ 修复后的代码 (移除了 insert)
   Future<bool> signUp(String email, String password, String fullName) async {
     try {
       final response = await Supabase.instance.client.auth.signUp(
-        email: email,
+        email: email.trim(),
         password: password,
         data: {'full_name': fullName},
       );
@@ -46,6 +47,7 @@ class AuthProvider extends ChangeNotifier {
       if (response.user != null) {
         return true;
       }
+
       return false;
     } catch (e) {
       print('Sign up error: $e');
@@ -62,19 +64,5 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> demoLogin() async {
-    final mockUser = User(
-      id: 'demo-user-id',
-      appMetadata: {},
-      userMetadata: {
-        'full_name': 'Demo User',
-        'email': 'demo@sfms.app',
-      },
-      aud: 'demo',
-      createdAt: DateTime.now().toIso8601String(),
-    );
 
-    setUser(mockUser);
-    return true;
-  }
 }
