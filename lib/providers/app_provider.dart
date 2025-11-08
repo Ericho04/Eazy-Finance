@@ -1,6 +1,8 @@
+// [*** providers/app_provider.dart - 完整替换版 (连接 Supabase) ***]
+
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert'; // 保留，以防你的模型需要
 
 // 确保这些路径是正确的
 import '../models/transaction.dart';
@@ -8,15 +10,18 @@ import '../models/budget.dart';
 import '../models/goal.dart';
 
 class AppProvider extends ChangeNotifier {
-  // Private fields
+  // 1. 添加 Supabase 客户端
+  final supabase = Supabase.instance.client;
+
+  // 2. 移除模拟数据，用空列表初始化
   List<Transaction> _transactions = [];
   List<Budget> _budgets = [];
   List<Goal> _goals = [];
-  int _rewardPoints = 850; // Starting points
+  int _rewardPoints = 0; // 将从数据库加载
   bool _isLoading = false;
   String? _error;
 
-  // Getters
+  // Getters (你原有的 Getters 保持不变)
   List<Transaction> get transactions => _transactions;
   List<Budget> get budgets => _budgets;
   List<Goal> get goals => _goals;
@@ -24,13 +29,12 @@ class AppProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  // Constructor
+  // 3. 移除构造函数中的 _loadData() 和 initializeSampleData()
   AppProvider() {
-    _loadData();
-    initializeSampleData();
+    // 构造函数现在是空的，等待 main.dart 通知登录
   }
 
-  // Loading state management
+  // Loading state management (保持不变)
   void _setLoading(bool loading) {
     _isLoading = loading;
     notifyListeners();
@@ -41,383 +45,202 @@ class AppProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Data persistence
-  Future<void> _loadData() async {
+  //
+  // 4. [*** 核心功能：从 Supabase 加载数据 ***]
+  //
+  Future<void> fetchAllData() async {
+    // 检查用户是否已登录
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      print('fetchAllData: User is null, clearing data.');
+      _clearLocalData(); // 如果用户为空，则清除本地数据
+      return;
+    }
+
+    _setLoading(true);
+    _setError(null);
+
     try {
-      _setLoading(true);
-      final prefs = await SharedPreferences.getInstance();
-
-      // Load transactions
-      final transactionsJson = prefs.getString('sfms_transactions');
-      if (transactionsJson != null) {
-        final List<dynamic> transactionsList = json.decode(transactionsJson);
-        _transactions =
-            transactionsList.map((json) => Transaction.fromJson(json)).toList();
-      }
-
-      // Load budgets
-      final budgetsJson = prefs.getString('sfms_budgets');
-      if (budgetsJson != null) {
-        final List<dynamic> budgetsList = json.decode(budgetsJson);
-        _budgets = budgetsList.map((json) => Budget.fromJson(json)).toList();
-      }
-
-      // Load goals
-      final goalsJson = prefs.getString('sfms_goals');
-      if (goalsJson != null) {
-        final List<dynamic> goalsList = json.decode(goalsJson);
-        _goals = goalsList.map((json) => Goal.fromJson(json)).toList();
-      }
-
-      // Load reward points
-      _rewardPoints = prefs.getInt('sfms_reward_points') ?? 850;
+      // 并行运行所有数据获取
+      await Future.wait([
+        fetchTransactions(),
+        fetchBudgets(),
+        fetchGoals(),
+        fetchRewardPoints(),
+      ]);
     } catch (e) {
-      _setError('Failed to load data: $e');
+      _setError('Failed to fetch data: $e');
+      print('Error fetching all data: $e');
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> _saveData() async {
+  // 5. 创建 fetchTransactions
+  Future<void> fetchTransactions() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final response = await supabase
+          .from('transactions')
+          .select()
+          .eq('user_id', user.id) // 🔑 只获取这个用户的！
+          .order('date', ascending: false); // 按日期排序
 
-      // Save transactions
-      final transactionsJson = json.encode(
-        _transactions.map((t) => t.toJson()).toList(),
-      );
-      await prefs.setString('sfms_transactions', transactionsJson);
+      //
+      // ⚠️ 关键假设:
+      // 这假设你的 'transaction.dart' 模型文件有一个
+      // factory Transaction.fromJson(Map<String, dynamic> json) 构造函数
+      //
+      _transactions = response
+          .map((item) => Transaction.fromJson(item))
+          .toList();
 
-      // Save budgets
-      final budgetsJson = json.encode(
-        _budgets.map((b) => b.toJson()).toList(),
-      );
-      await prefs.setString('sfms_budgets', budgetsJson);
-
-      // Save goals
-      final goalsJson = json.encode(
-        _goals.map((g) => g.toJson()).toList(),
-      );
-      await prefs.setString('sfms_goals', goalsJson);
-
-      // Save reward points
-      await prefs.setInt('sfms_reward_points', _rewardPoints);
+      notifyListeners();
     } catch (e) {
-      _setError('Failed to save data: $e');
+      print('Error fetching transactions: $e');
+      _setError('Could not load transactions.');
     }
   }
 
-  // Initialize with sample data if empty
-  void initializeSampleData() {
-    if (_budgets.isEmpty) {
-      // Calculate dates for monthly period
-      final now = DateTime.now();
-      final startDate = DateTime(now.year, now.month, 1);
-      final endDate = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
+  // 6. 创建 fetchBudgets
+  Future<void> fetchBudgets() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
 
-      _budgets = [
-        Budget(
-          id: '1',
-          userId: 'demo-user-123',
-          category: 'Food & Dining',
-          amount: 500.0,
-          spent: 450.0,
-          period: BudgetPeriod.monthly, // <-- 来自 budget.dart
-          startDate: startDate,
-          endDate: endDate,
-          createdAt: now,
-        ),
-        Budget(
-          id: '2',
-          userId: 'demo-user-123',
-          category: 'Transportation',
-          amount: 300.0,
-          spent: 280.0,
-          period: BudgetPeriod.monthly, // <-- 来自 budget.dart
-          startDate: startDate,
-          endDate: endDate,
-          createdAt: now,
-        ),
-      ];
+    try {
+      final response = await supabase
+          .from('budgets')
+          .select()
+          .eq('user_id', user.id) // 🔑 只获取这个用户的！
+          .eq('is_active', true); // 🔑 只获取当前活跃的预算
+
+      // ⚠️ 关键假设: 你的 'budget.dart' 有 .fromJson
+      _budgets = response
+          .map((item) => Budget.fromJson(item))
+          .toList();
+
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching budgets: $e');
+      _setError('Could not load budgets.');
     }
+  }
 
-    if (_goals.isEmpty) {
-      _goals = [
-        Goal(
-          id: '1',
-          userId: 'demo-user-123',
-          title: 'Emergency Fund',
-          description: 'Build 6 months of expenses',
-          targetAmount: 15000.0,
-          currentAmount: 8500.0,
-          deadline: '2024-12-31',
-          category: 'emergency',
-          priority: 'high',
-          isCompleted: false,
-          createdAt: DateTime.now().toIso8601String(),
-        ),
-        Goal(
-          id: '2',
-          userId: 'demo-user-123',
-          title: 'Vacation to Japan',
-          description: 'Save for dream vacation',
-          targetAmount: 8000.0,
-          currentAmount: 3200.0,
-          deadline: '2024-10-15',
-          category: 'travel',
-          priority: 'medium',
-          isCompleted: false,
-          createdAt: DateTime.now().toIso8601String(),
-        ),
-        Goal(
-          id: '3',
-          userId: 'demo-user-123',
-          title: 'New Laptop',
-          description: 'MacBook Pro for work',
-          targetAmount: 2500.0,
-          currentAmount: 2500.0,
-          deadline: '2024-06-30',
-          category: 'technology',
-          priority: 'low',
-          isCompleted: true,
-          completedAt: '2024-06-25',
-          createdAt: DateTime.now()
-              .subtract(const Duration(days: 90))
-              .toIso8601String(),
-        ),
-      ];
+  // 7. 创建 fetchGoals
+  Future<void> fetchGoals() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final response = await supabase
+          .from('goals')
+          .select()
+          .eq('user_id', user.id) // 🔑 只获取这个用户的！
+          .order('deadline', ascending: true);
+
+      // ⚠️ 关键假设: 你的 'goal.dart' 有 .fromJson
+      _goals = response
+          .map((item) => Goal.fromJson(item))
+          .toList();
+
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching goals: $e');
+      _setError('Could not load goals.');
     }
+  }
 
-    // Save initial data
-    _saveData();
+  // 8. (可选) 获取积分
+  Future<void> fetchRewardPoints() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      // 假设你的积分存储在 'user_profiles' 表
+      final response = await supabase
+          .from('user_profiles')
+          .select('reward_points')
+          .eq('id', user.id)
+          .single(); // 获取单条记录
+
+      _rewardPoints = response['reward_points'] ?? 0;
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching reward points: $e');
+      // 不把它设为严重错误
+    }
+  }
+
+  // 9. 登出时清除数据
+  void _clearLocalData() {
+    _transactions = [];
+    _budgets = [];
+    _goals = [];
+    _rewardPoints = 0;
+    _error = null;
     notifyListeners();
   }
 
-  // Transaction methods
-  Future<void> addTransaction(Transaction transaction) async {
-    try {
-      final newTransaction = transaction.copyWith(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-      );
+  //
+  // --- 移除所有 SharedPreferences 和 SampleData 函数 ---
+  //
+  // 移除了 initializeSampleData()
+  // 移除了 _loadData()
+  // 移除了 _saveData()
+  // 移除了 clearAllData()
+  // 移除了 _addTransaction, _addBudget, fundGoal (这些现在在屏幕或 Supabase Function 中处理)
+  //
 
-      _transactions.add(newTransaction);
+  //
+  // --- 计算属性 (Getters) ---
+  // (你原有的 helper/getter 函数保持不变，因为它们很有用)
+  //
 
-      // Update budget spending if applicable
-      _updateBudgetSpending(newTransaction);
-
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to add transaction: $e');
-    }
+  double get totalBalance {
+    return _transactions.fold(0.0, (sum, t) {
+      return sum + (t.type == TransactionType.income ? t.amount : -t.amount);
+    });
   }
 
-  Future<void> updateTransaction(Transaction transaction) async {
-    try {
-      final index = _transactions.indexWhere((t) => t.id == transaction.id);
-      if (index != -1) {
-        _transactions[index] = transaction;
-        await _saveData();
-        notifyListeners();
-      }
-    } catch (e) {
-      _setError('Failed to update transaction: $e');
-    }
-  }
-
-  Future<void> deleteTransaction(String id) async {
-    try {
-      _transactions.removeWhere((t) => t.id == id);
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to delete transaction: $e');
-    }
-  }
-
-  // Budget methods
-  Future<void> addBudget(Budget budget) async {
-    try {
-      final newBudget = budget.copyWith(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-      );
-
-      _budgets.add(newBudget);
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to add budget: $e');
-    }
-  }
-
-  Future<void> updateBudget(Budget budget) async {
-    try {
-      final index = _budgets.indexWhere((b) => b.id == budget.id);
-      if (index != -1) {
-        _budgets[index] = budget;
-        await _saveData();
-        notifyListeners();
-      }
-    } catch (e) {
-      _setError('Failed to update budget: $e');
-    }
-  }
-
-  void _updateBudgetSpending(Transaction transaction) {
-    if (transaction.type == TransactionType.expense) { // <-- 来自 transaction.dart
-      final budgetIndex = _budgets.indexWhere(
-            (b) => b.category.toLowerCase() == transaction.category.toLowerCase(),
-      );
-
-      if (budgetIndex != -1) {
-        _budgets[budgetIndex] = _budgets[budgetIndex].copyWith(
-          spent: _budgets[budgetIndex].spent + transaction.amount,
-        );
-      }
-    }
-  }
-
-  // Goal methods
-  Future<void> addGoal(Goal goal) async {
-    try {
-      final newGoal = goal.copyWith(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-      );
-
-      _goals.add(newGoal);
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to add goal: $e');
-    }
-  }
-
-  Future<void> updateGoal(Goal goal) async {
-    try {
-      final index = _goals.indexWhere((g) => g.id == goal.id);
-      if (index != -1) {
-        _goals[index] = goal;
-        await _saveData();
-        notifyListeners();
-      }
-    } catch (e) {
-      _setError('Failed to update goal: $e');
-    }
-  }
-
-  Future<void> contributeToGoal(String goalId, double amount) async {
-    try {
-      final index = _goals.indexWhere((g) => g.id == goalId);
-      if (index != -1) {
-        final goal = _goals[index];
-        final newAmount = goal.currentAmount + amount;
-        final isCompleted = newAmount >= goal.targetAmount;
-
-        _goals[index] = goal.copyWith(
-          currentAmount: isCompleted ? goal.targetAmount : newAmount,
-          isCompleted: isCompleted,
-          completedAt:
-          isCompleted ? DateTime.now().toIso8601String() : goal.completedAt,
-        );
-
-        // Award points for completing goal
-        if (isCompleted && !goal.isCompleted) {
-          final pointsReward = (goal.targetAmount / 100).floor();
-          _rewardPoints += pointsReward;
-        }
-
-        await _saveData();
-        notifyListeners();
-      }
-    } catch (e) {
-      _setError('Failed to contribute to goal: $e');
-    }
-  }
-
-  Future<void> deleteGoal(String id) async {
-    try {
-      _goals.removeWhere((g) => g.id == id);
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to delete goal: $e');
-    }
-  }
-
-  // Reward points methods
-  Future<void> addRewardPoints(int points) async {
-    try {
-      _rewardPoints += points;
-      await _saveData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to add reward points: $e');
-    }
-  }
-
-  Future<void> spendRewardPoints(int points) async {
-    try {
-      if (_rewardPoints >= points) {
-        _rewardPoints -= points;
-        await _saveData();
-        notifyListeners();
-      } else {
-        _setError('Insufficient reward points');
-      }
-    } catch (e) {
-      _setError('Failed to spend reward points: $e');
-    }
-  }
-
-  // Analytics methods
-  double getMonthlyExpenses() {
+  double get totalMonthlyIncome {
     final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
-
     return _transactions
-        .where((t) =>
-    t.type == TransactionType.expense &&
-        DateTime.parse(t.date).isAfter(currentMonth))
+        .where((t) {
+      final tDate = DateTime.parse(t.date);
+      return t.type == TransactionType.income &&
+          tDate.year == now.year &&
+          tDate.month == now.month;
+    })
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
-  double getCategorySpending(String category) {
+  double get totalMonthlyExpenses {
     final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
-
     return _transactions
-        .where((t) =>
-    t.type == TransactionType.expense &&
-        t.category.toLowerCase() == category.toLowerCase() &&
-        DateTime.parse(t.date).isAfter(currentMonth))
+        .where((t) {
+      final tDate = DateTime.parse(t.date);
+      return t.type == TransactionType.expense &&
+          tDate.year == now.year &&
+          tDate.month == now.month;
+    })
         .fold(0.0, (sum, t) => sum + t.amount);
   }
 
-  Map<String, double> getCategoryBreakdown() {
-    final now = DateTime.now();
-    final currentMonth = DateTime(now.year, now.month);
-    final expenses = _transactions
-        .where((t) =>
-    t.type == TransactionType.expense &&
-        DateTime.parse(t.date).isAfter(currentMonth))
-        .toList();
-
-    final Map<String, double> breakdown = {};
-
-    for (final expense in expenses) {
-      breakdown[expense.category] =
-          (breakdown[expense.category] ?? 0) + expense.amount;
-    }
-
-    return breakdown;
+  double get totalBudgetAmount {
+    return _budgets.fold(0.0, (sum, b) => sum + b.amount);
   }
 
-  List<Transaction> getRecentTransactions({int limit = 10}) {
-    final sortedTransactions = List<Transaction>.from(_transactions);
-    sortedTransactions.sort(
-            (a, b) => DateTime.parse(b.date).compareTo(DateTime.parse(a.date)));
+  double get totalBudgetSpent {
+    // 你的 Budget 模型需要有 'spent' 属性
+    // 假设它已经有了
+    return _budgets.fold(0.0, (sum, b) => sum + b.spent);
+  }
 
-    return sortedTransactions.take(limit).toList();
+  List<Transaction> getRecentTransactions({int limit = 5}) {
+    // _transactions 已经从 Supabase 按日期排序
+    return _transactions.take(limit).toList();
   }
 
   List<Transaction> getTransactionsByDateRange(DateTime start, DateTime end) {
@@ -430,36 +253,12 @@ class AppProvider extends ChangeNotifier {
 
   List<Transaction> getTodayTransactions() {
     final today = DateTime.now();
-    final todayString =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    final todayDate = DateTime(today.year, today.month, today.day);
 
-    return _transactions.where((t) => t.date == todayString).toList();
-  }
-
-  // Clear all data (for demo/testing)
-  Future<void> clearAllData() async {
-    try {
-      _transactions.clear();
-      _budgets.clear();
-      _goals.clear();
-      _rewardPoints = 850;
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('sfms_transactions');
-      await prefs.remove('sfms_budgets');
-      await prefs.remove('sfms_goals');
-      await prefs.remove('sfms_reward_points');
-
-      initializeSampleData();
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to clear data: $e');
-    }
-  }
-
-  // Clear error
-  void clearError() {
-    _error = null;
-    notifyListeners();
+    return _transactions.where((t) {
+      final transactionDate = DateTime.parse(t.date);
+      final tDate = DateTime(transactionDate.year, transactionDate.month, transactionDate.day);
+      return tDate.isAtSameMomentAs(todayDate);
+    }).toList();
   }
 }

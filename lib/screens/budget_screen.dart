@@ -54,12 +54,12 @@ class _BudgetScreenState extends State<BudgetScreen>
           final totalBudget = budgets.fold(0.0, (sum, budget) => sum + budget.amount);
           final totalSpent = appProvider.getMonthlyExpenses();
           final budgetProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-          
+
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 32),
-              
+
               // Header
               AnimatedBuilder(
                 animation: _animationController,
@@ -98,7 +98,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                 },
               ),
               const SizedBox(height: 24),
-              
+
               // Monthly Overview Card
               AnimatedBuilder(
                 animation: _animationController,
@@ -177,7 +177,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                               ],
                             ),
                             const SizedBox(height: 20),
-                            
+
                             // Progress Bar
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -237,7 +237,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                 },
               ),
               const SizedBox(height: 24),
-              
+
               // Category Budgets
               const Text(
                 'Budget Categories',
@@ -248,7 +248,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               if (budgets.isEmpty)
                 Container(
                   padding: const EdgeInsets.all(32),
@@ -316,7 +316,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                     final budget = entry.value;
                     final categorySpent = appProvider.getCategorySpending(budget.category);
                     final categoryProgress = budget.amount > 0 ? (categorySpent / budget.amount) * 100 : 0;
-                    
+
                     return AnimatedBuilder(
                       animation: _animationController,
                       builder: (context, child) {
@@ -414,7 +414,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                     ],
                                   ),
                                   const SizedBox(height: 16),
-                                  
+
                                   // Category Progress Bar
                                   Container(
                                     height: 8,
@@ -440,7 +440,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  
+
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -471,9 +471,9 @@ class _BudgetScreenState extends State<BudgetScreen>
                     );
                   }).toList(),
                 ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Add Budget Button
               Container(
                 width: double.infinity,
@@ -544,3 +544,4 @@ class _BudgetScreenState extends State<BudgetScreen>
     return gradients[index % gradients.length];
   }
 }
+

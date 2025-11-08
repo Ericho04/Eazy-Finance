@@ -1,3 +1,5 @@
+// [*** 修复后的 dashboard_screen.dart ***]
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -142,281 +144,283 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
+    //
+    // 💡 [*** 在这里修复 ***] 💡
+    // 我们移除了 Scaffold 和 body:
+    //
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
 
-            // Greeting Section
-            FadeTransition(
-              opacity: _greetingAnimation,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _getGreeting(),
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF6B7280),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _getUserName(),
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Balance Card
-            SlideTransition(
-              position: _cardAnimation,
-              child: ScaleTransition(
-                scale: _bounceAnimation,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF4E8EF7), Color(0xFF845EC2)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF4E8EF7).withOpacity(0.3),
-                        blurRadius: 20,
-                        spreadRadius: 0,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Balance',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'My Wallet 💰',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: const Icon(
-                              Icons.account_balance_wallet,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'RM ${_getTotalBalance().toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          _buildBalanceItem(
-                            '📈',
-                            'Income',
-                            _getMonthlyIncome(),
-                            Colors.green.shade400,
-                          ),
-                          const SizedBox(width: 24),
-                          _buildBalanceItem(
-                            '📉',
-                            'Expenses',
-                            _getMonthlyExpenses(),
-                            Colors.red.shade400,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Quick Actions
-            const Text(
-              'Quick Actions',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            Row(
+          // Greeting Section
+          FadeTransition(
+            opacity: _greetingAnimation,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _buildQuickActionCard(
-                    '➕',
-                    'Add Expense',
-                    'Track your spending',
-                    const Color(0xFF845EC2),
-                        () => widget.onNavigate('add-expense'),
+                Text(
+                  _getGreeting(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF6B7280),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    '📊',
-                    'View Reports',
-                    'Analyze your data',
-                    const Color(0xFF4E8EF7),
-                        () => widget.onNavigate('reports'),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: _buildQuickActionCard(
-                    '📱',
-                    'Scan QR',
-                    'Quick payment',
-                    const Color(0xFF4FFBDF),
-                        () => widget.onNavigate('qr-scan'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildQuickActionCard(
-                    '🎰',
-                    'Lucky Draw',
-                    'Win rewards',
-                    const Color(0xFFFFD93D),
-                        () => widget.onNavigate('lucky-draw'),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            // Recent Transactions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Recent Transactions',
-                  style: TextStyle(
-                    fontSize: 20,
+                const SizedBox(height: 4),
+                Text(
+                  _getUserName(),
+                  style: const TextStyle(
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1A1A1A),
                   ),
                 ),
-                TextButton(
-                  onPressed: () => widget.onNavigate('expense-history'),
-                  child: const Text(
-                    'View All',
-                    style: TextStyle(
-                      color: Color(0xFF4E8EF7),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 16),
+          ),
 
-            // Transaction List
-            Consumer<AppProvider>(
-              builder: (context, appProvider, child) {
-                // ✨ 修复: 使用 getRecentTransactions()
-                final recentTransactions = appProvider.getRecentTransactions(limit: 5);
+          const SizedBox(height: 32),
 
-                if (recentTransactions.isEmpty) {
-                  return _buildEmptyTransactions();
-                }
-
-                return Column(
-                  children: recentTransactions
-                      .map((transaction) => _buildTransactionItem(transaction))
-                      .toList(),
-                );
-              },
-            ),
-
-            const SizedBox(height: 32),
-
-            // Budget Overview
-            const Text(
-              'Budget Overview',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
+          // Balance Card
+          SlideTransition(
+            position: _cardAnimation,
+            child: ScaleTransition(
+              scale: _bounceAnimation,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4E8EF7), Color(0xFF845EC2)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF4E8EF7).withOpacity(0.3),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Total Balance',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'My Wallet 💰',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'RM ${_getTotalBalance().toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        _buildBalanceItem(
+                          '📈',
+                          'Income',
+                          _getMonthlyIncome(),
+                          Colors.green.shade400,
+                        ),
+                        const SizedBox(width: 24),
+                        _buildBalanceItem(
+                          '📉',
+                          'Expenses',
+                          _getMonthlyExpenses(),
+                          Colors.red.shade400,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 16),
+          ),
 
-            Consumer<AppProvider>(
-              builder: (context, appProvider, child) {
-                if (appProvider.budgets.isEmpty) {
-                  return _buildEmptyBudgets();
-                }
+          const SizedBox(height: 32),
 
-                return Column(
-                  children: appProvider.budgets
-                      .take(3)
-                      .map((budget) => _buildBudgetItem(budget))
-                      .toList(),
-                );
-              },
+          // Quick Actions
+          const Text(
+            'Quick Actions',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
             ),
+          ),
+          const SizedBox(height: 16),
 
-            const SizedBox(height: 100), // Extra space for bottom navigation
-          ],
-        ),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  '➕',
+                  'Add Expense',
+                  'Track your spending',
+                  const Color(0xFF845EC2),
+                      () => widget.onNavigate('add-expense'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickActionCard(
+                  '📊',
+                  'View Reports',
+                  'Analyze your data',
+                  const Color(0xFF4E8EF7),
+                      () => widget.onNavigate('reports'),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionCard(
+                  '📱',
+                  'Scan QR',
+                  'Quick payment',
+                  const Color(0xFF4FFBDF),
+                      () => widget.onNavigate('qr-scan'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildQuickActionCard(
+                  '🎰',
+                  'Lucky Draw',
+                  'Win rewards',
+                  const Color(0xFFFFD93D),
+                      () => widget.onNavigate('lucky-draw'),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Recent Transactions
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Recent Transactions',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+              TextButton(
+                onPressed: () => widget.onNavigate('expense-history'),
+                child: const Text(
+                  'View All',
+                  style: TextStyle(
+                    color: Color(0xFF4E8EF7),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Transaction List
+          Consumer<AppProvider>(
+            builder: (context, appProvider, child) {
+              // ✨ 修复: 使用 getRecentTransactions()
+              final recentTransactions = appProvider.getRecentTransactions(limit: 5);
+
+              if (recentTransactions.isEmpty) {
+                return _buildEmptyTransactions();
+              }
+
+              return Column(
+                children: recentTransactions
+                    .map((transaction) => _buildTransactionItem(transaction))
+                    .toList(),
+              );
+            },
+          ),
+
+          const SizedBox(height: 32),
+
+          // Budget Overview
+          const Text(
+            'Budget Overview',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Consumer<AppProvider>(
+            builder: (context, appProvider, child) {
+              if (appProvider.budgets.isEmpty) {
+                return _buildEmptyBudgets();
+              }
+
+              return Column(
+                children: appProvider.budgets
+                    .take(3)
+                    .map((budget) => _buildBudgetItem(budget))
+                    .toList(),
+              );
+            },
+          ),
+
+          const SizedBox(height: 100), // Extra space for bottom navigation
+        ],
       ),
     );
   }

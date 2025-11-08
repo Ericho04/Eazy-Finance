@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 import 'dart:math';
 
 //import providers
@@ -34,8 +36,8 @@ import 'screens/reports_screen.dart';
 import 'screens/rewards_shop_screen.dart';
 import 'screens/settings_screen.dart';
 
-
-
+// Supabase instance
+final supabase = Supabase.instance.client;
 
 // Main App Entry Point
 void main() async {
@@ -91,56 +93,171 @@ class AppContent extends StatefulWidget {
 
 class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   String activeTab = 'dashboard';
-  String currentView = 'login';
-  // Admin panel is separate web app - not included in mobile
+  String currentView = 'splash';
   bool loading = true;
   bool showConfigNotice = false;
-  // Map<String, dynamic>? scanData; // Removed scanData
 
   late AnimationController _backgroundController;
   late AnimationController _bounceController;
+
+  // Deep Links
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _deepLinkSubscription;
+
+  // ✅ 步骤 A: 添加 Auth 监听器变量
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _checkAuthStatus();
+    _initDeepLinks();
+
+    // ✅ 步骤 B: 设置 Auth 监听器
+    _authSubscription = supabase.auth.onAuthStateChange.listen((state) {
+      _handleAuthStateChange(state);
+    });
+
+    // 立即检查初始会话
+    final initialSession = supabase.auth.currentSession;
+    if (initialSession == null) {
+      // 延迟后显示欢迎页
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && currentView == 'splash') {
+          setState(() {
+            currentView = 'welcome';
+            loading = false;
+          });
+        }
+      });
+    } else {
+      // 用户已登录，立即触发数据加载
+      _handleAuthStateChange(AuthState(
+        AuthChangeEvent.signedIn,
+        initialSession,
+      ));
+      setState(() {
+        loading = false;
+      });
+    }
   }
 
   void _initializeAnimations() {
     _backgroundController = AnimationController(
       duration: const Duration(seconds: 10),
       vsync: this,
-    )..repeat();
-
+    );
     _bounceController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
+    _backgroundController.repeat();
+    _bounceController.repeat(reverse: true);
   }
 
-  Future<void> _checkAuthStatus() async {
+  // Deep Link 处理
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+
+    // 1. 处理 App 启动时的 deep link
     try {
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user != null) {
-        context.read<AuthProvider>().setUser(user);
-        setState(() {
-          currentView = 'app';
-          activeTab = 'dashboard';
-        });
-      } else {
-        setState(() {
-          currentView = 'login';
-        });
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        print('📱 App started with deep link: $initialUri');
+        _handleDeepLink(initialUri);
       }
     } catch (e) {
-      print('Auth check error: $e');
-      setState(() {
-        currentView = 'login';
+      print('❌ Failed to get initial URI: $e');
+    }
+
+    // 2. 监听 App 运行中的 deep links
+    _deepLinkSubscription = _appLinks.uriLinkStream.listen(
+          (Uri uri) {
+        print('📱 Received deep link while running: $uri');
+        _handleDeepLink(uri);
+      },
+      onError: (err) {
+        print('❌ Deep link error: $err');
+      },
+    );
+  }
+
+  void _handleDeepLink(Uri uri) {
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    print('📱 Processing Deep Link:');
+    print('   Scheme: ${uri.scheme}');
+    print('   Host: ${uri.host}');
+    print('   Path: ${uri.path}');
+    print('   Query: ${uri.query}');
+    print('   Full URI: $uri');
+    print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+    // 检查是否是认证回调
+    if (uri.scheme == 'com.sfms.app' && uri.host == 'auth-callback') {
+      print('✅ Auth callback detected!');
+
+      // Supabase 会自动处理 URL 中的 token 并设置 session
+      // Auth 监听器会自动触发，所以我们不需要手动导航
+
+      // 显示成功消息
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Email verified successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
       });
-    } finally {
+    }
+  }
+
+  // ✅ 步骤 C: 创建 Auth State Change 处理函数
+  void _handleAuthStateChange(AuthState state) {
+    final session = state.session;
+
+    if (session != null) {
+      // -------------------------------
+      // 用户已登录
+      // -------------------------------
+      print("🔐 Auth state change: User LOGGED IN");
+      print("   User ID: ${session.user.id}");
+      print("   Email: ${session.user.email}");
+
+      // 1. 立即从 Supabase 加载所有用户数据
+      context.read<AppProvider>().fetchAllData();
+
+      // 2. 设置 AuthProvider
+      context.read<AuthProvider>().setUser(session.user);
+
+      // 3. 导航到仪表板
+      if (currentView == 'login' ||
+          currentView == 'signup' ||
+          currentView == 'splash' ||
+          currentView == 'welcome') {
+        setState(() {
+          currentView = 'dashboard';
+          activeTab = 'dashboard';
+        });
+      }
+    } else {
+      // -------------------------------
+      // 用户已登出
+      // -------------------------------
+      print("🚪 Auth state change: User LOGGED OUT");
+
+      // 1. 清除 AuthProvider
+      context.read<AuthProvider>().clearUser();
+
+      // 2. 清除 AppProvider 中的所有数据
+      context.read<AppProvider>().clearLocalData();
+
+      // 3. 导航到欢迎页
       setState(() {
-        loading = false;
+        currentView = 'welcome';
+        activeTab = 'dashboard';
       });
     }
   }
@@ -165,8 +282,6 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
 
   void _handleBack() {
     if (context.read<AuthProvider>().user != null) {
-      // Handle back navigation logic
-      // Removed 'ocr-scan' and 'qr-scan' block
       if (['financial-debts', 'financial-tax'].contains(currentView)) {
         setState(() {
           currentView = 'financial';
@@ -238,11 +353,11 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Loading SFMS...',
+                'Loading...',
                 style: TextStyle(
                   fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1F2937),
                 ),
               ),
             ],
@@ -254,16 +369,20 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
 
   Widget _buildAuthView() {
     switch (currentView) {
-      case 'login':
-        return LoginScreen(
+      case 'signup':
+        return SignupScreen(
           onNavigate: _handleNavigation,
         );
-      case 'signup':
-        return SignupScreen(onNavigate: _handleNavigation);
       case 'forgot-password':
-        return ForgotPasswordScreen(onNavigate: _handleNavigation);
+        return ForgotPasswordScreen(
+          onNavigate: _handleNavigation,
+        );
       case 'otp':
-        return OTPScreen(onNavigate: _handleNavigation);
+        return OTPScreen(
+          onNavigate: _handleNavigation,
+        );
+      case 'welcome':
+        return _buildWelcomeScreen();
       default:
         return LoginScreen(
           onNavigate: _handleNavigation,
@@ -271,19 +390,137 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
     }
   }
 
+  Widget _buildWelcomeScreen() {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFDBEAFE),
+              Color(0xFFFAF5FF),
+              Color(0xFFFDF2F8),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // App Icon/Logo
+                  Container(
+                    width: 120,
+                    height: 120,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4E8EF7), Color(0xFF845EC2)],
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet,
+                      color: Colors.white,
+                      size: 60,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Title
+                  const Text(
+                    'Welcome to\nEazy Finance',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Subtitle
+                  Text(
+                    'Manage your finances with ease',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+
+                  // Login Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => _handleNavigation('login'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF4E8EF7),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Signup Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      onPressed: () => _handleNavigation('signup'),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                          color: Color(0xFF4E8EF7),
+                          width: 2,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4E8EF7),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMainView() {
     switch (currentView) {
-    // --- 我帮你新增的 Auth 页面 ---
-      case 'login':
-        return LoginScreen(onNavigate: _handleNavigation);
-      case 'signup':
-        return SignupScreen(onNavigate: _handleNavigation);
-      case 'forgot_password':
-        return ForgotPasswordScreen(onNavigate: _handleNavigation);
-      case 'otp':
-        return OTPScreen(onNavigate: _handleNavigation);
-    // --- 结束新增 ---
-
       case 'dashboard':
         return DashboardScreen(onNavigate: _handleNavigation);
       case 'budget':
@@ -294,16 +531,18 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
         return FinancialDebtsScreen(onBack: _handleBack);
       case 'financial-tax':
         return FinancialTaxScreen(onBack: _handleBack);
+      case 'financial-accounts':
+        return FinancialAccountsScreen(onBack: _handleBack);
       case 'goals':
         return GoalsScreen(onNavigate: _handleNavigation);
-      case 'lucky-draw':
-        return LuckyDrawScreen(onBack: _handleBack);
-      case 'rewards-shop':
-        return RewardsShopScreen(onBack: _handleBack);
       case 'insights':
         return InsightsScreen(onNavigate: _handleNavigation);
       case 'settings':
         return SettingsScreen(onNavigate: _handleNavigation);
+      case 'lucky-draw':
+        return LuckyDrawScreen(onBack: _handleBack);
+      case 'rewards-shop':
+        return RewardsShopScreen(onBack: _handleBack);
       case 'add-expense':
         return ExpenseEntryScreen(
           onBack: _handleBack,
@@ -538,8 +777,11 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   void dispose() {
     _backgroundController.dispose();
     _bounceController.dispose();
+    _deepLinkSubscription?.cancel();
+
+    // ✅ 步骤 D: 取消 Auth 监听器
+    _authSubscription?.cancel();
+
     super.dispose();
   }
 }
-
-

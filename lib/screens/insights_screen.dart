@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
@@ -25,7 +24,6 @@ class _InsightsScreenState extends State<InsightsScreen>
   late AnimationController _floatingController;
   String _timeRange = 'month';
 
-
   String _aiTipText = "Generating your personal financial tip...";
   bool _isAiLoading = true;
   // ⚠️ 警告: 永远不要将您的 API 密钥硬编码在应用中！
@@ -46,11 +44,11 @@ class _InsightsScreenState extends State<InsightsScreen>
     _animationController.forward();
     _floatingController.repeat();
 
-    // ✨ 5. (添加) 在屏幕加载时调用 AI
+    // ✨ 在屏幕加载时调用 AI
     _fetchAiTip();
   }
 
-  // ✨ 6. (添加) 获取 AI 建议的函数
+  // ✨ 获取 AI 建议的函数
   Future<void> _fetchAiTip() async {
     // 阻止在演示模式下或没有 API 密钥时运行
     if (_apiKey == "YOUR_GOOGLE_AI_API_KEY_HERE") {
@@ -110,7 +108,6 @@ class _InsightsScreenState extends State<InsightsScreen>
     }
   }
 
-
   @override
   void dispose() {
     _animationController.dispose();
@@ -122,33 +119,43 @@ class _InsightsScreenState extends State<InsightsScreen>
     return 'RM ${amount.toStringAsFixed(2)}';
   }
 
-  // ... (您的 _buildChart, _getTopCategories, _getSpendingInsight, _getCategoryColor 函数保持不变)
-  // ... (从您的 insights_screen.dart 文件粘贴它们到这里)
-
-  // (从您的文件中粘贴 _buildChart)
   Widget _buildChart(AppProvider appProvider) {
-    // ...
-    return Container(); // 您的图表代码
+    // 您的图表代码
+    return Container(
+      height: 200,
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Center(
+        child: Text(
+          'Chart visualization here',
+          style: TextStyle(color: Colors.grey.shade600),
+        ),
+      ),
+    );
   }
 
-  // (从您的文件中粘贴 _getTopCategories)
   List<Map<String, dynamic>> _getTopCategories(AppProvider appProvider) {
-    // ...
-    return []; // 您的分类代码
+    // 您的分类代码
+    return [];
   }
 
-  // (从您的文件中粘贴 _getSpendingInsight)
   String _getSpendingInsight(double amount) {
-    // ...
-    return ""; // 您的洞察代码
+    // 您的洞察代码
+    return "";
   }
 
-  // (从您的文件中粘贴 _getCategoryColor)
   Color _getCategoryColor(int index) {
-    // ...
-    return Colors.blue;
+    // 您的颜色代码
+    final colors = [
+      SFMSTheme.cartoonPink,
+      SFMSTheme.cartoonPurple,
+      SFMSTheme.cartoonBlue,
+      SFMSTheme.cartoonCyan,
+      SFMSTheme.cartoonMint,
+      SFMSTheme.cartoonYellow,
+      SFMSTheme.cartoonOrange,
+    ];
+    return colors[index % colors.length];
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -156,76 +163,151 @@ class _InsightsScreenState extends State<InsightsScreen>
     final monthlyExpenses = appProvider.getMonthlyExpenses();
     final topCategories = _getTopCategories(appProvider);
 
-    return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 20),
-            // Header
-            const Text(
-              'Financial Insights',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+    // ✅ 修复：移除 Scaffold，直接返回 SingleChildScrollView
+    // 父级 (main.dart) 已经提供了 Scaffold 和底部导航栏
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 20),
+          // Header
+          const Text(
+            'Financial Insights',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Your smart financial summary and tips.',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey,
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          AiTipCard(
+            title: "AI Financial Tip",
+            tip: _aiTipText, // 使用我们从 AI 获取的状态变量
+            icon: _isAiLoading ? Icons.sync : Icons.auto_awesome, // 显示加载图标
+            color: Colors.purple,
+          ),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Financial Tools',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Financial Tools Cards
+          ..._financialTools.map((tool) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => widget.onNavigate(tool['route']),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: tool['colors'],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: tool['colors'][0].withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Icon(
+                            tool['icon'],
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tool['title'],
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                tool['description'],
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.arrow_forward_ios,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
+            );
+          }).toList(),
+
+          const SizedBox(height: 24),
+
+          const Text(
+            'Category Breakdown',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Your smart financial summary and tips.',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
+          ),
 
-            const SizedBox(height: 24),
+          _buildChart(appProvider),
 
+          ...topCategories.map((category) {
+            return ListTile(
+              title: Text(category['name']),
+              trailing: Text(_formatCurrency(category['amount'])),
+            );
+          }).toList(),
 
-            AiTipCard(
-              title: "AI Financial Tip",
-              tip: _aiTipText, // 使用我们从 AI 获取的状态变量
-              icon: _isAiLoading ? Icons.sync : Icons.auto_awesome, // 显示加载图标
-              color: Colors.purple,
-            ),
-
-            const SizedBox(height: 24),
-
-
-            const Text(
-              'Financial Tools',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ..._financialTools.map((tool) {
-              return Card();
-            }).toList(),
-
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Category Breakdown',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            _buildChart(appProvider),
-            ...topCategories.map((category) {
-              return ListTile( );
-            }).toList(),
-          ],
-        ),
+          const SizedBox(height: 100), // Extra padding for bottom navigation
+        ],
       ),
     );
   }
 }
-
 
 final List<Map<String, dynamic>> _financialTools = [
   {
