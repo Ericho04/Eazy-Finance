@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'dart:math' as math;
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 
 class FinancialScreen extends StatefulWidget {
@@ -40,50 +42,61 @@ class _FinancialScreenState extends State<FinancialScreen>
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          
-          // Header
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, -50 * (1 - _animationController.value)),
-                child: Opacity(
-                  opacity: _animationController.value,
-                  child: Row(
-                    children: [
-                      AnimatedBuilder(
-                        animation: _floatingController,
-                        builder: (context, child) {
-                          return Transform.rotate(
-                            angle: math.sin(_floatingController.value * 2 * math.pi) * 0.1,
-                            child: const Text(
-                              '💰',
-                              style: TextStyle(fontSize: 40),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        'Financial Tools',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+
+    return Container(
+      color: bgColor,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 32),
+
+            // Header
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, -50 * (1 - _animationController.value)),
+                  child: Opacity(
+                    opacity: _animationController.value,
+                    child: Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _floatingController,
+                          builder: (context, child) {
+                            return Transform.rotate(
+                              angle: math.sin(_floatingController.value * 2 * math.pi) * 0.1,
+                              child: const Text(
+                                '💰',
+                                style: TextStyle(fontSize: 40),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+                        Text(
+                          'Financial Tools',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
           const SizedBox(height: 24),
           
           // Financial Tools Grid
@@ -116,13 +129,15 @@ class _FinancialScreenState extends State<FinancialScreen>
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: tool.colors.first.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                            boxShadow: isDarkMode
+                                ? SFMSTheme.darkCardGlow
+                                : [
+                                    BoxShadow(
+                                      color: tool.colors.first.withOpacity(0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                           ),
                           child: Stack(
                             children: [
@@ -225,13 +240,19 @@ class _FinancialScreenState extends State<FinancialScreen>
                   child: Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Colors.white, Color(0xFFFAF5FF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      gradient: isDarkMode
+                          ? LinearGradient(
+                              colors: [cardBg, cardBg.withOpacity(0.8)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : const LinearGradient(
+                              colors: [Colors.white, Color(0xFFFAF5FF)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: [
+                      boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 20,
@@ -258,7 +279,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                               ),
                             ),
                             const SizedBox(width: 16),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -267,14 +288,14 @@ class _FinancialScreenState extends State<FinancialScreen>
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1F2937),
+                                      color: textPrimary,
                                     ),
                                   ),
                                   Text(
                                     'Smart recommendations for your finances',
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Color(0xFF6B7280),
+                                      color: textSecondary,
                                     ),
                                   ),
                                 ],
@@ -283,26 +304,30 @@ class _FinancialScreenState extends State<FinancialScreen>
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
+
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: SFMSTheme.aiLight,
+                            color: isDarkMode
+                                ? SFMSTheme.accentTeal.withOpacity(0.1)
+                                : SFMSTheme.aiLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: SFMSTheme.aiColor.withOpacity(0.2),
+                              color: isDarkMode
+                                  ? SFMSTheme.accentTeal.withOpacity(0.3)
+                                  : SFMSTheme.aiColor.withOpacity(0.2),
                               width: 1,
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 '💡 Smart Tip',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F2937),
+                                  color: textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -310,7 +335,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                                 'Based on your spending patterns, consider setting up automatic savings to reach your financial goals faster!',
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey.shade700,
+                                  color: textSecondary,
                                   height: 1.4,
                                 ),
                               ),
@@ -331,16 +356,23 @@ class _FinancialScreenState extends State<FinancialScreen>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  SFMSTheme.cartoonYellow.withOpacity(0.1),
-                  SFMSTheme.cartoonOrange.withOpacity(0.1),
-                ],
+                colors: isDarkMode
+                    ? [
+                        SFMSTheme.accentTeal.withOpacity(0.1),
+                        SFMSTheme.accentEmerald.withOpacity(0.1),
+                      ]
+                    : [
+                        SFMSTheme.cartoonYellow.withOpacity(0.1),
+                        SFMSTheme.cartoonOrange.withOpacity(0.1),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: SFMSTheme.cartoonYellow.withOpacity(0.3),
+                color: isDarkMode
+                    ? SFMSTheme.accentTeal.withOpacity(0.3)
+                    : SFMSTheme.cartoonYellow.withOpacity(0.3),
                 width: 2,
               ),
             ),
@@ -356,12 +388,12 @@ class _FinancialScreenState extends State<FinancialScreen>
                   },
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'More Features Coming Soon!',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
+                    color: textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -369,7 +401,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                   'We\'re working hard to bring you more powerful financial management tools.',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.grey.shade600,
+                    color: textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -377,7 +409,8 @@ class _FinancialScreenState extends State<FinancialScreen>
             ),
           ),
           const SizedBox(height: 100), // Extra padding for bottom navigation
-        ],
+          ],
+        ),
       ),
     );
   }

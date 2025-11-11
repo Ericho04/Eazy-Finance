@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 
 class BudgetScreen extends StatefulWidget {
@@ -394,16 +395,28 @@ class _BudgetScreenState extends State<BudgetScreen>
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextSecondary.withOpacity(0.7) : SFMSTheme.textMuted;
+
     return Stack(
       children: [
-        SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Consumer<AppProvider>(
-            builder: (context, appProvider, child) {
-              final budgets = appProvider.budgets.where((b) => b.isActive).toList();
-              final totalBudget = budgets.fold(0.0, (sum, budget) => sum + budget.amount);
-              final totalSpent = appProvider.getMonthlyExpenses();
-              final budgetProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0.0;
+        Container(
+          color: bgColor,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Consumer<AppProvider>(
+              builder: (context, appProvider, child) {
+                final budgets = appProvider.budgets.where((b) => b.isActive).toList();
+                final totalBudget = budgets.fold(0.0, (sum, budget) => sum + budget.amount);
+                final totalSpent = appProvider.getMonthlyExpenses();
+                final budgetProgress = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0.0;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,12 +446,12 @@ class _BudgetScreenState extends State<BudgetScreen>
                                 },
                               ),
                               const SizedBox(width: 16),
-                              const Text(
+                              Text(
                                 'Budget Tracker',
                                 style: TextStyle(
                                   fontSize: 28,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F2937),
+                                  color: textPrimary,
                                 ),
                               ),
                             ],
@@ -460,22 +473,25 @@ class _BudgetScreenState extends State<BudgetScreen>
                           child: Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  Colors.white,
-                                  SFMSTheme.successColor.withOpacity(0.1),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
+                              gradient: isDarkMode
+                                  ? LinearGradient(
+                                      colors: [
+                                        cardBg,
+                                        (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.1),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : LinearGradient(
+                                      colors: [
+                                        Colors.white,
+                                        SFMSTheme.successColor.withOpacity(0.1),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
+                              boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -483,11 +499,11 @@ class _BudgetScreenState extends State<BudgetScreen>
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Monthly Budget',
                                       style: TextStyle(
                                         fontSize: 16,
-                                        color: Color(0xFF6B7280),
+                                        color: textSecondary,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -498,8 +514,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                                       ),
                                       decoration: BoxDecoration(
                                         color: budgetProgress > 90
-                                            ? Colors.red.withOpacity(0.1)
-                                            : SFMSTheme.successColor.withOpacity(0.1),
+                                            ? (isDarkMode ? SFMSTheme.accentCoral : Colors.red).withOpacity(0.1)
+                                            : (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Row(
@@ -516,8 +532,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
                                               color: budgetProgress > 90
-                                                  ? Colors.red
-                                                  : SFMSTheme.successColor,
+                                                  ? (isDarkMode ? SFMSTheme.accentCoral : Colors.red)
+                                                  : (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor),
                                             ),
                                           ),
                                         ],
@@ -536,15 +552,15 @@ class _BudgetScreenState extends State<BudgetScreen>
                                         fontSize: 32,
                                         fontWeight: FontWeight.bold,
                                         color: budgetProgress > 100
-                                            ? Colors.red
-                                            : const Color(0xFF1F2937),
+                                            ? (isDarkMode ? SFMSTheme.accentCoral : Colors.red)
+                                            : textPrimary,
                                       ),
                                     ),
                                     Text(
                                       ' / ${_formatCurrency(totalBudget)}',
                                       style: TextStyle(
                                         fontSize: 18,
-                                        color: Colors.grey.shade600,
+                                        color: textSecondary,
                                       ),
                                     ),
                                   ],
@@ -554,10 +570,12 @@ class _BudgetScreenState extends State<BudgetScreen>
                                   borderRadius: BorderRadius.circular(10),
                                   child: LinearProgressIndicator(
                                     value: (budgetProgress / 100).clamp(0.0, 1.0),
-                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundColor: isDarkMode
+                                        ? SFMSTheme.darkBgTertiary
+                                        : Colors.grey.shade200,
                                     color: budgetProgress > 90
-                                        ? Colors.red
-                                        : SFMSTheme.successColor,
+                                        ? (isDarkMode ? SFMSTheme.accentCoral : Colors.red)
+                                        : (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor),
                                     minHeight: 12,
                                   ),
                                 ),
@@ -569,7 +587,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                       'Remaining',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey.shade600,
+                                        color: textSecondary,
                                       ),
                                     ),
                                     Text(
@@ -580,8 +598,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: totalBudget - totalSpent < 0
-                                            ? Colors.red
-                                            : SFMSTheme.successColor,
+                                            ? (isDarkMode ? SFMSTheme.accentCoral : Colors.red)
+                                            : (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor),
                                       ),
                                     ),
                                   ],
@@ -599,19 +617,19 @@ class _BudgetScreenState extends State<BudgetScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Categories',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       Text(
                         '${budgets.length} active',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey.shade600,
+                          color: textSecondary,
                         ),
                       ),
                     ],
@@ -629,11 +647,12 @@ class _BudgetScreenState extends State<BudgetScreen>
                             style: TextStyle(fontSize: 80),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'No budgets yet',
                             style: TextStyle(
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -641,7 +660,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                             'Create your first budget to start tracking',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey.shade600,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -911,14 +930,14 @@ class _BudgetScreenState extends State<BudgetScreen>
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: SFMSTheme.successColor,
+                      backgroundColor: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                       elevation: 8,
-                      shadowColor: SFMSTheme.successColor.withOpacity(0.5),
+                      shadowColor: (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.5),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -973,7 +992,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                     margin: const EdgeInsets.all(24),
                     constraints: const BoxConstraints(maxWidth: 500),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardBg,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Column(
@@ -983,7 +1002,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: SFMSTheme.successColor.withOpacity(0.1),
+                            color: (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.1),
                             borderRadius: const BorderRadius.only(
                               topLeft: Radius.circular(24),
                               topRight: Radius.circular(24),
@@ -994,7 +1013,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: SFMSTheme.successColor,
+                                  color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Text(
@@ -1011,9 +1030,10 @@ class _BudgetScreenState extends State<BudgetScreen>
                                       _setupStep == 1
                                           ? 'Select Categories'
                                           : 'Set Amounts',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 22,
                                         fontWeight: FontWeight.bold,
+                                        color: textPrimary,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
@@ -1023,7 +1043,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                           : 'Enter monthly budget for each category',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey.shade600,
+                                        color: textSecondary,
                                       ),
                                     ),
                                   ],
@@ -1064,7 +1084,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
+                            color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
                             borderRadius: const BorderRadius.only(
                               bottomLeft: Radius.circular(24),
                               bottomRight: Radius.circular(24),
@@ -1099,7 +1119,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                 child: ElevatedButton(
                                   onPressed: _setupStep == 1 ? _handleNext : _handleSaveBudgets,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: SFMSTheme.successColor,
+                                    backgroundColor: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
                                     foregroundColor: Colors.white,
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     shape: RoundedRectangleBorder(
@@ -1131,6 +1151,11 @@ class _BudgetScreenState extends State<BudgetScreen>
 
   // Category 选择界面
   Widget _buildCategorySelection(List<Map<String, String>> availableCategories) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+
     if (availableCategories.isEmpty) {
       return Center(
         child: Column(
@@ -1141,11 +1166,12 @@ class _BudgetScreenState extends State<BudgetScreen>
               style: TextStyle(fontSize: 48),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'All categories have budgets!',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
+                color: textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -1153,7 +1179,7 @@ class _BudgetScreenState extends State<BudgetScreen>
               'You have covered all budget categories',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey.shade600,
+                color: textSecondary,
               ),
             ),
           ],
@@ -1169,7 +1195,7 @@ class _BudgetScreenState extends State<BudgetScreen>
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: SFMSTheme.successColor,
+            color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
           ),
         ),
         const SizedBox(height: 12),
@@ -1179,12 +1205,12 @@ class _BudgetScreenState extends State<BudgetScreen>
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
               color: isSelected
-                  ? SFMSTheme.successColor.withOpacity(0.1)
-                  : Colors.grey.shade100,
+                  ? (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.1)
+                  : (isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade100),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected
-                    ? SFMSTheme.successColor
+                    ? (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor)
                     : Colors.transparent,
                 width: 2,
               ),
@@ -1210,15 +1236,16 @@ class _BudgetScreenState extends State<BudgetScreen>
                   Expanded(
                     child: Text(
                       category['name']!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
+                        color: textPrimary,
                       ),
                     ),
                   ),
                 ],
               ),
-              activeColor: SFMSTheme.successColor,
+              activeColor: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -1231,6 +1258,13 @@ class _BudgetScreenState extends State<BudgetScreen>
 
   // ✅ 修复问题2：金额输入界面 - 使用状态变量中的 controllers
   Widget _buildAmountInput() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+    final borderColor = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.grey.shade200;
+    final inputBg = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.white;
+
     return Column(
       children: _selectedCategories.map((categoryId) {
         final category = _availableCategories.firstWhere(
@@ -1242,9 +1276,9 @@ class _BudgetScreenState extends State<BudgetScreen>
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey.shade50,
+            color: cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: borderColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1259,9 +1293,10 @@ class _BudgetScreenState extends State<BudgetScreen>
                   Expanded(
                     child: Text(
                       category['name']!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: textPrimary,
                       ),
                     ),
                   ),
@@ -1279,7 +1314,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: inputBg,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 12,
@@ -1302,7 +1337,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                     'Budget: ${_formatCurrency(_categoryAmounts[categoryId]!)}',
                     style: TextStyle(
                       fontSize: 14,
-                      color: SFMSTheme.successColor,
+                      color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
