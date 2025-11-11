@@ -71,6 +71,7 @@ class SFMSTheme {
   static const Color aiPrimary = Color(0xFF8B5CF6);      // Purple
   static const Color aiSecondary = Color(0xFFEC4899);    // Pink
   static const Color aiLight = Color(0xFFFAF5FF);        // Light Purple
+  static const Color aiColor = aiPrimary;                // Alias for convenience
   static const Color premiumGold = Color(0xFFFBBF24);    // Gold
 
   // Background Colors with Soft Gradients
