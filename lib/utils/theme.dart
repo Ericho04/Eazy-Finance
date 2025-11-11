@@ -398,4 +398,132 @@ class SFMSTheme {
       end: Alignment.bottomRight,
     );
   }
+
+  // ==========================================================================
+  // ✅ 修复：支出分类（expense_entry_screen.dart:139 需要）
+  // ==========================================================================
+
+  static final List<Map<String, dynamic>> expenseCategories = [
+    {
+      'id': 'food',
+      'name': 'Food & Dining',
+      'emoji': '🍔',
+      'color': cartoonOrange,
+    },
+    {
+      'id': 'transport',
+      'name': 'Transportation',
+      'emoji': '🚗',
+      'color': cartoonBlue,
+    },
+    {
+      'id': 'shopping',
+      'name': 'Shopping',
+      'emoji': '🛍️',
+      'color': cartoonPink,
+    },
+    {
+      'id': 'entertainment',
+      'name': 'Entertainment',
+      'emoji': '🎬',
+      'color': cartoonPurple,
+    },
+    {
+      'id': 'bills',
+      'name': 'Bills & Utilities',
+      'emoji': '💡',
+      'color': warningColor,
+    },
+    {
+      'id': 'healthcare',
+      'name': 'Healthcare',
+      'emoji': '⚕️',
+      'color': dangerColor,
+    },
+    {
+      'id': 'education',
+      'name': 'Education',
+      'emoji': '📚',
+      'color': cartoonCyan,
+    },
+    {
+      'id': 'groceries',
+      'name': 'Groceries',
+      'emoji': '🛒',
+      'color': cartoonMint,
+    },
+    {
+      'id': 'personal',
+      'name': 'Personal Care',
+      'emoji': '💅',
+      'color': cartoonPink,
+    },
+    {
+      'id': 'other',
+      'name': 'Other',
+      'emoji': '📦',
+      'color': neutralDark,
+    },
+  ];
+
+  // ==========================================================================
+  // ✅ 修复：收入分类（expense_entry_screen.dart:140 需要）
+  // ==========================================================================
+
+  static final List<Map<String, dynamic>> incomeCategories = [
+    {
+      'id': 'salary',
+      'name': 'Salary',
+      'emoji': '💼',
+      'color': successColor,
+    },
+    {
+      'id': 'business',
+      'name': 'Business',
+      'emoji': '🏢',
+      'color': cartoonBlue,
+    },
+    {
+      'id': 'investment',
+      'name': 'Investment',
+      'emoji': '📈',
+      'color': cartoonCyan,
+    },
+    {
+      'id': 'freelance',
+      'name': 'Freelance',
+      'emoji': '💻',
+      'color': cartoonPurple,
+    },
+    {
+      'id': 'rental',
+      'name': 'Rental Income',
+      'emoji': '🏠',
+      'color': cartoonMint,
+    },
+    {
+      'id': 'gift',
+      'name': 'Gift',
+      'emoji': '🎁',
+      'color': cartoonPink,
+    },
+    {
+      'id': 'bonus',
+      'name': 'Bonus',
+      'emoji': '💰',
+      'color': cartoonYellow,
+    },
+    {
+      'id': 'refund',
+      'name': 'Refund',
+      'emoji': '↩️',
+      'color': cartoonOrange,
+    },
+    {
+      'id': 'other',
+      'name': 'Other',
+      'emoji': '💵',
+      'color': neutralDark,
+    },
+  ];
 }

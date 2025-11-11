@@ -1,4 +1,5 @@
-// Budget model for expense tracking and financial planning
+// ✅ FIXED: budget.dart - 使用 snake_case 匹配 Supabase 数据库
+
 class Budget {
   final String id;
   final String userId;
@@ -135,45 +136,46 @@ class Budget {
     );
   }
 
-  // JSON serialization
+  // ✅ 修复：toJson 使用 snake_case
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userId': userId,
+      'user_id': userId,  // ✅ snake_case
       'category': category,
       'amount': amount,
       'spent': spent,
       'period': period.toString().split('.').last,
-      'startDate': startDate.toIso8601String(),
-      'endDate': endDate.toIso8601String(),
-      'isActive': isActive,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'start_date': startDate.toIso8601String(),  // ✅ snake_case
+      'end_date': endDate.toIso8601String(),  // ✅ snake_case
+      'is_active': isActive,  // ✅ snake_case
+      'created_at': createdAt.toIso8601String(),  // ✅ snake_case
+      'updated_at': updatedAt?.toIso8601String(),  // ✅ snake_case
       'status': status.toString().split('.').last,
       'tags': tags,
     };
   }
 
+  // ✅ 修复：fromJson 读取 snake_case
   factory Budget.fromJson(Map<String, dynamic> json) {
     return Budget(
       id: json['id'] as String,
-      userId: json['userId'] as String,
+      userId: json['user_id'] as String,  // ✅ snake_case
       category: json['category'] as String,
       amount: (json['amount'] as num).toDouble(),
       spent: (json['spent'] as num?)?.toDouble() ?? 0.0,
       period: BudgetPeriod.values.firstWhere(
-        (e) => e.toString().split('.').last == json['period'],
+            (e) => e.toString().split('.').last == json['period'],
         orElse: () => BudgetPeriod.monthly,
       ),
-      startDate: DateTime.parse(json['startDate'] as String),
-      endDate: DateTime.parse(json['endDate'] as String),
-      isActive: json['isActive'] as bool? ?? true,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
-          : null,
+      startDate: DateTime.parse(json['start_date'] as String),  // ✅ snake_case
+      endDate: DateTime.parse(json['end_date'] as String),  // ✅ snake_case
+      isActive: json['is_active'] as bool? ?? true,  // ✅ snake_case
+      createdAt: DateTime.parse(json['created_at'] as String),  // ✅ snake_case
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,  // ✅ snake_case
       status: BudgetStatus.values.firstWhere(
-        (e) => e.toString().split('.').last == json['status'],
+            (e) => e.toString().split('.').last == json['status'],
         orElse: () => BudgetStatus.active,
       ),
       tags: List<String>.from(json['tags'] as List? ?? []),
@@ -284,9 +286,9 @@ class BudgetCategory {
 class BudgetUtils {
   // Calculate budget period dates
   static Map<String, DateTime> calculatePeriodDates(
-    BudgetPeriod period, {
-    DateTime? startDate,
-  }) {
+      BudgetPeriod period, {
+        DateTime? startDate,
+      }) {
     final start = startDate ?? DateTime.now();
     DateTime end;
 
@@ -374,7 +376,7 @@ class BudgetUtils {
     BudgetPeriod period = BudgetPeriod.monthly,
   }) {
     final dates = calculatePeriodDates(period);
-    
+
     return Budget(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       userId: userId,
@@ -395,7 +397,7 @@ class BudgetUtils {
   // Renew budget for next period
   static Budget renewBudget(Budget budget) {
     final dates = calculatePeriodDates(budget.period);
-    
+
     return budget.copyWith(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       startDate: dates['startDate'],
@@ -412,7 +414,7 @@ class BudgetUtils {
     double buffer = 0.1, // 10% buffer
   }) {
     if (historicalSpending.isEmpty) return 0.0;
-    
+
     final averageSpending = historicalSpending.reduce((a, b) => a + b) / historicalSpending.length;
     return averageSpending * (1 + buffer);
   }

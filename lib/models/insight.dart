@@ -1,4 +1,5 @@
-// Insight model for financial analytics and reporting
+// ✅ FIXED: insight.dart - 使用 snake_case 匹配 Supabase 数据库
+
 class Insight {
   final String id;
   final String userId;
@@ -51,40 +52,43 @@ class Insight {
     );
   }
 
-  // JSON serialization
+  // ✅ 修复：toJson 使用 snake_case
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'userId': userId,
+      'user_id': userId,  // ✅ snake_case
       'title': title,
       'description': description,
       'type': type.toString().split('.').last,
       'category': category.toString().split('.').last,
       'data': data,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
-      'isActive': isActive,
+      'created_at': createdAt.toIso8601String(),  // ✅ snake_case
+      'updated_at': updatedAt?.toIso8601String(),  // ✅ snake_case
+      'is_active': isActive,  // ✅ snake_case
     };
   }
 
+  // ✅ 修复：fromJson 读取 snake_case
   factory Insight.fromJson(Map<String, dynamic> json) {
     return Insight(
       id: json['id'] as String,
-      userId: json['userId'] as String,
+      userId: json['user_id'] as String,  // ✅ snake_case
       title: json['title'] as String,
       description: json['description'] as String,
       type: InsightType.values.firstWhere(
-        (e) => e.toString().split('.').last == json['type'],
+            (e) => e.toString().split('.').last == json['type'],
+        orElse: () => InsightType.summary,
       ),
       category: InsightCategory.values.firstWhere(
-        (e) => e.toString().split('.').last == json['category'],
+            (e) => e.toString().split('.').last == json['category'],
+        orElse: () => InsightCategory.general,
       ),
-      data: Map<String, dynamic>.from(json['data'] as Map),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt'] as String) 
-          : null,
-      isActive: json['isActive'] as bool? ?? true,
+      data: Map<String, dynamic>.from(json['data'] as Map? ?? {}),
+      createdAt: DateTime.parse(json['created_at'] as String),  // ✅ snake_case
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'] as String)
+          : null,  // ✅ snake_case
+      isActive: json['is_active'] as bool? ?? true,  // ✅ snake_case
     );
   }
 
@@ -149,22 +153,22 @@ class SpendingTrendData {
   Map<String, dynamic> toJson() {
     return {
       'period': period,
-      'currentAmount': currentAmount,
-      'previousAmount': previousAmount,
-      'changePercentage': changePercentage,
+      'current_amount': currentAmount,  // ✅ snake_case
+      'previous_amount': previousAmount,  // ✅ snake_case
+      'change_percentage': changePercentage,  // ✅ snake_case
       'category': category,
-      'chartData': chartData,
+      'chart_data': chartData,  // ✅ snake_case
     };
   }
 
   factory SpendingTrendData.fromJson(Map<String, dynamic> json) {
     return SpendingTrendData(
       period: json['period'] as String,
-      currentAmount: (json['currentAmount'] as num).toDouble(),
-      previousAmount: (json['previousAmount'] as num).toDouble(),
-      changePercentage: (json['changePercentage'] as num).toDouble(),
+      currentAmount: (json['current_amount'] as num).toDouble(),  // ✅ snake_case
+      previousAmount: (json['previous_amount'] as num).toDouble(),  // ✅ snake_case
+      changePercentage: (json['change_percentage'] as num).toDouble(),  // ✅ snake_case
       category: json['category'] as String,
-      chartData: List<Map<String, dynamic>>.from(json['chartData'] as List),
+      chartData: List<Map<String, dynamic>>.from(json['chart_data'] as List? ?? []),  // ✅ snake_case
     );
   }
 }
@@ -192,26 +196,26 @@ class BudgetPerformanceData {
   Map<String, dynamic> toJson() {
     return {
       'period': period,
-      'budgetAmount': budgetAmount,
-      'actualAmount': actualAmount,
-      'remainingAmount': remainingAmount,
-      'utilizationPercentage': utilizationPercentage,
-      'topCategories': topCategories,
-      'categoryBreakdown': categoryBreakdown,
+      'budget_amount': budgetAmount,  // ✅ snake_case
+      'actual_amount': actualAmount,  // ✅ snake_case
+      'remaining_amount': remainingAmount,  // ✅ snake_case
+      'utilization_percentage': utilizationPercentage,  // ✅ snake_case
+      'top_categories': topCategories,  // ✅ snake_case
+      'category_breakdown': categoryBreakdown,  // ✅ snake_case
     };
   }
 
   factory BudgetPerformanceData.fromJson(Map<String, dynamic> json) {
     return BudgetPerformanceData(
       period: json['period'] as String,
-      budgetAmount: (json['budgetAmount'] as num).toDouble(),
-      actualAmount: (json['actualAmount'] as num).toDouble(),
-      remainingAmount: (json['remainingAmount'] as num).toDouble(),
-      utilizationPercentage: (json['utilizationPercentage'] as num).toDouble(),
-      topCategories: List<String>.from(json['topCategories'] as List),
+      budgetAmount: (json['budget_amount'] as num).toDouble(),  // ✅ snake_case
+      actualAmount: (json['actual_amount'] as num).toDouble(),  // ✅ snake_case
+      remainingAmount: (json['remaining_amount'] as num).toDouble(),  // ✅ snake_case
+      utilizationPercentage: (json['utilization_percentage'] as num).toDouble(),  // ✅ snake_case
+      topCategories: List<String>.from(json['top_categories'] as List? ?? []),  // ✅ snake_case
       categoryBreakdown: Map<String, double>.from(
-        (json['categoryBreakdown'] as Map).map(
-          (key, value) => MapEntry(key as String, (value as num).toDouble()),
+        (json['category_breakdown'] as Map? ?? {}).map(  // ✅ snake_case
+              (key, value) => MapEntry(key as String, (value as num).toDouble()),
         ),
       ),
     );
@@ -244,29 +248,29 @@ class GoalProgressData {
 
   Map<String, dynamic> toJson() {
     return {
-      'goalId': goalId,
-      'goalTitle': goalTitle,
-      'targetAmount': targetAmount,
-      'currentAmount': currentAmount,
-      'progressPercentage': progressPercentage,
-      'daysRemaining': daysRemaining,
-      'requiredMonthlySaving': requiredMonthlySaving,
-      'isOnTrack': isOnTrack,
-      'projectedCompletionDate': projectedCompletionDate,
+      'goal_id': goalId,  // ✅ snake_case
+      'goal_title': goalTitle,  // ✅ snake_case
+      'target_amount': targetAmount,  // ✅ snake_case
+      'current_amount': currentAmount,  // ✅ snake_case
+      'progress_percentage': progressPercentage,  // ✅ snake_case
+      'days_remaining': daysRemaining,  // ✅ snake_case
+      'required_monthly_saving': requiredMonthlySaving,  // ✅ snake_case
+      'is_on_track': isOnTrack,  // ✅ snake_case
+      'projected_completion_date': projectedCompletionDate,  // ✅ snake_case
     };
   }
 
   factory GoalProgressData.fromJson(Map<String, dynamic> json) {
     return GoalProgressData(
-      goalId: json['goalId'] as String,
-      goalTitle: json['goalTitle'] as String,
-      targetAmount: (json['targetAmount'] as num).toDouble(),
-      currentAmount: (json['currentAmount'] as num).toDouble(),
-      progressPercentage: (json['progressPercentage'] as num).toDouble(),
-      daysRemaining: json['daysRemaining'] as int,
-      requiredMonthlySaving: (json['requiredMonthlySaving'] as num).toDouble(),
-      isOnTrack: json['isOnTrack'] as bool,
-      projectedCompletionDate: json['projectedCompletionDate'] as String,
+      goalId: json['goal_id'] as String,  // ✅ snake_case
+      goalTitle: json['goal_title'] as String,  // ✅ snake_case
+      targetAmount: (json['target_amount'] as num).toDouble(),  // ✅ snake_case
+      currentAmount: (json['current_amount'] as num).toDouble(),  // ✅ snake_case
+      progressPercentage: (json['progress_percentage'] as num).toDouble(),  // ✅ snake_case
+      daysRemaining: json['days_remaining'] as int,  // ✅ snake_case
+      requiredMonthlySaving: (json['required_monthly_saving'] as num).toDouble(),  // ✅ snake_case
+      isOnTrack: json['is_on_track'] as bool,  // ✅ snake_case
+      projectedCompletionDate: json['projected_completion_date'] as String,  // ✅ snake_case
     );
   }
 }
@@ -296,32 +300,32 @@ class CashFlowData {
   Map<String, dynamic> toJson() {
     return {
       'period': period,
-      'totalIncome': totalIncome,
-      'totalExpenses': totalExpenses,
-      'netCashFlow': netCashFlow,
-      'savingsRate': savingsRate,
-      'monthlyTrends': monthlyTrends,
-      'incomeBySource': incomeBySource,
-      'expensesByCategory': expensesByCategory,
+      'total_income': totalIncome,  // ✅ snake_case
+      'total_expenses': totalExpenses,  // ✅ snake_case
+      'net_cash_flow': netCashFlow,  // ✅ snake_case
+      'savings_rate': savingsRate,  // ✅ snake_case
+      'monthly_trends': monthlyTrends,  // ✅ snake_case
+      'income_by_source': incomeBySource,  // ✅ snake_case
+      'expenses_by_category': expensesByCategory,  // ✅ snake_case
     };
   }
 
   factory CashFlowData.fromJson(Map<String, dynamic> json) {
     return CashFlowData(
       period: json['period'] as String,
-      totalIncome: (json['totalIncome'] as num).toDouble(),
-      totalExpenses: (json['totalExpenses'] as num).toDouble(),
-      netCashFlow: (json['netCashFlow'] as num).toDouble(),
-      savingsRate: (json['savingsRate'] as num).toDouble(),
-      monthlyTrends: List<Map<String, dynamic>>.from(json['monthlyTrends'] as List),
+      totalIncome: (json['total_income'] as num).toDouble(),  // ✅ snake_case
+      totalExpenses: (json['total_expenses'] as num).toDouble(),  // ✅ snake_case
+      netCashFlow: (json['net_cash_flow'] as num).toDouble(),  // ✅ snake_case
+      savingsRate: (json['savings_rate'] as num).toDouble(),  // ✅ snake_case
+      monthlyTrends: List<Map<String, dynamic>>.from(json['monthly_trends'] as List? ?? []),  // ✅ snake_case
       incomeBySource: Map<String, double>.from(
-        (json['incomeBySource'] as Map).map(
-          (key, value) => MapEntry(key as String, (value as num).toDouble()),
+        (json['income_by_source'] as Map? ?? {}).map(  // ✅ snake_case
+              (key, value) => MapEntry(key as String, (value as num).toDouble()),
         ),
       ),
       expensesByCategory: Map<String, double>.from(
-        (json['expensesByCategory'] as Map).map(
-          (key, value) => MapEntry(key as String, (value as num).toDouble()),
+        (json['expenses_by_category'] as Map? ?? {}).map(  // ✅ snake_case
+              (key, value) => MapEntry(key as String, (value as num).toDouble()),
         ),
       ),
     );
@@ -336,10 +340,10 @@ class InsightUtils {
     required SpendingTrendData data,
   }) {
     final isIncreasing = data.changePercentage > 0;
-    final title = isIncreasing 
+    final title = isIncreasing
         ? 'Spending Increased in ${data.category}'
         : 'Spending Decreased in ${data.category}';
-    
+
     final description = isIncreasing
         ? 'Your ${data.category.toLowerCase()} spending increased by ${data.changePercentage.abs().toStringAsFixed(1)}% this ${data.period}.'
         : 'Great job! Your ${data.category.toLowerCase()} spending decreased by ${data.changePercentage.abs().toStringAsFixed(1)}% this ${data.period}.';
@@ -364,9 +368,9 @@ class InsightUtils {
     final title = isOverBudget
         ? 'Budget Exceeded'
         : data.utilizationPercentage > 80
-            ? 'Budget Alert: ${data.utilizationPercentage.toStringAsFixed(0)}% Used'
-            : 'Budget On Track';
-    
+        ? 'Budget Alert: ${data.utilizationPercentage.toStringAsFixed(0)}% Used'
+        : 'Budget On Track';
+
     final description = isOverBudget
         ? 'You\'ve exceeded your ${data.period} budget by RM ${(data.actualAmount - data.budgetAmount).toStringAsFixed(2)}.'
         : 'You\'ve used ${data.utilizationPercentage.toStringAsFixed(0)}% of your ${data.period} budget with RM ${data.remainingAmount.toStringAsFixed(2)} remaining.';
@@ -390,7 +394,7 @@ class InsightUtils {
     final title = data.isOnTrack
         ? '${data.goalTitle} is On Track'
         : '${data.goalTitle} Needs Attention';
-    
+
     final description = data.isOnTrack
         ? 'You\'re ${data.progressPercentage.toStringAsFixed(0)}% towards your ${data.goalTitle} goal. Keep it up!'
         : 'To reach your ${data.goalTitle} goal on time, you need to save RM ${data.requiredMonthlySaving.toStringAsFixed(2)} monthly.';
@@ -415,7 +419,7 @@ class InsightUtils {
     final title = isPositive
         ? 'Positive Cash Flow'
         : 'Negative Cash Flow';
-    
+
     final description = isPositive
         ? 'Your ${data.period} cash flow is positive at RM ${data.netCashFlow.toStringAsFixed(2)} with a ${data.savingsRate.toStringAsFixed(1)}% savings rate.'
         : 'Your ${data.period} cash flow is negative at RM ${data.netCashFlow.toStringAsFixed(2)}. Consider reviewing your expenses.';
@@ -440,10 +444,10 @@ class InsightUtils {
     required double savingsRate,
   }) {
     final isHealthy = savingsRate >= 20 && (monthlyIncome - monthlyExpenses) > 0;
-    final title = isHealthy 
-        ? 'Strong Financial Health' 
+    final title = isHealthy
+        ? 'Strong Financial Health'
         : 'Financial Health Needs Attention';
-    
+
     final description = isHealthy
         ? 'Great job! Your ${savingsRate.toStringAsFixed(1)}% savings rate and positive cash flow indicate strong financial health.'
         : 'Consider reviewing your expenses. Your current savings rate is ${savingsRate.toStringAsFixed(1)}%, aim for at least 20%.';
@@ -456,10 +460,10 @@ class InsightUtils {
       type: isHealthy ? InsightType.achievement : InsightType.recommendation,
       category: InsightCategory.general,
       data: {
-        'netWorth': netWorth,
-        'monthlyIncome': monthlyIncome,
-        'monthlyExpenses': monthlyExpenses,
-        'savingsRate': savingsRate,
+        'net_worth': netWorth,  // ✅ snake_case
+        'monthly_income': monthlyIncome,  // ✅ snake_case
+        'monthly_expenses': monthlyExpenses,  // ✅ snake_case
+        'savings_rate': savingsRate,  // ✅ snake_case
       },
     );
   }
@@ -484,7 +488,7 @@ class InsightUtils {
 
     final sortedCategories = categorySpending.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    
+
     final topCategory = sortedCategories.first;
     final totalSpending = categorySpending.values.reduce((a, b) => a + b);
     final topCategoryPercentage = (topCategory.value / totalSpending) * 100;
@@ -501,11 +505,11 @@ class InsightUtils {
       category: InsightCategory.spending,
       data: {
         'period': period,
-        'topCategory': topCategory.key,
-        'topCategoryAmount': topCategory.value,
-        'topCategoryPercentage': topCategoryPercentage,
-        'totalSpending': totalSpending,
-        'categoryBreakdown': categorySpending,
+        'top_category': topCategory.key,  // ✅ snake_case
+        'top_category_amount': topCategory.value,  // ✅ snake_case
+        'top_category_percentage': topCategoryPercentage,  // ✅ snake_case
+        'total_spending': totalSpending,  // ✅ snake_case
+        'category_breakdown': categorySpending,  // ✅ snake_case
       },
     );
   }

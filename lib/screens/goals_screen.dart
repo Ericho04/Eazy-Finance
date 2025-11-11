@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:sfms_flutter/providers/auth_provider.dart';
 import 'dart:math' as math;
 
 import '../providers/app_provider.dart';
@@ -21,6 +22,9 @@ class _GoalsScreenState extends State<GoalsScreen>
   late AnimationController _animationController;
   late AnimationController _floatingController;
   bool _showAddGoal = false;
+  bool _showContributeDialog = false;
+  String _selectedGoalId = '';
+  final _contributeController = TextEditingController();
 
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -52,11 +56,140 @@ class _GoalsScreenState extends State<GoalsScreen>
     _descriptionController.dispose();
     _targetAmountController.dispose();
     _deadlineController.dispose();
+    _contributeController.dispose();
     super.dispose();
   }
 
   String _formatCurrency(double amount) {
     return 'RM ${amount.toStringAsFixed(2)}';
+  }
+
+// ✅ 新增方法 1：处理贡献金额
+  Future<void> _handleContribute() async {
+    if (_contributeController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter amount'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final amount = double.parse(_contributeController.text);
+      if (amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Amount must be greater than 0'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      _handleContributeToGoal(_selectedGoalId, amount);
+
+      _contributeController.clear();
+      setState(() {
+        _showContributeDialog = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Contributed RM${amount.toStringAsFixed(2)}! 💰'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Invalid amount: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+// ✅ 新增方法 2：自定义金额对话框
+  Widget _buildContributeDialog() {
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Add Money',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showContributeDialog = false;
+                        _contributeController.clear();
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              TextField(
+                controller: _contributeController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  hintText: 'Enter amount',
+                  prefixText: 'RM ',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _handleContribute,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SFMSTheme.cartoonPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Add Money',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   double _getProgressPercentage(double current, double target) {
@@ -84,8 +217,8 @@ class _GoalsScreenState extends State<GoalsScreen>
       final appProvider = Provider.of<AppProvider>(context, listen: false);
 
       final goal = Goal(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: 'demo-user-123',
+        id: '',
+        userId: context.read<AuthProvider>().user?.id??'',
         title: _titleController.text,
         description: _descriptionController.text,
         targetAmount: double.parse(_targetAmountController.text),
@@ -127,11 +260,8 @@ class _GoalsScreenState extends State<GoalsScreen>
 
   @override
   Widget build(BuildContext context) {
-    // ✅ 修复：移除 Scaffold，直接返回 Stack
-    // 父级 (main.dart) 已经提供了 Scaffold 和底部导航栏
     return Stack(
       children: [
-        // Main content
         SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Consumer<AppProvider>(
@@ -264,7 +394,6 @@ class _GoalsScreenState extends State<GoalsScreen>
                       );
                     },
                   ),
-
                   const SizedBox(height: 24),
 
                   // Goals Overview Card
@@ -300,45 +429,52 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Total Goals Value',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Color(0xFF6B7280),
+                                    Flexible(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Text(
+                                            'Total Goals Value',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xFF6B7280),
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          _formatCurrency(totalGoalsValue),
-                                          style: const TextStyle(
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1F2937),
+                                          Text(
+                                            _formatCurrency(totalGoalsValue),
+                                            style: const TextStyle(
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1F2937),
+                                            ),
+                                            overflow: TextOverflow.ellipsis,  // ✅ 添加这行
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        const Text(
-                                          'Saved',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Color(0xFF6B7280),
+                                    const SizedBox(width: 16),  // ✅ 添加间距
+                                    Flexible(  // ✅ 添加 Flexible
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          const Text(
+                                            'Saved',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: Color(0xFF6B7280),
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          _formatCurrency(totalSaved),
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: SFMSTheme.successColor,
+                                          Text(
+                                            _formatCurrency(totalSaved),
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: SFMSTheme.successColor,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,  // ✅ 添加这行
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -573,18 +709,17 @@ class _GoalsScreenState extends State<GoalsScreen>
                             Row(
                               children: [
                                 Expanded(
-                                  child: ElevatedButton.icon(
+                                  child:
+                                  ElevatedButton.icon(
                                     onPressed: () {
-                                      _handleContributeToGoal(goal.id, 100);
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text('Contributed RM100 to ${goal.title}! 💰'),
-                                          backgroundColor: Colors.green,
-                                        ),
-                                      );
+                                      // ✅ 修改：显示自定义金额对话框
+                                      setState(() {
+                                        _selectedGoalId = goal.id;
+                                        _showContributeDialog = true;
+                                      });
                                     },
                                     icon: const Icon(Icons.add_rounded, size: 20),
-                                    label: const Text('Add RM100'),
+                                    label: const Text('Add Money'),  // ✅ 修改：改名
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: SFMSTheme.cartoonPurple,
                                       foregroundColor: Colors.white,
@@ -597,13 +732,43 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 ),
                                 const SizedBox(width: 8),
                                 IconButton(
-                                  onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Goal details coming soon!'),
-                                        backgroundColor: Colors.orange,
+                                  onPressed: () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Delete Goal?'),
+                                        content: Text('Delete "${goal.title}"?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
                                       ),
                                     );
+
+                                    if (confirmed == true) {
+                                      try {
+                                        await context.read<AppProvider>().deleteGoal(goal.id);
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Goal deleted! 🗑️'),
+                                            backgroundColor: Colors.green,
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Failed: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
                                   },
                                   icon: const Icon(Icons.more_vert),
                                   color: Colors.grey.shade600,
@@ -896,6 +1061,10 @@ class _GoalsScreenState extends State<GoalsScreen>
             ),
           ),
 
+
+        // ✅ 新增：自定义金额对话框
+        if (_showContributeDialog)
+          _buildContributeDialog(),
         // Floating Action Button for Add Goal
         Positioned(
           right: 16,

@@ -104,7 +104,7 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
         'description': description,
         'category': _selectedCategory,
         'type': _transactionType.name,
-        'date': _selectedDate.toIso8601String(),
+        'transaction_date': _selectedDate.toIso8601String(),
         'source': 'manual'
       });
 
@@ -231,6 +231,7 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
           ),
         ],
       ),
+    child: SingleChildScrollView(
       child: Form(
         key: _formKey,
         child: Column(
@@ -403,6 +404,7 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
           ],
         ),
       ),
+    ),
     );
   }
 

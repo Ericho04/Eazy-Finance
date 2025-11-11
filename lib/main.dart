@@ -123,7 +123,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
     if (initialSession == null) {
       // 延迟后显示欢迎页
       Future.delayed(const Duration(seconds: 2), () {
-        if (mounted && currentView == 'splash') {
+        if (mounted) {
           setState(() {
             currentView = 'welcome';
             loading = false;

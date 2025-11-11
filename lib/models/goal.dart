@@ -1,3 +1,6 @@
+// lib/models/goal.dart
+// ✅ 基于实际Supabase数据库结构
+
 class Goal {
   final String id;
   final String userId;
@@ -10,6 +13,7 @@ class Goal {
   final String priority;
   final bool isCompleted;
   final String? completedAt;
+  final int pointsReward;
   final String createdAt;
   final String? updatedAt;
 
@@ -25,6 +29,7 @@ class Goal {
     required this.priority,
     required this.isCompleted,
     this.completedAt,
+    this.pointsReward = 0,
     required this.createdAt,
     this.updatedAt,
   });
@@ -33,11 +38,6 @@ class Goal {
   double get progressPercentage {
     if (targetAmount <= 0) return 0.0;
     return (currentAmount / targetAmount) * 100;
-  }
-
-  // Calculate points reward (1 point per RM100 target)
-  int get pointsReward {
-    return (targetAmount / 100).floor();
   }
 
   // Check if goal is overdue
@@ -74,6 +74,7 @@ class Goal {
     String? priority,
     bool? isCompleted,
     String? completedAt,
+    int? pointsReward,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -89,46 +90,50 @@ class Goal {
       priority: priority ?? this.priority,
       isCompleted: isCompleted ?? this.isCompleted,
       completedAt: completedAt ?? this.completedAt,
+      pointsReward: pointsReward ?? this.pointsReward,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? DateTime.now().toIso8601String(),
     );
   }
 
-  // JSON serialization
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'userId': userId,
-      'title': title,
-      'description': description,
-      'targetAmount': targetAmount,
-      'currentAmount': currentAmount,
-      'deadline': deadline,
-      'category': category,
-      'priority': priority,
-      'isCompleted': isCompleted,
-      'completedAt': completedAt,
-      'createdAt': createdAt,
-      'updatedAt': updatedAt,
-    };
-  }
-
+  // ✅ 正确的 fromJson - 使用 snake_case
   factory Goal.fromJson(Map<String, dynamic> json) {
     return Goal(
       id: json['id'] as String,
-      userId: json['userId'] as String,
+      userId: json['user_id'] as String,              // snake_case
       title: json['title'] as String,
       description: json['description'] as String,
-      targetAmount: (json['targetAmount'] as num).toDouble(),
-      currentAmount: (json['currentAmount'] as num).toDouble(),
+      targetAmount: (json['target_amount'] as num).toDouble(),    // snake_case
+      currentAmount: (json['current_amount'] as num).toDouble(),  // snake_case
       deadline: json['deadline'] as String,
       category: json['category'] as String,
       priority: json['priority'] as String,
-      isCompleted: json['isCompleted'] as bool,
-      completedAt: json['completedAt'] as String?,
-      createdAt: json['createdAt'] as String,
-      updatedAt: json['updatedAt'] as String?,
+      isCompleted: json['is_completed'] as bool,      // snake_case
+      completedAt: json['completed_at'] as String?,   // snake_case
+      pointsReward: json['points_reward'] as int? ?? 0, // snake_case
+      createdAt: json['created_at'] as String,        // snake_case
+      updatedAt: json['updated_at'] as String?,       // snake_case
     );
+  }
+
+  // ✅ 正确的 toJson - 返回 snake_case
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,              // snake_case
+      'title': title,
+      'description': description,
+      'target_amount': targetAmount,  // snake_case
+      'current_amount': currentAmount, // snake_case
+      'deadline': deadline,
+      'category': category,
+      'priority': priority,
+      'is_completed': isCompleted,    // snake_case
+      'completed_at': completedAt,    // snake_case
+      'points_reward': pointsReward,  // snake_case
+      'created_at': createdAt,        // snake_case
+      'updated_at': updatedAt,        // snake_case
+    };
   }
 
   @override
@@ -176,7 +181,7 @@ class GoalCategory {
     travel: '✈️',
     technology: '💻',
     education: '📚',
-    health: '🏥',
+    health: '🥗',
     home: '🏠',
     car: '🚗',
     investment: '📈',
