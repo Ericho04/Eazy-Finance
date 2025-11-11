@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 
 /// Modern Settings & Profile Screen
@@ -23,7 +24,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _promotionalEnabled = false;
-  bool _isDarkMode = false;
   bool _isTwoFactorEnabled = false;
 
   @override
@@ -452,6 +452,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   /// Appearance Section with theme toggle
   Widget _buildAppearanceSection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Container(
@@ -471,13 +474,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    gradient: _isDarkMode
+                    gradient: isDarkMode
                         ? SFMSTheme.cartoonPurpleGradient
                         : SFMSTheme.cartoonYellowGradient,
                     borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                   ),
                   child: Icon(
-                    _isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
+                    isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
                     color: Colors.white,
                     size: SFMSTheme.iconSizeLarge,
                   ),
@@ -496,7 +499,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       SizedBox(height: SFMSTheme.spacing4),
                       Text(
-                        _isDarkMode ? 'Dark Mode' : 'Light Mode',
+                        isDarkMode ? 'Dark Mode' : 'Light Mode',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: SFMSTheme.textSecondary,
                             ),
@@ -520,16 +523,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isDarkMode = false;
-                        });
+                        if (isDarkMode) {
+                          themeProvider.setThemeMode(ThemeMode.light);
+                        }
                       },
                       child: Container(
                         height: 56,
                         decoration: BoxDecoration(
-                          gradient: !_isDarkMode ? SFMSTheme.cartoonYellowGradient : null,
+                          gradient: !isDarkMode ? SFMSTheme.cartoonYellowGradient : null,
                           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
-                          boxShadow: !_isDarkMode
+                          boxShadow: !isDarkMode
                               ? SFMSTheme.accentShadow(SFMSTheme.cartoonYellow)
                               : null,
                         ),
@@ -544,7 +547,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Text(
                               'Light',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: !_isDarkMode
+                                    color: !isDarkMode
                                         ? Colors.white
                                         : SFMSTheme.textSecondary,
                                     fontWeight: FontWeight.w700,
@@ -560,17 +563,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        setState(() {
-                          _isDarkMode = true;
-                        });
-                        _showThemeComingSoonDialog(context);
+                        if (!isDarkMode) {
+                          themeProvider.setThemeMode(ThemeMode.dark);
+                        }
                       },
                       child: Container(
                         height: 56,
                         decoration: BoxDecoration(
-                          gradient: _isDarkMode ? SFMSTheme.cartoonPurpleGradient : null,
+                          gradient: isDarkMode ? SFMSTheme.cartoonPurpleGradient : null,
                           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
-                          boxShadow: _isDarkMode
+                          boxShadow: isDarkMode
                               ? SFMSTheme.accentShadow(SFMSTheme.cartoonPurple)
                               : null,
                         ),
@@ -585,7 +587,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             Text(
                               'Dark',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: _isDarkMode
+                                    color: isDarkMode
                                         ? Colors.white
                                         : SFMSTheme.textSecondary,
                                     fontWeight: FontWeight.w700,
@@ -1052,46 +1054,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         content: Text(
           'Device management feature coming soon! You\'ll be able to see all logged-in devices and manage them.',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Got it'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Show theme coming soon dialog
-  void _showThemeComingSoonDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: EdgeInsets.all(SFMSTheme.spacing8),
-              decoration: BoxDecoration(
-                gradient: SFMSTheme.cartoonPurpleGradient,
-                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-              ),
-              child: Icon(
-                Icons.nightlight_round,
-                color: Colors.white,
-                size: SFMSTheme.iconSizeLarge,
-              ),
-            ),
-            SizedBox(width: SFMSTheme.spacing12),
-            Text('Dark Mode'),
-          ],
-        ),
-        content: Text(
-          'Dark mode coming soon! We\'re working on a beautiful dark theme for you.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
