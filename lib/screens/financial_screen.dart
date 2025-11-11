@@ -248,9 +248,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                               width: 50,
                               height: 50,
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [SFMSTheme.aiColor, SFMSTheme.aiColor.withOpacity(0.8)],
-                                ),
+                                gradient: SFMSTheme.aiGradient,
                                 borderRadius: BorderRadius.circular(25),
                               ),
                               child: const Center(
@@ -290,7 +288,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                             color: SFMSTheme.aiLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: SFMSTheme.aiColor.withOpacity(0.2),
+                              color: SFMSTheme.aiPrimary.withOpacity(0.2),
                               width: 1,
                             ),
                           ),
