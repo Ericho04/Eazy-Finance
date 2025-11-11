@@ -94,11 +94,46 @@ class AppContent extends StatefulWidget {
 class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
   String activeTab = 'dashboard';
   String currentView = 'splash';
+  String _previousView = 'splash';
   bool loading = true;
   bool showConfigNotice = false;
 
   late AnimationController _backgroundController;
   late AnimationController _bounceController;
+
+  // Define view order for directional transitions
+  final List<String> _viewOrder = [
+    'splash',
+    'login',
+    'signup',
+    'dashboard',
+    'budget',
+    'financial',
+    'goals',
+    'insights',
+    'settings',
+    'profile',
+  ];
+
+  // Determine slide direction based on navigation
+  bool _isForwardNavigation() {
+    final currentIndex = _viewOrder.indexOf(currentView);
+    final previousIndex = _viewOrder.indexOf(_previousView);
+
+    if (currentIndex == -1 || previousIndex == -1) {
+      return true; // Default to forward
+    }
+
+    return currentIndex > previousIndex;
+  }
+
+  // Navigate to a new view with tracking
+  void _navigateTo(String newView) {
+    setState(() {
+      _previousView = currentView;
+      currentView = newView;
+    });
+  }
 
   // Deep Links
   late AppLinks _appLinks;
@@ -125,6 +160,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() {
+            _previousView = currentView;
             currentView = 'welcome';
             loading = false;
           });
@@ -238,6 +274,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
           currentView == 'splash' ||
           currentView == 'welcome') {
         setState(() {
+          _previousView = currentView;
           currentView = 'dashboard';
           activeTab = 'dashboard';
         });
@@ -256,6 +293,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
 
       // 3. 导航到欢迎页
       setState(() {
+        _previousView = currentView;
         currentView = 'welcome';
         activeTab = 'dashboard';
       });
@@ -264,6 +302,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
 
   void _handleNavigation(String destination) {
     setState(() {
+      _previousView = currentView;
       currentView = destination;
 
       // Update active tab if navigating to a main section
@@ -284,25 +323,30 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
     if (context.read<AuthProvider>().user != null) {
       if (['financial-debts', 'financial-tax'].contains(currentView)) {
         setState(() {
+          _previousView = currentView;
           currentView = 'financial';
           activeTab = 'financial';
         });
       } else if (['lucky-draw', 'rewards-shop'].contains(currentView)) {
         setState(() {
+          _previousView = currentView;
           currentView = 'goals';
           activeTab = 'goals';
         });
       } else if (currentView == 'settings') {
         setState(() {
+          _previousView = currentView;
           currentView = activeTab;
         });
       } else {
         setState(() {
+          _previousView = currentView;
           currentView = activeTab;
         });
       }
     } else {
       setState(() {
+        _previousView = currentView;
         currentView = 'login';
       });
     }
@@ -716,8 +760,10 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: FloatingActionButton.small(
-                        onPressed: () =>
-                            setState(() => currentView = 'settings'),
+                        onPressed: () => setState(() {
+                          _previousView = currentView;
+                          currentView = 'settings';
+                        }),
                         backgroundColor: Colors.white.withOpacity(0.9),
                         child:
                         const Icon(Icons.settings, color: Colors.black87),
@@ -730,15 +776,21 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                 // Main content area
                 Expanded(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 400),
+                    duration: const Duration(milliseconds: 350),
                     transitionBuilder: (child, animation) {
+                      // Determine slide direction
+                      final isForward = _isForwardNavigation();
+                      final slideOffset = isForward
+                          ? const Offset(1.0, 0.0)  // Slide from right (forward)
+                          : const Offset(-1.0, 0.0); // Slide from left (back)
+
                       return SlideTransition(
                         position: Tween<Offset>(
-                          begin: const Offset(1.0, 0.0),
+                          begin: slideOffset,
                           end: Offset.zero,
                         ).animate(CurvedAnimation(
                           parent: animation,
-                          curve: Curves.elasticOut,
+                          curve: Curves.easeInOutCubic,
                         )),
                         child: FadeTransition(
                           opacity: animation,
@@ -765,6 +817,7 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
         onTabChange: (tab) {
           setState(() {
             activeTab = tab;
+            _previousView = currentView;
             currentView = tab;
           });
         },
