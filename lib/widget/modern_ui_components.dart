@@ -228,7 +228,7 @@ class ProgressIndicatorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (progress * 100).clamp(0, 100);
+    final percentage = (progress * 100).clamp(0, 100).toDouble();
     final statusColor = SFMSTheme.getStatusColor(percentage);
     final statusGradient = SFMSTheme.getStatusGradient(percentage);
 
