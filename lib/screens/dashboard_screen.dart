@@ -100,41 +100,18 @@ class _DashboardScreenState extends State<DashboardScreen>
     return metadata?['full_name'] ?? 'User';
   }
 
-  double _getTotalBalance() {
-    final transactions = context.read<AppProvider>().transactions;
-    double balance = 0;
-    for (var transaction in transactions) {
-      if (transaction.type == TransactionType.income) {
-        balance += transaction.amount;
-      } else {
-        balance -= transaction.amount;
-      }
-    }
-    return balance;
-  }
-
-  double _getMonthlyIncome() {
+  double _getDailyExpenses() {
     final transactions = context.read<AppProvider>().transactions;
     final now = DateTime.now();
-    final thisMonth = transactions.where((t) {
-      final tDate = DateTime.parse(t.date);
-      return t.type == TransactionType.income &&
-          tDate.year == now.year &&
-          tDate.month == now.month;
-    });
-    return thisMonth.fold(0.0, (sum, t) => sum + t.amount);
-  }
+    final today = DateTime(now.year, now.month, now.day);
 
-  double _getMonthlyExpenses() {
-    final transactions = context.read<AppProvider>().transactions;
-    final now = DateTime.now();
-    final thisMonth = transactions.where((t) {
+    final todayExpenses = transactions.where((t) {
       final tDate = DateTime.parse(t.date);
-      return t.type == TransactionType.expense &&
-          tDate.year == now.year &&
-          tDate.month == now.month;
+      final transactionDay = DateTime(tDate.year, tDate.month, tDate.day);
+      return t.type == TransactionType.expense && transactionDay == today;
     });
-    return thisMonth.fold(0.0, (sum, t) => sum + t.amount);
+
+    return todayExpenses.fold(0.0, (sum, t) => sum + t.amount);
   }
 
   @override
@@ -196,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Balance',
+                              'Today\'s Expenses',
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -242,29 +219,18 @@ class _DashboardScreenState extends State<DashboardScreen>
                     ),
                     SizedBox(height: SFMSTheme.spacing16),
                     Text(
-                      'RM ${_getTotalBalance().toStringAsFixed(2)}',
+                      'RM ${_getDailyExpenses().toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w800,
                           ),
                     ),
-                    SizedBox(height: SFMSTheme.spacing16),
-                    Row(
-                      children: [
-                        _buildBalanceItem(
-                          '📈',
-                          'Income',
-                          _getMonthlyIncome(),
-                          SFMSTheme.successColor,
-                        ),
-                        SizedBox(width: SFMSTheme.spacing24),
-                        _buildBalanceItem(
-                          '📉',
-                          'Expenses',
-                          _getMonthlyExpenses(),
-                          SFMSTheme.dangerColor,
-                        ),
-                      ],
+                    SizedBox(height: SFMSTheme.spacing8),
+                    Text(
+                      'Daily spending tracker',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withOpacity(0.8),
+                          ),
                     ),
                   ],
                 ),
@@ -409,35 +375,6 @@ class _DashboardScreenState extends State<DashboardScreen>
           const SizedBox(height: 100), // Extra space for bottom navigation
         ],
       ),
-    );
-  }
-
-  Widget _buildBalanceItem(
-      String emoji, String label, double amount, Color color) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 16)),
-            SizedBox(width: SFMSTheme.spacing4),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-            ),
-          ],
-        ),
-        SizedBox(height: SFMSTheme.spacing4),
-        Text(
-          'RM ${amount.toStringAsFixed(2)}',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-        ),
-      ],
     );
   }
 
