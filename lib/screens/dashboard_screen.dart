@@ -264,11 +264,11 @@ class _DashboardScreenState extends State<DashboardScreen>
               SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: _buildQuickActionCard(
-                  '📊',
-                  'View Reports',
-                  'Analyze your data',
+                  '🎯',
+                  'Add Goal',
+                  'Set your targets',
                   SFMSTheme.primaryLight,
-                  () => widget.onNavigate('reports'),
+                  () => widget.onNavigate('goals'),
                 ),
               ),
             ],
@@ -280,11 +280,11 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Expanded(
                 child: _buildQuickActionCard(
-                  '📱',
-                  'Scan QR',
-                  'Quick payment',
+                  '📋',
+                  'Tax Planning',
+                  'Plan your taxes',
                   SFMSTheme.cartoonCyan,
-                  () => widget.onNavigate('qr-scan'),
+                  () => widget.onNavigate('tax-planning'),
                 ),
               ),
               SizedBox(width: SFMSTheme.spacing16),
