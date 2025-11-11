@@ -358,29 +358,72 @@ class SFMSTheme {
     );
   }
 
+  // ==========================================================================
+  // 🌙 DARK MODE COLOR PALETTE
+  // Elegant, modern, and professional dark mode colors
+  // ==========================================================================
+
+  // Dark Mode Backgrounds
+  static const Color darkBgPrimary = Color(0xFF0F172A);      // Deep Navy
+  static const Color darkBgSecondary = Color(0xFF1E293B);    // Slate Gray
+  static const Color darkBgTertiary = Color(0xFF334155);     // Lighter Slate
+
+  // Dark Mode Accent Colors
+  static const Color darkAccentTeal = Color(0xFF14B8A6);     // Teal Highlight
+  static const Color darkAccentEmerald = Color(0xFF10B981);  // Emerald Success
+  static const Color darkAccentCoral = Color(0xFFF87171);    // Coral Alert
+
+  // Dark Mode Text Colors
+  static const Color darkTextPrimary = Color(0xFFF9FAFB);    // Primary Text
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);  // Secondary Text
+  static const Color darkTextMuted = Color(0xFF64748B);      // Muted Text
+
+  // ==========================================================================
+  // 🎨 THEME VARIANTS (for Dark Mode)
+  // ==========================================================================
+
+  // Variant 1: Blue-Teal Trust Theme
+  static const Color trustPrimary = Color(0xFF0EA5E9);       // Sky Blue
+  static const Color trustAccent = Color(0xFF14B8A6);        // Teal
+  static const Color trustHighlight = Color(0xFF22D3EE);     // Cyan
+
+  // Variant 2: Emerald-Cyan Growth Theme
+  static const Color growthPrimary = Color(0xFF10B981);      // Emerald
+  static const Color growthAccent = Color(0xFF06B6D4);       // Cyan
+  static const Color growthHighlight = Color(0xFF34D399);    // Light Emerald
+
+  // Active Dark Theme Variant (change to switch themes)
+  static const int darkThemeVariant = 1; // 1 = Blue-Teal Trust, 2 = Emerald-Cyan Growth
+
   static ThemeData get darkTheme {
-    const darkBackgroundColor = Color(0xFF0A0E27);
-    const darkBackgroundVariant = Color(0xFF141938);
-    const darkCardColor = Color(0xFF1A1F3A);
-    const darkTextPrimary = Color(0xFFE8EAF6);
-    const darkTextSecondary = Color(0xFF9FA8DA);
-    const darkNeutralMedium = Color(0xFF3A4059);
+    // Select colors based on variant
+    final isDarkTrustTheme = darkThemeVariant == 1;
+    final primaryAccent = isDarkTrustTheme ? trustPrimary : growthPrimary;
+    final secondaryAccent = isDarkTrustTheme ? trustAccent : growthAccent;
+    final highlightAccent = isDarkTrustTheme ? trustHighlight : growthHighlight;
+
+    const darkBackgroundColor = darkBgPrimary;
+    const darkBackgroundVariant = darkBgSecondary;
+    const darkCardColor = darkBgSecondary;
+    const darkTextPrimaryColor = darkTextPrimary;
+    const darkTextSecondaryColor = darkTextSecondary;
+    const darkNeutralMedium = Color(0xFF334155);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryLight,
+        seedColor: primaryAccent,
         brightness: Brightness.dark,
-        primary: primaryLight,
-        secondary: accentColor,
-        tertiary: accentAlt,
+        primary: primaryAccent,
+        secondary: secondaryAccent,
+        tertiary: highlightAccent,
         surface: darkCardColor,
         background: darkBackgroundColor,
-        error: dangerColor,
+        error: darkAccentCoral,
         onPrimary: Colors.white,
-        onSecondary: textOnAccent,
-        onSurface: darkTextPrimary,
-        onBackground: darkTextPrimary,
+        onSecondary: Colors.white,
+        onSurface: darkTextPrimaryColor,
+        onBackground: darkTextPrimaryColor,
         onError: Colors.white,
       ),
       scaffoldBackgroundColor: darkBackgroundColor,
@@ -388,9 +431,9 @@ class SFMSTheme {
         backgroundColor: Colors.transparent,
         elevation: 0,
         surfaceTintColor: Colors.transparent,
-        iconTheme: IconThemeData(color: darkTextPrimary, size: 24),
+        iconTheme: IconThemeData(color: darkTextPrimaryColor, size: 24),
         titleTextStyle: TextStyle(
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           fontSize: 22,
           fontWeight: FontWeight.w700,
           letterSpacing: -0.5,
@@ -408,10 +451,10 @@ class SFMSTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryLight,
+          backgroundColor: primaryAccent,
           foregroundColor: Colors.white,
           elevation: 0,
-          shadowColor: primaryLight.withOpacity(0.3),
+          shadowColor: primaryAccent.withOpacity(0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -425,8 +468,8 @@ class SFMSTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryLight,
-          side: const BorderSide(color: primaryLight, width: 2),
+          foregroundColor: primaryAccent,
+          side: BorderSide(color: primaryAccent, width: 2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -440,7 +483,7 @@ class SFMSTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primaryLight,
+          foregroundColor: primaryAccent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -465,7 +508,7 @@ class SFMSTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: primaryLight, width: 2),
+          borderSide: BorderSide(color: primaryAccent, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
@@ -477,7 +520,7 @@ class SFMSTheme {
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         hintStyle: TextStyle(
-          color: darkTextSecondary,
+          color: darkTextSecondaryColor,
           fontSize: 15,
           fontWeight: FontWeight.w400,
         ),
@@ -492,8 +535,8 @@ class SFMSTheme {
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: darkCardColor,
-        selectedItemColor: primaryLight,
-        unselectedItemColor: darkTextSecondary,
+        selectedItemColor: primaryAccent,
+        unselectedItemColor: darkTextSecondaryColor,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
         selectedLabelStyle: const TextStyle(
@@ -507,7 +550,7 @@ class SFMSTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: darkBackgroundVariant,
-        selectedColor: primaryLight.withOpacity(0.2),
+        selectedColor: primaryAccent.withOpacity(0.2),
         labelStyle: const TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w500,
@@ -527,21 +570,21 @@ class SFMSTheme {
         displayLarge: TextStyle(
           fontSize: 48,
           fontWeight: FontWeight.w800,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: -1.5,
           height: 1.1,
         ),
         displayMedium: TextStyle(
           fontSize: 36,
           fontWeight: FontWeight.w700,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: -1,
           height: 1.2,
         ),
         displaySmall: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.w700,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: -0.5,
           height: 1.2,
         ),
@@ -549,42 +592,42 @@ class SFMSTheme {
         headlineLarge: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w700,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: -0.5,
           height: 1.3,
         ),
         headlineMedium: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: -0.25,
           height: 1.3,
         ),
         headlineSmall: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           height: 1.4,
         ),
         // Titles - Card headers & labels
         titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.15,
           height: 1.4,
         ),
         titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.1,
           height: 1.4,
         ),
         titleSmall: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.1,
           height: 1.4,
         ),
@@ -592,21 +635,21 @@ class SFMSTheme {
         bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w400,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.15,
           height: 1.5,
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w400,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.1,
           height: 1.5,
         ),
         bodySmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w400,
-          color: darkTextSecondary,
+          color: darkTextSecondaryColor,
           letterSpacing: 0.25,
           height: 1.5,
         ),
@@ -614,21 +657,21 @@ class SFMSTheme {
         labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.5,
           height: 1.2,
         ),
         labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
           letterSpacing: 0.4,
           height: 1.2,
         ),
         labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
-          color: darkTextSecondary,
+          color: darkTextSecondaryColor,
           letterSpacing: 0.5,
           height: 1.2,
         ),
@@ -805,6 +848,128 @@ class SFMSTheme {
       end: Alignment.bottomRight,
     );
   }
+
+  // ==========================================================================
+  // 🌙 DARK MODE GRADIENTS
+  // Elegant gradients for dark mode with glowing effects
+  // ==========================================================================
+
+  // Dark Mode Theme Variant Gradients
+  static LinearGradient get darkTrustGradient {
+    return const LinearGradient(
+      colors: [trustPrimary, trustHighlight],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkGrowthGradient {
+    return const LinearGradient(
+      colors: [growthPrimary, growthHighlight],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Accent Gradients
+  static LinearGradient get darkTealGradient {
+    return const LinearGradient(
+      colors: [darkAccentTeal, Color(0xFF2DD4BF)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkEmeraldGradient {
+    return const LinearGradient(
+      colors: [darkAccentEmerald, Color(0xFF34D399)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkCoralGradient {
+    return const LinearGradient(
+      colors: [darkAccentCoral, Color(0xFFFCA5A5)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Glowing Gradient (for headers and special elements)
+  static LinearGradient get darkGlowGradient {
+    return const LinearGradient(
+      colors: [
+        darkAccentTeal,
+        Color(0xFF22D3EE),
+        darkAccentEmerald,
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // ==========================================================================
+  // ✨ GLOWING EFFECTS FOR DARK MODE
+  // ==========================================================================
+
+  /// Creates a glowing shadow effect for teal accent elements
+  static List<BoxShadow> get tealGlowShadow => [
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a glowing shadow effect for emerald accent elements
+  static List<BoxShadow> get emeraldGlowShadow => [
+        BoxShadow(
+          color: darkAccentEmerald.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentEmerald.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a glowing shadow effect for coral/danger elements
+  static List<BoxShadow> get coralGlowShadow => [
+        BoxShadow(
+          color: darkAccentCoral.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentCoral.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a subtle glow for dark mode cards
+  static List<BoxShadow> get darkCardGlow => [
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.1),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+          spreadRadius: 1,
+        ),
+      ];
 
   // ==========================================================================
   // 💳 EXPENSE & INCOME CATEGORIES
