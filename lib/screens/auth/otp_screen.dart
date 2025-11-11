@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../utils/theme.dart';
 
 class OTPScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -21,18 +24,40 @@ class _OTPScreenState extends State<OTPScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : Colors.white;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SFMSTheme.darkBgPrimary,
+                  SFMSTheme.darkBgSecondary,
+                  SFMSTheme.darkBgTertiary,
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFDBEAFE),
+                  Color(0xFFFAF5FF),
+                  Color(0xFFFDF2F8),
+                ],
+              ),
         ),
         child: SafeArea(
           child: Padding(
@@ -44,14 +69,15 @@ class _OTPScreenState extends State<OTPScreen> {
                   children: [
                     IconButton(
                       onPressed: () => widget.onNavigate('login'),
-                      icon: const Icon(Icons.arrow_back_rounded),
+                      icon: Icon(Icons.arrow_back_rounded, color: textPrimary),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Verification',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          color: textPrimary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -59,12 +85,14 @@ class _OTPScreenState extends State<OTPScreen> {
                     const SizedBox(width: 48),
                   ],
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Content
                 Card(
-                  elevation: 12,
+                  color: cardColor,
+                  elevation: isDarkMode ? 0 : 12,
+                  shadowColor: isDarkMode ? Colors.transparent : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24),
                   ),
@@ -72,30 +100,31 @@ class _OTPScreenState extends State<OTPScreen> {
                     padding: const EdgeInsets.all(32),
                     child: Column(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.verified_user,
                           size: 64,
-                          color: Color(0xFF4CAF50),
+                          color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF4CAF50),
                         ),
-                        
+
                         const SizedBox(height: 24),
-                        
-                        const Text(
+
+                        Text(
                           'Enter Verification Code 📱',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            color: textPrimary,
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        
+
                         const SizedBox(height: 8),
-                        
-                        const Text(
+
+                        Text(
                           'We\'ve sent a 6-digit code to your email address. Please enter it below.',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -115,19 +144,32 @@ class _OTPScreenState extends State<OTPScreen> {
                                 keyboardType: TextInputType.number,
                                 textAlign: TextAlign.center,
                                 maxLength: 1,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
+                                  color: textPrimary,
                                 ),
                                 decoration: InputDecoration(
                                   counterText: '',
+                                  filled: true,
+                                  fillColor: isDarkMode ? SFMSTheme.darkBgPrimary : Colors.white,
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                      width: 1.5,
+                                    ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
-                                    borderSide: const BorderSide(
-                                      color: Color(0xFF4CAF50),
+                                    borderSide: BorderSide(
+                                      color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF4CAF50),
                                       width: 2,
                                     ),
                                   ),
@@ -145,10 +187,15 @@ class _OTPScreenState extends State<OTPScreen> {
                         ),
                         
                         const SizedBox(height: 24),
-                        
+
                         // Verify Button
-                        SizedBox(
+                        Container(
                           width: double.infinity,
+                          decoration: BoxDecoration(
+                            gradient: isDarkMode ? SFMSTheme.darkTrustGradient : SFMSTheme.successGradient,
+                            borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                            boxShadow: isDarkMode ? SFMSTheme.tealGlowShadow : null,
+                          ),
                           child: ElevatedButton(
                             onPressed: _loading ? null : () {
                               // TODO: Implement OTP verification
@@ -160,9 +207,13 @@ class _OTPScreenState extends State<OTPScreen> {
                               );
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4CAF50),
+                              backgroundColor: Colors.transparent,
                               foregroundColor: Colors.white,
+                              shadowColor: Colors.transparent,
                               padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                              ),
                             ),
                             child: _loading
                                 ? const SizedBox(
@@ -182,16 +233,16 @@ class _OTPScreenState extends State<OTPScreen> {
                                   ),
                           ),
                         ),
-                        
+
                         const SizedBox(height: 16),
-                        
+
                         // Resend Code
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text(
+                            Text(
                               'Didn\'t receive the code? ',
-                              style: TextStyle(color: Color(0xFF6B7280)),
+                              style: TextStyle(color: textSecondary),
                             ),
                             TextButton(
                               onPressed: () {
@@ -207,10 +258,10 @@ class _OTPScreenState extends State<OTPScreen> {
                                 padding: EdgeInsets.zero,
                                 minimumSize: Size.zero,
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Resend',
                                 style: TextStyle(
-                                  color: Color(0xFF4E8EF7),
+                                  color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF4E8EF7),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

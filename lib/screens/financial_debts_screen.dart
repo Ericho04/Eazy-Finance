@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 
 import '../utils/theme.dart';
+import '../providers/theme_provider.dart';
 
 class FinancialDebtsScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -135,11 +137,18 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     }
   }
 
-  Color _getDebtStatusColor(double currentBalance, double totalAmount) {
+  Color _getDebtStatusColor(BuildContext context, double currentBalance, double totalAmount) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
     final percentage = currentBalance / totalAmount;
-    if (percentage > 0.7) return Colors.red;
-    if (percentage > 0.4) return Colors.orange;
-    return Colors.green;
+    if (percentage > 0.7) {
+      return isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red;
+    }
+    if (percentage > 0.4) {
+      return Colors.orange;
+    }
+    return isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green;
   }
 
   void _addDebt() {
@@ -190,27 +199,48 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return Scaffold(
       body: Stack(
         children: [
           // Main content
           Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFDBEAFE),
-                  Color(0xFFFAF5FF),
-                  Color(0xFFFDF2F8),
-                ],
-              ),
+            decoration: BoxDecoration(
+              gradient: isDarkMode
+                  ? LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        SFMSTheme.darkBgPrimary,
+                        SFMSTheme.darkBgSecondary,
+                      ],
+                    )
+                  : const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFFDBEAFE),
+                        Color(0xFFFAF5FF),
+                        Color(0xFFFDF2F8),
+                      ],
+                    ),
             ),
             child: SafeArea(
               child: Column(
                 children: [
                   // Header
-                  _buildHeader(),
+                  _buildHeader(context, isDarkMode, cardColor, textPrimary, textSecondary),
 
                   Expanded(
                     child: SingleChildScrollView(
@@ -218,15 +248,15 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                       child: Column(
                         children: [
                           // Debt Overview Cards
-                          _buildOverviewCards(),
+                          _buildOverviewCards(context, isDarkMode, cardShadow),
                           const SizedBox(height: 24),
 
                           // Debt List Header
-                          _buildDebtListHeader(),
+                          _buildDebtListHeader(context, textPrimary, textSecondary),
                           const SizedBox(height: 16),
 
                           // Debt List
-                          _buildDebtList(),
+                          _buildDebtList(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
                           const SizedBox(height: 100), // Space for FAB
                         ],
                       ),
@@ -238,8 +268,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
           ),
 
           // Modals
-          if (_showAddDebtModal) _buildAddDebtModal(),
-          if (_showPaymentModal) _buildPaymentModal(),
+          if (_showAddDebtModal) _buildAddDebtModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
+          if (_showPaymentModal) _buildPaymentModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
         ],
       ),
 
@@ -262,7 +292,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -272,8 +302,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
             icon: const Icon(Icons.arrow_back, size: 18),
             label: const Text('Back'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.9),
-              foregroundColor: Colors.black,
+              backgroundColor: cardColor.withOpacity(0.9),
+              foregroundColor: textPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -287,27 +317,27 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Text(
+                  children: [
+                    const Text(
                       '📊',
                       style: TextStyle(fontSize: 24),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Debt Management',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ],
                 ),
-                const Text(
+                Text(
                   'Track and manage your debts',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF6B7280),
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -318,7 +348,12 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildOverviewCards() {
+  Widget _buildOverviewCards(BuildContext context, bool isDarkMode, List<BoxShadow> cardShadow) {
+    final dangerColor = isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade400;
+    final dangerColor2 = isDarkMode ? Color(0xFFFF6B9D) : Colors.orange.shade500;
+    final accentBlue = isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.cartoonBlue;
+    final accentCyan = isDarkMode ? Color(0xFF06B6D4) : SFMSTheme.cartoonCyan;
+
     return Column(
       children: [
         // Total Debt Card
@@ -334,14 +369,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.red.shade400,
-                        Colors.orange.shade500,
+                        dangerColor,
+                        dangerColor2,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
+                        color: dangerColor.withOpacity(0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -420,14 +455,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        SFMSTheme.cartoonBlue,
-                        SFMSTheme.cartoonCyan,
+                        accentBlue,
+                        accentCyan,
                       ],
                     ),
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: SFMSTheme.cartoonBlue.withOpacity(0.3),
+                        color: accentBlue.withOpacity(0.3),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                       ),
@@ -485,65 +520,59 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildDebtListHeader() {
+  Widget _buildDebtListHeader(BuildContext context, Color textPrimary, Color textSecondary) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const Text(
+        Text(
           'Your Debts',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF1F2937),
+            color: textPrimary,
           ),
         ),
         Text(
           '${_debts.length} total',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: Color(0xFF6B7280),
+            color: textSecondary,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDebtList() {
+  Widget _buildDebtList(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
     if (_debts.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(32),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: cardColor,
           borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
+          boxShadow: cardShadow,
         ),
         child: Column(
-          children: const [
-            Text(
+          children: [
+            const Text(
               '🎉',
               style: TextStyle(fontSize: 48),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
               'No debts!',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1F2937),
+                color: textPrimary,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'You\'re debt-free! Keep up the great work.',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF6B7280),
+                color: textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -571,7 +600,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   margin: EdgeInsets.only(
                     bottom: index < _debts.length - 1 ? 16 : 0,
                   ),
-                  child: _buildDebtCard(debt),
+                  child: _buildDebtCard(context, debt, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
                 ),
               ),
             );
@@ -581,24 +610,21 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildDebtCard(Map<String, dynamic> debt) {
+  Widget _buildDebtCard(BuildContext context, Map<String, dynamic> debt, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
     final double totalAmount = debt['totalAmount'] as double;
     final double currentBalance = debt['currentBalance'] as double;
     final progressPercentage = 1 - (currentBalance / totalAmount);
-    final statusColor = _getDebtStatusColor(currentBalance, totalAmount);
+    final statusColor = _getDebtStatusColor(context, currentBalance, totalAmount);
+    final iconBgColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade100;
+    final iconFgColor = isDarkMode ? Colors.white : Colors.green.shade700;
+    final dateMutedColor = isDarkMode ? textMuted : Colors.grey.shade600;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -628,10 +654,10 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   children: [
                     Text(
                       debt['name'] as String,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -655,9 +681,9 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                         const SizedBox(width: 8),
                         Text(
                           '${debt['interestRate']}% APR',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                         ),
                       ],
@@ -675,8 +701,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                 },
                 icon: const Icon(Icons.payment),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.green.shade100,
-                  foregroundColor: Colors.green.shade700,
+                  backgroundColor: iconBgColor,
+                  foregroundColor: iconFgColor,
                 ),
               ),
             ],
@@ -690,11 +716,11 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Current Balance',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6B7280),
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -714,20 +740,20 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Min. Payment',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6B7280),
+                        color: textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'RM ${(debt['minimumPayment'] as double).toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -744,11 +770,11 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Progress',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF6B7280),
+                      color: textSecondary,
                     ),
                   ),
                   Text(
@@ -766,7 +792,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               Container(
                 height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: FractionallySizedBox(
@@ -787,13 +813,13 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
           // Due Date
           Row(
             children: [
-              Icon(Icons.schedule, size: 16, color: Colors.grey.shade600),
+              Icon(Icons.schedule, size: 16, color: dateMutedColor),
               const SizedBox(width: 4),
               Text(
                 'Due: ${DateTime.parse(debt['dueDate'] as String).toString().split(' ')[0]}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey.shade600,
+                  color: dateMutedColor,
                 ),
               ),
             ],
@@ -803,7 +829,10 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildAddDebtModal() {
+  Widget _buildAddDebtModal(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted) {
+    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+    final buttonCancelBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300;
+
     return Container(
       color: Colors.black.withOpacity(0.5),
       child: Center(
@@ -811,7 +840,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -833,19 +862,19 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     style: TextStyle(fontSize: 24),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Add New Debt',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ),
                   IconButton(
                     onPressed: () => setState(() => _showAddDebtModal = false),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: textPrimary),
                   ),
                 ],
               ),
@@ -854,11 +883,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               // Debt Name
               TextFormField(
                 controller: _debtNameController,
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Debt Name',
+                  labelStyle: TextStyle(color: textSecondary),
                   hintText: 'e.g., Credit Card - CIMB',
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -871,10 +903,13 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               DropdownButtonFormField<String>(
                 value: _selectedDebtType,
                 onChanged: (value) => setState(() => _selectedDebtType = value!),
+                dropdownColor: cardColor,
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Debt Type',
+                  labelStyle: TextStyle(color: textSecondary),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -899,11 +934,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               TextFormField(
                 controller: _debtAmountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Amount (RM)',
+                  labelStyle: TextStyle(color: textSecondary),
                   hintText: '0.00',
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -916,11 +954,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               TextFormField(
                 controller: _interestRateController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Interest Rate (%)',
+                  labelStyle: TextStyle(color: textSecondary),
                   hintText: '0.0',
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -936,8 +977,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: ElevatedButton(
                       onPressed: () => setState(() => _showAddDebtModal = false),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black,
+                        backgroundColor: buttonCancelBg,
+                        foregroundColor: textPrimary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -972,10 +1013,17 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
   }
 
-  Widget _buildPaymentModal() {
+  Widget _buildPaymentModal(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted) {
     final selectedDebt = _debts.firstWhere((debt) => debt['id'] == _selectedDebtId);
     final double currentBalance = selectedDebt['currentBalance'] as double;
     final double minimumPayment = selectedDebt['minimumPayment'] as double;
+    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+    final infoCardBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+    final buttonCancelBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300;
+    final quickPaymentBg = isDarkMode ? SFMSTheme.darkAccentTeal.withOpacity(0.2) : Colors.blue.shade100;
+    final quickPaymentBorder = isDarkMode ? SFMSTheme.darkAccentTeal.withOpacity(0.3) : Colors.blue.shade300;
+    final quickPaymentText = isDarkMode ? SFMSTheme.darkAccentTeal : Colors.blue.shade700;
+    final successColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green;
 
     return Container(
       color: Colors.black.withOpacity(0.5),
@@ -984,7 +1032,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
           margin: const EdgeInsets.all(24),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
@@ -1010,19 +1058,19 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Make Payment',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
+                            color: textPrimary,
                           ),
                         ),
                         Text(
                           selectedDebt['name'] as String,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                         ),
                       ],
@@ -1030,7 +1078,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   ),
                   IconButton(
                     onPressed: () => setState(() => _showPaymentModal = false),
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: textPrimary),
                   ),
                 ],
               ),
@@ -1040,25 +1088,25 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: infoCardBg,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Current Balance:',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF6B7280),
+                        color: textSecondary,
                       ),
                     ),
                     Text(
                       'RM ${currentBalance.toStringAsFixed(2)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -1070,11 +1118,14 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               TextFormField(
                 controller: _paymentAmountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Payment Amount (RM)',
+                  labelStyle: TextStyle(color: textSecondary),
                   hintText: '0.00',
+                  hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -1103,16 +1154,16 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue.shade100,
+                        color: quickPaymentBg,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.blue.shade300),
+                        border: Border.all(color: quickPaymentBorder),
                       ),
                       child: Text(
                         label,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.blue.shade700,
+                          color: quickPaymentText,
                         ),
                       ),
                     ),
@@ -1128,8 +1179,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: ElevatedButton(
                       onPressed: () => setState(() => _showPaymentModal = false),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade300,
-                        foregroundColor: Colors.black,
+                        backgroundColor: buttonCancelBg,
+                        foregroundColor: textPrimary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -1149,7 +1200,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                        backgroundColor: successColor,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),

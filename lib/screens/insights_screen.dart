@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 import '../widget/ai_tip_card.dart';
 
@@ -84,8 +85,8 @@ class _InsightsScreenState extends State<InsightsScreen>
 
       // 3. 创建提示 (Prompt)
       final prompt = """
-      You are a friendly Malaysian financial advisor. 
-      Based on the following user financial data (in JSON format), provide one short, actionable financial tip (max 2-3 sentences). 
+      You are a friendly Malaysian financial advisor.
+      Based on the following user financial data (in JSON format), provide one short, actionable financial tip (max 2-3 sentences).
       Address the user directly (e.g., "You...").
       Data: $contextData
       """;
@@ -119,7 +120,7 @@ class _InsightsScreenState extends State<InsightsScreen>
     return 'RM ${amount.toStringAsFixed(2)}';
   }
 
-  Widget _buildChart(AppProvider appProvider) {
+  Widget _buildChart(AppProvider appProvider, Color textMuted) {
     // 您的图表代码
     return Container(
       height: 200,
@@ -127,7 +128,7 @@ class _InsightsScreenState extends State<InsightsScreen>
       child: Center(
         child: Text(
           'Chart visualization here',
-          style: TextStyle(color: Colors.grey.shade600),
+          style: TextStyle(color: textMuted),
         ),
       ),
     );
@@ -159,9 +160,59 @@ class _InsightsScreenState extends State<InsightsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     final appProvider = context.watch<AppProvider>();
     final monthlyExpenses = appProvider.getMonthlyExpenses();
     final topCategories = _getTopCategories(appProvider);
+
+    // Update financial tools with theme-aware colors
+    final financialTools = [
+      {
+        'title': 'Debt Manager',
+        'description': 'Track and manage your debts',
+        'icon': Icons.credit_card,
+        'colors': [
+          isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor,
+          const Color(0xFFFF8A65)
+        ],
+        'route': 'financial-debts',
+      },
+      {
+        'title': 'Accounts',
+        'description': 'Manage your bank accounts',
+        'icon': Icons.account_balance,
+        'colors': [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
+        'route': 'financial-accounts',
+      },
+      {
+        'title': 'Financial Goals',
+        'description': 'Save for your future',
+        'icon': Icons.track_changes,
+        'colors': [
+          isDarkMode ? SFMSTheme.darkSuccessColor : SFMSTheme.successColor,
+          const Color(0xFF81C784)
+        ],
+        'route': 'financial-goals',
+      },
+      {
+        'title': 'Tax Calculator',
+        'description': 'Estimate your income tax',
+        'icon': Icons.calculate,
+        'colors': [SFMSTheme.warningColor, const Color(0xFFFFD54F)],
+        'route': 'financial-tax',
+      },
+    ];
 
     // ✅ 修复：移除 Scaffold，直接返回 SingleChildScrollView
     // 父级 (main.dart) 已经提供了 Scaffold 和底部导航栏
@@ -172,19 +223,20 @@ class _InsightsScreenState extends State<InsightsScreen>
         children: [
           const SizedBox(height: 20),
           // Header
-          const Text(
+          Text(
             'Financial Insights',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Your smart financial summary and tips.',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: textSecondary,
             ),
           ),
 
@@ -199,17 +251,18 @@ class _InsightsScreenState extends State<InsightsScreen>
 
           const SizedBox(height: 24),
 
-          const Text(
+          Text(
             'Financial Tools',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: textPrimary,
             ),
           ),
           const SizedBox(height: 16),
 
           // Financial Tools Cards
-          ..._financialTools.map((tool) {
+          ...financialTools.map((tool) {
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               child: Material(
@@ -224,13 +277,15 @@ class _InsightsScreenState extends State<InsightsScreen>
                         colors: tool['colors'],
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: tool['colors'][0].withOpacity(0.3),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: isDarkMode
+                          ? SFMSTheme.tealGlowShadow
+                          : [
+                              BoxShadow(
+                                color: tool['colors'][0].withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                     ),
                     child: Row(
                       children: [
@@ -285,20 +340,27 @@ class _InsightsScreenState extends State<InsightsScreen>
 
           const SizedBox(height: 24),
 
-          const Text(
+          Text(
             'Category Breakdown',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
+              color: textPrimary,
             ),
           ),
 
-          _buildChart(appProvider),
+          _buildChart(appProvider, textMuted),
 
           ...topCategories.map((category) {
             return ListTile(
-              title: Text(category['name']),
-              trailing: Text(_formatCurrency(category['amount'])),
+              title: Text(
+                category['name'],
+                style: TextStyle(color: textPrimary),
+              ),
+              trailing: Text(
+                _formatCurrency(category['amount']),
+                style: TextStyle(color: textPrimary),
+              ),
             );
           }).toList(),
 
@@ -308,34 +370,3 @@ class _InsightsScreenState extends State<InsightsScreen>
     );
   }
 }
-
-final List<Map<String, dynamic>> _financialTools = [
-  {
-    'title': 'Debt Manager',
-    'description': 'Track and manage your debts',
-    'icon': Icons.credit_card,
-    'colors': [SFMSTheme.dangerColor, const Color(0xFFFF8A65)],
-    'route': 'financial-debts',
-  },
-  {
-    'title': 'Accounts',
-    'description': 'Manage your bank accounts',
-    'icon': Icons.account_balance,
-    'colors': [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
-    'route': 'financial-accounts',
-  },
-  {
-    'title': 'Financial Goals',
-    'description': 'Save for your future',
-    'icon': Icons.track_changes,
-    'colors': [SFMSTheme.successColor, const Color(0xFF81C784)],
-    'route': 'financial-goals',
-  },
-  {
-    'title': 'Tax Calculator',
-    'description': 'Estimate your income tax',
-    'icon': Icons.calculate,
-    'colors': [SFMSTheme.warningColor, const Color(0xFFFFD54F)],
-    'route': 'financial-tax',
-  },
-];
