@@ -33,8 +33,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final userEmail = user?.email ?? 'user@example.com';
     final userId = user?.id.substring(0, 8) ?? 'N/A';
 
+    // Check if dark mode is active
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Set background color based on theme
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+
     return Scaffold(
-      backgroundColor: SFMSTheme.backgroundColor,
+      backgroundColor: bgColor,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -100,8 +107,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Header with title and back button
+  /// Header with title, back button, and gear icon with glowing teal accent
   Widget _buildHeader(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Colors based on theme
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final iconColor = isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.primaryColor;
+    final textColor = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final cardShadow = isDarkMode ? SFMSTheme.tealGlowShadow : SFMSTheme.softCardShadow;
+
     return Padding(
       padding: EdgeInsets.all(SFMSTheme.spacing20),
       child: Row(
@@ -113,55 +129,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: SFMSTheme.cardColor,
+                color: cardBg,
                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-                boxShadow: SFMSTheme.softCardShadow,
+                boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
               ),
               child: Icon(
                 Icons.arrow_back_rounded,
-                color: SFMSTheme.primaryColor,
+                color: iconColor,
                 size: SFMSTheme.iconSizeLarge,
               ),
             ),
           ),
           SizedBox(width: SFMSTheme.spacing16),
           // Title
-          Text(
-            'Settings & Profile',
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+          Expanded(
+            child: Text(
+              'Settings & Profile',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: textColor,
+                  ),
+            ),
+          ),
+          // Gear Icon with Glowing Teal Accent (for dark mode)
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              gradient: isDarkMode ? SFMSTheme.darkTealGradient : SFMSTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+              boxShadow: cardShadow,
+            ),
+            child: Icon(
+              Icons.settings_rounded,
+              color: Colors.white,
+              size: SFMSTheme.iconSizeLarge,
+            ),
           ),
         ],
       ),
     );
   }
 
-  /// Profile Avatar Section with edit button
+  /// Profile Avatar Section with edit button and glowing effects
   Widget _buildProfileSection(
       BuildContext context, String name, String email, String id) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Colors and gradients based on theme
+    final borderGradient = isDarkMode ? SFMSTheme.darkTealGradient : SFMSTheme.primaryGradient;
+    final avatarBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final editButtonGradient = isDarkMode ? SFMSTheme.darkEmeraldGradient : SFMSTheme.accentGradient;
+    final textColor = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondaryColor = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final avatarShadow = isDarkMode ? SFMSTheme.tealGlowShadow : SFMSTheme.softCardShadow;
+    final editButtonShadow = isDarkMode ? SFMSTheme.emeraldGlowShadow : SFMSTheme.accentShadow(SFMSTheme.accentColor);
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Column(
         children: [
-          // Avatar with gradient border
+          // Avatar with gradient border and glowing effect
           Stack(
             alignment: Alignment.center,
             children: [
-              // Gradient Border
+              // Gradient Border with Glow
               Container(
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  gradient: SFMSTheme.primaryGradient,
+                  gradient: borderGradient,
                   shape: BoxShape.circle,
+                  boxShadow: avatarShadow,
                 ),
                 child: Center(
                   child: Container(
                     width: 112,
                     height: 112,
                     decoration: BoxDecoration(
-                      color: SFMSTheme.cardColor,
+                      color: avatarBg,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -169,7 +216,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: 104,
                         height: 104,
                         decoration: BoxDecoration(
-                          gradient: SFMSTheme.primaryGradient,
+                          gradient: borderGradient,
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -189,7 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
               ),
-              // Edit Button
+              // Edit Button with Glowing Effect
               Positioned(
                 bottom: 0,
                 right: 0,
@@ -201,9 +248,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      gradient: SFMSTheme.accentGradient,
+                      gradient: editButtonGradient,
                       shape: BoxShape.circle,
-                      boxShadow: SFMSTheme.accentShadow(SFMSTheme.accentColor),
+                      boxShadow: editButtonShadow,
                     ),
                     child: Icon(
                       Icons.camera_alt_rounded,
@@ -221,6 +268,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             name,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.w700,
+                  color: textColor,
                 ),
           ),
           SizedBox(height: SFMSTheme.spacing4),
@@ -228,7 +276,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             email,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: SFMSTheme.textSecondary,
+                  color: textSecondaryColor,
                 ),
           ),
           SizedBox(height: SFMSTheme.spacing24),
@@ -237,9 +285,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// User Info Card with name, email, and account ID
+  /// User Info Card with name, email, and account ID - Dark Mode Enhanced
   Widget _buildUserInfoCard(
       BuildContext context, String name, String email, String id) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: SFMSTheme.spacing20,
@@ -248,9 +302,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Container(
         padding: EdgeInsets.all(SFMSTheme.spacing20),
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
         ),
         child: Column(
           children: [
@@ -333,8 +387,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Section title with emoji
+  /// Section title with emoji - Dark Mode Enhanced
   Widget _buildSectionTitle(BuildContext context, String title) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final textColor = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+
     return Padding(
       padding: EdgeInsets.fromLTRB(
         SFMSTheme.spacing20,
@@ -346,20 +404,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title,
         style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
+              color: textColor,
             ),
       ),
     );
   }
 
-  /// Security & Privacy Section
+  /// Security & Privacy Section - Dark Mode Enhanced
   Widget _buildSecuritySection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Container(
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
         ),
         child: Column(
           children: [
@@ -405,15 +469,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Notifications Section with toggle switches
+  /// Notifications Section with toggle switches - Dark Mode Enhanced
   Widget _buildNotificationsSection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Container(
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
         ),
         child: Column(
           children: [
@@ -450,34 +519,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Appearance Section with theme toggle
+  /// Appearance Section with theme toggle - Dark Mode Enhanced
   Widget _buildAppearanceSection(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
+
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+    final textColor = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondaryColor = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final toggleBg = isDarkMode ? SFMSTheme.darkBgTertiary : SFMSTheme.neutralLight;
 
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Container(
         padding: EdgeInsets.all(SFMSTheme.spacing20),
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                // Icon with gradient
+                // Icon with gradient and glow
                 Container(
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
                     gradient: isDarkMode
-                        ? SFMSTheme.cartoonPurpleGradient
+                        ? SFMSTheme.darkTealGradient
                         : SFMSTheme.cartoonYellowGradient,
                     borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                    boxShadow: isDarkMode
+                        ? SFMSTheme.tealGlowShadow
+                        : SFMSTheme.accentShadow(SFMSTheme.cartoonYellow),
                   ),
                   child: Icon(
                     isDarkMode ? Icons.nightlight_round : Icons.wb_sunny_rounded,
@@ -495,13 +573,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         'Theme Mode',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
+                              color: textColor,
                             ),
                       ),
                       SizedBox(height: SFMSTheme.spacing4),
                       Text(
                         isDarkMode ? 'Dark Mode' : 'Light Mode',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: SFMSTheme.textSecondary,
+                              color: textSecondaryColor,
                             ),
                       ),
                     ],
@@ -510,11 +589,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
             SizedBox(height: SFMSTheme.spacing16),
-            // Theme Toggle with cartoon sun/moon
+            // Theme Toggle with cartoon sun/moon and glowing effects
             Container(
               height: 56,
               decoration: BoxDecoration(
-                color: SFMSTheme.neutralLight,
+                color: toggleBg,
                 borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
               ),
               child: Row(
@@ -549,7 +628,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: !isDarkMode
                                         ? Colors.white
-                                        : SFMSTheme.textSecondary,
+                                        : textSecondaryColor,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -559,7 +638,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   SizedBox(width: SFMSTheme.spacing8),
-                  // Dark Mode Button
+                  // Dark Mode Button with Glowing Teal Gradient
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
@@ -570,10 +649,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Container(
                         height: 56,
                         decoration: BoxDecoration(
-                          gradient: isDarkMode ? SFMSTheme.cartoonPurpleGradient : null,
+                          gradient: isDarkMode ? SFMSTheme.darkTealGradient : null,
                           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
                           boxShadow: isDarkMode
-                              ? SFMSTheme.accentShadow(SFMSTheme.cartoonPurple)
+                              ? SFMSTheme.tealGlowShadow
                               : null,
                         ),
                         child: Row(
@@ -589,7 +668,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: isDarkMode
                                         ? Colors.white
-                                        : SFMSTheme.textSecondary,
+                                        : textSecondaryColor,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -607,15 +686,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Account Section
+  /// Account Section - Dark Mode Enhanced
   Widget _buildAccountSection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: SFMSTheme.spacing20),
       child: Container(
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
         ),
         child: Column(
           children: [
@@ -783,8 +867,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  /// Modern Logout Button with gradient
+  /// Modern Logout Button with gradient and glowing effect (red → pink glow)
   Widget _buildLogoutButton(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final logoutGradient = isDarkMode ? SFMSTheme.darkCoralGradient : SFMSTheme.dangerGradient;
+    final logoutShadow = isDarkMode ? SFMSTheme.coralGlowShadow : SFMSTheme.accentShadow(SFMSTheme.dangerColor);
+
     return Padding(
       padding: EdgeInsets.symmetric(
         horizontal: SFMSTheme.spacing20,
@@ -811,9 +901,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Container(
           height: 56,
           decoration: BoxDecoration(
-            gradient: SFMSTheme.dangerGradient,
+            gradient: logoutGradient,
             borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
-            boxShadow: SFMSTheme.accentShadow(SFMSTheme.dangerColor),
+            boxShadow: logoutShadow,
           ),
           child: Center(
             child: Row(
