@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_provider.dart';
+import '../../utils/theme.dart';
 
 class LoginScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -21,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   bool _showPassword = false;
   bool _loading = false;
-  // _isAdminTab 和 _demoLoading 已被移除
 
   late AnimationController _logoController;
   late AnimationController _cardController;
@@ -77,60 +77,67 @@ class _LoginScreenState extends State<LoginScreen>
     setState(() => _loading = true);
 
     try {
-      // 简化的用户登录
       final success = await context.read<AuthProvider>().signIn(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
 
-      if (!success) {
+      if (!success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invalid email or password'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text('Invalid email or password'),
+            backgroundColor: SFMSTheme.dangerColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+            ),
           ),
         );
       }
-      // 成功后 AuthProvider 会自动导航，这里不需要处理
-
     } catch (e) {
       print('Login error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Login failed: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login failed: ${e.toString()}'),
+            backgroundColor: SFMSTheme.dangerColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+            ),
+          ),
+        );
+      }
     } finally {
-      setState(() => _loading = false);
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
-
-  // _handleDemoLogin 函数已被移除
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
+              SFMSTheme.backgroundVariant,
+              SFMSTheme.backgroundColor,
+              SFMSTheme.aiLight,
             ],
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(SFMSTheme.spacing24),
             child: Column(
               children: [
-                const SizedBox(height: 40),
+                SizedBox(height: SFMSTheme.spacing40),
 
-                // App Logo and Title
+                // App Logo and Title with theme gradient
                 ScaleTransition(
                   scale: _logoAnimation,
                   child: Column(
@@ -140,207 +147,224 @@ class _LoginScreenState extends State<LoginScreen>
                         height: 80,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF4E8EF7), Color(0xFF845EC2)],
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 20,
-                              spreadRadius: 5,
-                            ),
-                          ],
+                          gradient: SFMSTheme.primaryGradient,
+                          boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.trending_up,
                           color: Colors.white,
-                          size: 40,
+                          size: SFMSTheme.iconSizeHero,
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      const Text(
+                      SizedBox(height: SFMSTheme.spacing24),
+                      Text(
                         'SFMS',
-                        style: TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          background: null,
-                        ),
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                              color: SFMSTheme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(height: SFMSTheme.spacing8),
+                      Text(
                         'Smart Finance Management System',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Color(0xFF6B7280),
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: SFMSTheme.textSecondary,
+                            ),
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 48),
+                SizedBox(height: SFMSTheme.spacing48),
 
-                // Login Card
+                // Login Card with modern styling
                 SlideTransition(
                   position: _cardAnimation,
-                  child: Card(
-                    elevation: 12,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: SFMSTheme.cardColor,
+                      borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
+                      boxShadow: SFMSTheme.floatingShadow,
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(32),
+                      padding: EdgeInsets.all(SFMSTheme.spacing32),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           // Welcome Text
-                          const Text(
+                          Text(
                             'Welcome Back! 👋',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  color: SFMSTheme.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 8),
-                          const Text(
+                          SizedBox(height: SFMSTheme.spacing8),
+                          Text(
                             'Sign in to continue your financial journey',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: SFMSTheme.textSecondary,
+                                ),
                             textAlign: TextAlign.center,
                           ),
 
-                          const SizedBox(height: 32),
-
-                          // Tab Selection (已被移除)
-
-                          // Admin Notice (已被移除)
+                          SizedBox(height: SFMSTheme.spacing32),
 
                           // Email Input
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            style: TextStyle(color: SFMSTheme.textPrimary),
                             decoration: InputDecoration(
-                              labelText: 'Email Address', // 已简化
-                              prefixIcon: Icon(Icons.email), // 已简化
+                              labelText: 'Email Address',
+                              labelStyle: TextStyle(color: SFMSTheme.textSecondary),
+                              prefixIcon: Icon(Icons.email, color: SFMSTheme.primaryColor),
+                              filled: true,
+                              fillColor: SFMSTheme.neutralLight,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
+                                  color: SFMSTheme.neutralMedium,
+                                  width: 1.5,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: const Color(0xFF2E7D32),
+                                  color: SFMSTheme.primaryColor,
                                   width: 2,
                                 ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 16),
+                          SizedBox(height: SFMSTheme.spacing16),
 
                           // Password Input
                           TextFormField(
                             controller: _passwordController,
                             obscureText: !_showPassword,
+                            style: TextStyle(color: SFMSTheme.textPrimary),
                             decoration: InputDecoration(
-                              labelText: 'Password', // 已简化
-                              prefixIcon: const Icon(Icons.lock),
+                              labelText: 'Password',
+                              labelStyle: TextStyle(color: SFMSTheme.textSecondary),
+                              prefixIcon: Icon(Icons.lock, color: SFMSTheme.primaryColor),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _showPassword
                                       ? Icons.visibility_off
                                       : Icons.visibility,
+                                  color: SFMSTheme.textSecondary,
                                 ),
-                                onPressed: () => setState(
-                                        () => _showPassword = !_showPassword),
+                                onPressed: () =>
+                                    setState(() => _showPassword = !_showPassword),
                               ),
+                              filled: true,
+                              fillColor: SFMSTheme.neutralLight,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: Colors.grey.shade300,
+                                  color: SFMSTheme.neutralMedium,
+                                  width: 1.5,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: const Color(0xFF2E7D32),
+                                  color: SFMSTheme.primaryColor,
                                   width: 2,
                                 ),
                               ),
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          SizedBox(height: SFMSTheme.spacing24),
 
-                          // Login Button
-                          ElevatedButton(
-                            onPressed: _loading ? null : _handleLogin,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF2E7D32), // 已简化
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
+                          // Login Button with gradient
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: SFMSTheme.primaryGradient,
+                              borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                              boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                             ),
-                            child: _loading
-                                ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                                : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.person), // 已简化
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Sign In to SFMS', // 已简化
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            child: ElevatedButton(
+                              onPressed: _loading ? null : _handleLogin,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                shadowColor: Colors.transparent,
+                                padding: EdgeInsets.symmetric(
+                                  vertical: SFMSTheme.spacing16,
                                 ),
-                              ],
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(SFMSTheme.radiusMedium),
+                                ),
+                              ),
+                              child: _loading
+                                  ? SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.login,
+                                            size: SFMSTheme.iconSizeMedium),
+                                        SizedBox(width: SFMSTheme.spacing8),
+                                        Text(
+                                          'Sign In to SFMS',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ),
-
-                          // Demo Button 和 "OR" Divider (已被移除)
-
                         ],
                       ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: SFMSTheme.spacing24),
 
                 // Footer Links
                 TextButton(
                   onPressed: () => widget.onNavigate('forgot-password'),
-                  child: const Text(
+                  child: Text(
                     'Forgot your password?',
                     style: TextStyle(
-                      color: Color(0xFF845EC2),
+                      color: SFMSTheme.aiPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: SFMSTheme.spacing8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Don\'t have an account? ',
-                      style: TextStyle(color: Color(0xFF6B7280)),
+                      style: TextStyle(color: SFMSTheme.textSecondary),
                     ),
                     TextButton(
                       onPressed: () => widget.onNavigate('signup'),
@@ -348,10 +372,10 @@ class _LoginScreenState extends State<LoginScreen>
                         padding: EdgeInsets.zero,
                         minimumSize: Size.zero,
                       ),
-                      child: const Text(
+                      child: Text(
                         'Sign up here',
                         style: TextStyle(
-                          color: Color(0xFF4E8EF7),
+                          color: SFMSTheme.primaryLight,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -359,18 +383,18 @@ class _LoginScreenState extends State<LoginScreen>
                   ],
                 ),
 
-                const SizedBox(height: 40),
+                SizedBox(height: SFMSTheme.spacing40),
 
-                // Feature Highlights
+                // Feature Highlights with theme colors
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildFeatureHighlight(
-                        '📊', 'Smart\nAnalytics', const Color(0xFF4E8EF7)),
+                        '📊', 'Smart\nAnalytics', SFMSTheme.cartoonBlue),
                     _buildFeatureHighlight(
-                        '🎯', 'Goal\nTracking', const Color(0xFF845EC2)),
+                        '🎯', 'Goal\nTracking', SFMSTheme.cartoonPurple),
                     _buildFeatureHighlight(
-                        '💰', 'Budget\nControl', const Color(0xFF4FFBDF)),
+                        '💰', 'Budget\nControl', SFMSTheme.cartoonTeal),
                   ],
                 ),
               ],
@@ -388,8 +412,19 @@ class _LoginScreenState extends State<LoginScreen>
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [
+                color.withOpacity(0.2),
+                color.withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 2,
+            ),
           ),
           child: Center(
             child: Text(
@@ -398,14 +433,13 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: SFMSTheme.spacing8),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF6B7280),
-          ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: SFMSTheme.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
           textAlign: TextAlign.center,
         ),
       ],

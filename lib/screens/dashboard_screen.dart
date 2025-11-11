@@ -1,15 +1,12 @@
-// [*** 修复后的 dashboard_screen.dart ***]
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-// ✨ 第 1 步：修复 Imports
 import '../providers/auth_provider.dart';
 import '../providers/app_provider.dart';
 import '../models/transaction.dart';
 import '../models/budget.dart';
-// (我们删除了 'import ../main.dart;')
-
+import '../utils/theme.dart';
+import '../widget/modern_ui_components.dart';
 
 class DashboardScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -103,12 +100,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     return metadata?['full_name'] ?? 'User';
   }
 
-  // ✨ 第 2 步：修复 Transaction 逻辑 (类型和日期)
   double _getTotalBalance() {
     final transactions = context.read<AppProvider>().transactions;
     double balance = 0;
     for (var transaction in transactions) {
-      // 修复: 'income' -> TransactionType.income
       if (transaction.type == TransactionType.income) {
         balance += transaction.amount;
       } else {
@@ -122,8 +117,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final transactions = context.read<AppProvider>().transactions;
     final now = DateTime.now();
     final thisMonth = transactions.where((t) {
-      final tDate = DateTime.parse(t.date); // 修复: t.date 是 String
-      return t.type == TransactionType.income && // 修复: 'income' -> TransactionType.income
+      final tDate = DateTime.parse(t.date);
+      return t.type == TransactionType.income &&
           tDate.year == now.year &&
           tDate.month == now.month;
     });
@@ -134,8 +129,8 @@ class _DashboardScreenState extends State<DashboardScreen>
     final transactions = context.read<AppProvider>().transactions;
     final now = DateTime.now();
     final thisMonth = transactions.where((t) {
-      final tDate = DateTime.parse(t.date); // 修复: t.date 是 String
-      return t.type == TransactionType.expense && // 修复: 'expense' -> TransactionType.expense
+      final tDate = DateTime.parse(t.date);
+      return t.type == TransactionType.expense &&
           tDate.year == now.year &&
           tDate.month == now.month;
     });
@@ -144,18 +139,14 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    //
-    // 💡 [*** 在这里修复 ***] 💡
-    // 我们移除了 Scaffold 和 body:
-    //
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(SFMSTheme.spacing24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: SFMSTheme.spacing20),
 
-          // Greeting Section
+          // Greeting Section - Using theme colors
           FadeTransition(
             opacity: _greetingAnimation,
             child: Column(
@@ -163,50 +154,37 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 Text(
                   _getGreeting(),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF6B7280),
-                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: SFMSTheme.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: SFMSTheme.spacing4),
                 Text(
                   _getUserName(),
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1A1A1A),
-                  ),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: SFMSTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: SFMSTheme.spacing32),
 
-          // Balance Card
+          // Balance Card - Using BalanceCard component with theme gradient
           SlideTransition(
             position: _cardAnimation,
             child: ScaleTransition(
               scale: _bounceAnimation,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(SFMSTheme.spacing24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4E8EF7), Color(0xFF845EC2)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4E8EF7).withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  gradient: SFMSTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
+                  boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,65 +192,77 @@ class _DashboardScreenState extends State<DashboardScreen>
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Column(
+                        Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Total Balance',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
                             ),
-                            SizedBox(height: 8),
-                            Text(
-                              'My Wallet 💰',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
+                            SizedBox(height: SFMSTheme.spacing8),
+                            Row(
+                              children: [
+                                Text(
+                                  'My Wallet ',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
+                                const Text(
+                                  '💰',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: EdgeInsets.all(SFMSTheme.spacing12),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius:
+                                BorderRadius.circular(SFMSTheme.radiusMedium),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.account_balance_wallet,
                             color: Colors.white,
-                            size: 24,
+                            size: SFMSTheme.iconSizeLarge,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: SFMSTheme.spacing16),
                     Text(
                       'RM ${_getTotalBalance().toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: SFMSTheme.spacing16),
                     Row(
                       children: [
                         _buildBalanceItem(
                           '📈',
                           'Income',
                           _getMonthlyIncome(),
-                          Colors.green.shade400,
+                          SFMSTheme.successColor,
                         ),
-                        const SizedBox(width: 24),
+                        SizedBox(width: SFMSTheme.spacing24),
                         _buildBalanceItem(
                           '📉',
                           'Expenses',
                           _getMonthlyExpenses(),
-                          Colors.red.shade400,
+                          SFMSTheme.dangerColor,
                         ),
                       ],
                     ),
@@ -282,18 +272,17 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: SFMSTheme.spacing32),
 
-          // Quick Actions
-          const Text(
+          // Quick Actions - Using theme colors
+          Text(
             'Quick Actions',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
-            ),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: SFMSTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: SFMSTheme.spacing16),
 
           Row(
             children: [
@@ -302,24 +291,24 @@ class _DashboardScreenState extends State<DashboardScreen>
                   '➕',
                   'Add Expense',
                   'Track your spending',
-                  const Color(0xFF845EC2),
-                      () => widget.onNavigate('add-expense'),
+                  SFMSTheme.cartoonPurple,
+                  () => widget.onNavigate('add-expense'),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: _buildQuickActionCard(
                   '📊',
                   'View Reports',
                   'Analyze your data',
-                  const Color(0xFF4E8EF7),
-                      () => widget.onNavigate('reports'),
+                  SFMSTheme.primaryLight,
+                  () => widget.onNavigate('reports'),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          SizedBox(height: SFMSTheme.spacing16),
 
           Row(
             children: [
@@ -328,56 +317,55 @@ class _DashboardScreenState extends State<DashboardScreen>
                   '📱',
                   'Scan QR',
                   'Quick payment',
-                  const Color(0xFF4FFBDF),
-                      () => widget.onNavigate('qr-scan'),
+                  SFMSTheme.cartoonCyan,
+                  () => widget.onNavigate('qr-scan'),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: _buildQuickActionCard(
                   '🎰',
                   'Lucky Draw',
                   'Win rewards',
-                  const Color(0xFFFFD93D),
-                      () => widget.onNavigate('lucky-draw'),
+                  SFMSTheme.cartoonYellow,
+                  () => widget.onNavigate('lucky-draw'),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: SFMSTheme.spacing32),
 
-          // Recent Transactions
+          // Recent Transactions - Using theme colors
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Recent Transactions',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
-                ),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: SFMSTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               TextButton(
                 onPressed: () => widget.onNavigate('expense-history'),
-                child: const Text(
+                child: Text(
                   'View All',
                   style: TextStyle(
-                    color: Color(0xFF4E8EF7),
+                    color: SFMSTheme.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: SFMSTheme.spacing16),
 
           // Transaction List
           Consumer<AppProvider>(
             builder: (context, appProvider, child) {
-              // ✨ 修复: 使用 getRecentTransactions()
-              final recentTransactions = appProvider.getRecentTransactions(limit: 5);
+              final recentTransactions =
+                  appProvider.getRecentTransactions(limit: 5);
 
               if (recentTransactions.isEmpty) {
                 return _buildEmptyTransactions();
@@ -391,18 +379,17 @@ class _DashboardScreenState extends State<DashboardScreen>
             },
           ),
 
-          const SizedBox(height: 32),
+          SizedBox(height: SFMSTheme.spacing32),
 
-          // Budget Overview
-          const Text(
+          // Budget Overview - Using theme colors
+          Text(
             'Budget Overview',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
-            ),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: SFMSTheme.textPrimary,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: SFMSTheme.spacing16),
 
           Consumer<AppProvider>(
             builder: (context, appProvider, child) {
@@ -425,58 +412,54 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBalanceItem(String emoji, String label, double amount, Color color) {
+  Widget _buildBalanceItem(
+      String emoji, String label, double amount, Color color) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Text(emoji, style: const TextStyle(fontSize: 16)),
-            const SizedBox(width: 4),
+            SizedBox(width: SFMSTheme.spacing4),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.white70,
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.white.withOpacity(0.9),
+                  ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: SFMSTheme.spacing4),
         Text(
           'RM ${amount.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
         ),
       ],
     );
   }
 
   Widget _buildQuickActionCard(
-      String emoji,
-      String title,
-      String subtitle,
-      Color color,
-      VoidCallback onTap,
-      ) {
+    String emoji,
+    String title,
+    String subtitle,
+    Color color,
+    VoidCallback onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(SFMSTheme.spacing20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.1),
-              blurRadius: 15,
-              spreadRadius: 0,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          color: SFMSTheme.cardColor,
+          borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
+          boxShadow: SFMSTheme.softCardShadow,
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 2,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -485,8 +468,15 @@ class _DashboardScreenState extends State<DashboardScreen>
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    color.withOpacity(0.2),
+                    color.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
               ),
               child: Center(
                 child: Text(
@@ -495,22 +485,20 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: SFMSTheme.spacing12),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1A1A1A),
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: SFMSTheme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const SizedBox(height: 4),
+            SizedBox(height: SFMSTheme.spacing4),
             Text(
               subtitle,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Color(0xFF6B7280),
-              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: SFMSTheme.textSecondary,
+                  ),
             ),
           ],
         ),
@@ -518,24 +506,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  // ✨ 第 3 步：修复 Transaction 和 Budget 的 UI
   Widget _buildTransactionItem(Transaction transaction) {
-    // 修复: 'income' -> TransactionType.income
     final isIncome = transaction.type == TransactionType.income;
+    final color = isIncome ? SFMSTheme.successColor : SFMSTheme.dangerColor;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
+      padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: SFMSTheme.cardColor,
+        borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+        boxShadow: SFMSTheme.softCardShadow,
       ),
       child: Row(
         children: [
@@ -543,37 +524,40 @@ class _DashboardScreenState extends State<DashboardScreen>
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: isIncome
-                  ? Colors.green.shade50
-                  : Colors.red.shade50,
-              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                colors: [
+                  color.withOpacity(0.2),
+                  color.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusSmall),
             ),
             child: Icon(
               isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isIncome ? Colors.green : Colors.red,
-              size: 20,
+              color: color,
+              size: SFMSTheme.iconSizeMedium,
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: SFMSTheme.spacing16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  transaction.description, // 属性存在
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
-                  ),
+                  transaction.description,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: SFMSTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
-                const SizedBox(height: 2),
+                SizedBox(height: SFMSTheme.spacing4),
                 Text(
-                  transaction.category, // 属性存在
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF6B7280),
-                  ),
+                  transaction.category,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: SFMSTheme.textSecondary,
+                      ),
                 ),
               ],
             ),
@@ -582,20 +566,18 @@ class _DashboardScreenState extends State<DashboardScreen>
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isIncome ? '+' : '-'}RM ${transaction.amount.toStringAsFixed(2)}', // 属性存在
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: isIncome ? Colors.green : Colors.red,
-                ),
+                '${isIncome ? '+' : '-'}RM ${transaction.amount.toStringAsFixed(2)}',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-              const SizedBox(height: 2),
+              SizedBox(height: SFMSTheme.spacing4),
               Text(
-                _formatDate(DateTime.parse(transaction.date)), // 修复: date 是 String
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF6B7280),
-                ),
+                _formatDate(DateTime.parse(transaction.date)),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: SFMSTheme.textMuted,
+                    ),
               ),
             ],
           ),
@@ -605,24 +587,20 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildBudgetItem(Budget budget) {
-    // 修复: 适配新的 Budget 模型
-    final percentage = budget.utilizationPercentage / 100; // .utilizationPercentage 是 0-100
-    final color = percentage > 0.8 ? Colors.red : Colors.blue; // 修复: 新模型没有 .color
+    final percentage = budget.utilizationPercentage / 100;
+    final color = percentage > 0.8
+        ? SFMSTheme.dangerColor
+        : percentage > 0.6
+            ? SFMSTheme.warningColor
+            : SFMSTheme.primaryColor;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
+      padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: SFMSTheme.cardColor,
+        borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+        boxShadow: SFMSTheme.softCardShadow,
       ),
       child: Column(
         children: [
@@ -632,59 +610,63 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: LinearGradient(
+                    colors: [
+                      color.withOpacity(0.2),
+                      color.withOpacity(0.1),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(SFMSTheme.radiusSmall),
                 ),
                 child: const Center(
                   child: Text(
-                    '💰', // 修复: 新模型没有 .icon
+                    '💰',
                     style: TextStyle(fontSize: 20),
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      budget.category, // 修复: 新模型没有 .name，使用 .category
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1A1A),
-                      ),
+                      budget.category,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: SFMSTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: SFMSTheme.spacing4),
                     Text(
-                      // 属性存在
                       'RM ${budget.spent.toStringAsFixed(2)} / RM ${budget.amount.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF6B7280),
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: SFMSTheme.textSecondary,
+                          ),
                     ),
                   ],
                 ),
               ),
               Text(
-                // 修复: 使用 .utilizationPercentage
                 '${budget.utilizationPercentage.toInt()}%',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: color,
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: percentage, // 修复: 使用 0-1.0 的百分比
-            backgroundColor: color.withOpacity(0.1),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-            minHeight: 6,
-            borderRadius: BorderRadius.circular(3),
+          SizedBox(height: SFMSTheme.spacing12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(SFMSTheme.radiusSmall / 2),
+            child: LinearProgressIndicator(
+              value: percentage,
+              backgroundColor: color.withOpacity(0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+              minHeight: 6,
+            ),
           ),
         ],
       ),
@@ -693,10 +675,10 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildEmptyTransactions() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(20),
+        color: SFMSTheme.neutralLight,
+        borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
       ),
       child: Column(
         children: [
@@ -704,31 +686,36 @@ class _DashboardScreenState extends State<DashboardScreen>
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [
+                  SFMSTheme.neutralMedium.withOpacity(0.3),
+                  SFMSTheme.neutralMedium.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
             ),
             child: Icon(
               Icons.receipt_long,
-              size: 32,
-              color: Colors.grey.shade400,
+              size: SFMSTheme.iconSizeXLarge,
+              color: SFMSTheme.neutralDark,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: SFMSTheme.spacing16),
+          Text(
             'No transactions yet',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-            ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: SFMSTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: SFMSTheme.spacing8),
+          Text(
             'Start tracking your expenses',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF9CA3AF),
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: SFMSTheme.textMuted,
+                ),
           ),
         ],
       ),
@@ -737,10 +724,10 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   Widget _buildEmptyBudgets() {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(20),
+        color: SFMSTheme.neutralLight,
+        borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
       ),
       child: Column(
         children: [
@@ -748,31 +735,36 @@ class _DashboardScreenState extends State<DashboardScreen>
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                colors: [
+                  SFMSTheme.neutralMedium.withOpacity(0.3),
+                  SFMSTheme.neutralMedium.withOpacity(0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
             ),
             child: Icon(
               Icons.pie_chart,
-              size: 32,
-              color: Colors.grey.shade400,
+              size: SFMSTheme.iconSizeXLarge,
+              color: SFMSTheme.neutralDark,
             ),
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: SFMSTheme.spacing16),
+          Text(
             'No budgets set',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
-            ),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: SFMSTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
           ),
-          const SizedBox(height: 8),
-          const Text(
+          SizedBox(height: SFMSTheme.spacing8),
+          Text(
             'Create budgets to manage spending',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFF9CA3AF),
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: SFMSTheme.textMuted,
+                ),
           ),
         ],
       ),
