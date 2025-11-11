@@ -367,6 +367,7 @@ class SFMSTheme {
   static const Color darkBgPrimary = Color(0xFF0F172A);      // Deep Navy
   static const Color darkBgSecondary = Color(0xFF1E293B);    // Slate Gray
   static const Color darkBgTertiary = Color(0xFF334155);     // Lighter Slate
+  static const Color darkCardBg = darkBgSecondary;            // Card Background (alias)
 
   // Dark Mode Accent Colors
   static const Color darkAccentTeal = Color(0xFF14B8A6);     // Teal Highlight
@@ -970,6 +971,9 @@ class SFMSTheme {
           spreadRadius: 1,
         ),
       ];
+
+  /// Creates a shadow for dark mode cards (alias for darkCardGlow)
+  static List<BoxShadow> get darkCardShadow => darkCardGlow;
 
   // ==========================================================================
   // 💳 EXPENSE & INCOME CATEGORIES

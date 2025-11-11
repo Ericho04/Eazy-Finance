@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../utils/theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -117,18 +118,40 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : Colors.white;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              SFMSTheme.backgroundVariant,
-              SFMSTheme.backgroundColor,
-              SFMSTheme.aiLight,
-            ],
-          ),
+          gradient: isDarkMode
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SFMSTheme.darkBgPrimary,
+                  SFMSTheme.darkBgSecondary,
+                  SFMSTheme.darkBgTertiary,
+                ],
+              )
+            : LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SFMSTheme.backgroundVariant,
+                  SFMSTheme.backgroundColor,
+                  SFMSTheme.aiLight,
+                ],
+              ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
@@ -160,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         'SFMS',
                         style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                              color: SFMSTheme.textPrimary,
+                              color: textPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
@@ -168,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         'Smart Finance Management System',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: SFMSTheme.textSecondary,
+                              color: textSecondary,
                             ),
                       ),
                     ],
@@ -182,9 +205,9 @@ class _LoginScreenState extends State<LoginScreen>
                   position: _cardAnimation,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: SFMSTheme.cardColor,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-                      boxShadow: SFMSTheme.floatingShadow,
+                      boxShadow: cardShadow,
                     ),
                     child: Padding(
                       padding: EdgeInsets.all(SFMSTheme.spacing32),
@@ -195,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen>
                           Text(
                             'Welcome Back! 👋',
                             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: SFMSTheme.textPrimary,
+                                  color: textPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                             textAlign: TextAlign.center,
@@ -204,7 +227,7 @@ class _LoginScreenState extends State<LoginScreen>
                           Text(
                             'Sign in to continue your financial journey',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: SFMSTheme.textSecondary,
+                                  color: textSecondary,
                                 ),
                             textAlign: TextAlign.center,
                           ),
@@ -215,13 +238,13 @@ class _LoginScreenState extends State<LoginScreen>
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            style: TextStyle(color: SFMSTheme.textPrimary),
+                            style: TextStyle(color: textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Email Address',
-                              labelStyle: TextStyle(color: SFMSTheme.textSecondary),
-                              prefixIcon: Icon(Icons.email, color: SFMSTheme.primaryColor),
+                              labelStyle: TextStyle(color: textSecondary),
+                              prefixIcon: Icon(Icons.email, color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor),
                               filled: true,
-                              fillColor: SFMSTheme.neutralLight,
+                              fillColor: isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.neutralLight,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide.none,
@@ -229,14 +252,14 @@ class _LoginScreenState extends State<LoginScreen>
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: SFMSTheme.neutralMedium,
+                                  color: isDarkMode ? SFMSTheme.darkBgTertiary : SFMSTheme.neutralMedium,
                                   width: 1.5,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: SFMSTheme.primaryColor,
+                                  color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
                                   width: 2,
                                 ),
                               ),
@@ -249,23 +272,23 @@ class _LoginScreenState extends State<LoginScreen>
                           TextFormField(
                             controller: _passwordController,
                             obscureText: !_showPassword,
-                            style: TextStyle(color: SFMSTheme.textPrimary),
+                            style: TextStyle(color: textPrimary),
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              labelStyle: TextStyle(color: SFMSTheme.textSecondary),
-                              prefixIcon: Icon(Icons.lock, color: SFMSTheme.primaryColor),
+                              labelStyle: TextStyle(color: textSecondary),
+                              prefixIcon: Icon(Icons.lock, color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor),
                               suffixIcon: IconButton(
                                 icon: Icon(
                                   _showPassword
                                       ? Icons.visibility_off
                                       : Icons.visibility,
-                                  color: SFMSTheme.textSecondary,
+                                  color: textSecondary,
                                 ),
                                 onPressed: () =>
                                     setState(() => _showPassword = !_showPassword),
                               ),
                               filled: true,
-                              fillColor: SFMSTheme.neutralLight,
+                              fillColor: isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.neutralLight,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide.none,
@@ -273,14 +296,14 @@ class _LoginScreenState extends State<LoginScreen>
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: SFMSTheme.neutralMedium,
+                                  color: isDarkMode ? SFMSTheme.darkBgTertiary : SFMSTheme.neutralMedium,
                                   width: 1.5,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
                                 borderSide: BorderSide(
-                                  color: SFMSTheme.primaryColor,
+                                  color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
                                   width: 2,
                                 ),
                               ),
@@ -292,9 +315,9 @@ class _LoginScreenState extends State<LoginScreen>
                           // Login Button with gradient
                           Container(
                             decoration: BoxDecoration(
-                              gradient: SFMSTheme.primaryGradient,
+                              gradient: isDarkMode ? SFMSTheme.darkTrustGradient : SFMSTheme.primaryGradient,
                               borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-                              boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
+                              boxShadow: isDarkMode ? SFMSTheme.tealGlowShadow : SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                             ),
                             child: ElevatedButton(
                               onPressed: _loading ? null : _handleLogin,
@@ -353,7 +376,7 @@ class _LoginScreenState extends State<LoginScreen>
                   child: Text(
                     'Forgot your password?',
                     style: TextStyle(
-                      color: SFMSTheme.aiPrimary,
+                      color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.aiPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -364,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen>
                   children: [
                     Text(
                       'Don\'t have an account? ',
-                      style: TextStyle(color: SFMSTheme.textSecondary),
+                      style: TextStyle(color: textSecondary),
                     ),
                     TextButton(
                       onPressed: () => widget.onNavigate('signup'),
@@ -375,7 +398,7 @@ class _LoginScreenState extends State<LoginScreen>
                       child: Text(
                         'Sign up here',
                         style: TextStyle(
-                          color: SFMSTheme.primaryLight,
+                          color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryLight,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -406,6 +429,10 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildFeatureHighlight(String emoji, String title, Color color) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+
     return Column(
       children: [
         Container(
@@ -414,15 +441,15 @@ class _LoginScreenState extends State<LoginScreen>
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                color.withOpacity(0.2),
-                color.withOpacity(0.1),
+                color.withOpacity(isDarkMode ? 0.3 : 0.2),
+                color.withOpacity(isDarkMode ? 0.15 : 0.1),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
             border: Border.all(
-              color: color.withOpacity(0.3),
+              color: color.withOpacity(isDarkMode ? 0.4 : 0.3),
               width: 2,
             ),
           ),
@@ -437,7 +464,7 @@ class _LoginScreenState extends State<LoginScreen>
         Text(
           title,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: SFMSTheme.textSecondary,
+                color: textSecondary,
                 fontWeight: FontWeight.w500,
               ),
           textAlign: TextAlign.center,

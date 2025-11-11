@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/app_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../utils/theme.dart';
 
 class SignupScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -130,18 +132,40 @@ class _SignupScreenState extends State<SignupScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : Colors.white;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SFMSTheme.darkBgPrimary,
+                  SFMSTheme.darkBgSecondary,
+                  SFMSTheme.darkBgTertiary,
+                ],
+              )
+            : const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFDBEAFE),
+                  Color(0xFFFAF5FF),
+                  Color(0xFFFDF2F8),
+                ],
+              ),
         ),
         child: SafeArea(
           child: SlideTransition(
@@ -157,14 +181,15 @@ class _SignupScreenState extends State<SignupScreen>
                     children: [
                       IconButton(
                         onPressed: () => widget.onNavigate('login'),
-                        icon: const Icon(Icons.arrow_back_rounded),
+                        icon: Icon(Icons.arrow_back_rounded, color: textPrimary),
                       ),
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Create Account',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
+                            color: textPrimary,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -176,28 +201,30 @@ class _SignupScreenState extends State<SignupScreen>
                   const SizedBox(height: 32),
                   
                   // Welcome Text
-                  const Text(
+                  Text(
                     'Join SFMS Today! 🚀',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF2E7D32),
+                      color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF2E7D32),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Start your journey to financial freedom',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFF6B7280),
+                      color: textSecondary,
                     ),
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Signup Form
                   Card(
-                    elevation: 12,
+                    color: cardColor,
+                    elevation: isDarkMode ? 0 : 12,
+                    shadowColor: isDarkMode ? Colors.transparent : null,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -213,63 +240,141 @@ class _SignupScreenState extends State<SignupScreen>
                               controller: _fullNameController,
                               validator: (value) =>
                                   value?.isEmpty == true ? 'Full name is required' : null,
-                              decoration: const InputDecoration(
+                              style: TextStyle(color: textPrimary),
+                              decoration: InputDecoration(
                                 labelText: 'Full Name',
-                                prefixIcon: Icon(Icons.person_outline),
+                                labelStyle: TextStyle(color: textSecondary),
+                                prefixIcon: Icon(Icons.person_outline, color: isDarkMode ? SFMSTheme.trustPrimary : null),
                                 hintText: 'Enter your full name',
+                                hintStyle: TextStyle(color: textMuted),
+                                filled: true,
+                                fillColor: isDarkMode ? SFMSTheme.darkBgPrimary : null,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Email
                             TextFormField(
                               controller: _emailController,
                               keyboardType: TextInputType.emailAddress,
                               validator: _validateEmail,
-                              decoration: const InputDecoration(
+                              style: TextStyle(color: textPrimary),
+                              decoration: InputDecoration(
                                 labelText: 'Email Address',
-                                prefixIcon: Icon(Icons.email_outlined),
+                                labelStyle: TextStyle(color: textSecondary),
+                                prefixIcon: Icon(Icons.email_outlined, color: isDarkMode ? SFMSTheme.trustPrimary : null),
                                 hintText: 'Enter your email',
+                                hintStyle: TextStyle(color: textMuted),
+                                filled: true,
+                                fillColor: isDarkMode ? SFMSTheme.darkBgPrimary : null,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Password
                             TextFormField(
                               controller: _passwordController,
                               obscureText: !_showPassword,
                               validator: _validatePassword,
+                              style: TextStyle(color: textPrimary),
                               decoration: InputDecoration(
                                 labelText: 'Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
+                                labelStyle: TextStyle(color: textSecondary),
+                                prefixIcon: Icon(Icons.lock_outline, color: isDarkMode ? SFMSTheme.trustPrimary : null),
                                 hintText: 'Enter your password',
+                                hintStyle: TextStyle(color: textMuted),
+                                filled: true,
+                                fillColor: isDarkMode ? SFMSTheme.darkBgPrimary : null,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _showPassword ? Icons.visibility_off : Icons.visibility,
+                                    color: textSecondary,
                                   ),
                                   onPressed: () => setState(() => _showPassword = !_showPassword),
                                 ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
+                                    width: 2,
+                                  ),
+                                ),
                               ),
                             ),
-                            
+
                             const SizedBox(height: 16),
-                            
+
                             // Confirm Password
                             TextFormField(
                               controller: _confirmPasswordController,
                               obscureText: !_showConfirmPassword,
                               validator: _validateConfirmPassword,
+                              style: TextStyle(color: textPrimary),
                               decoration: InputDecoration(
                                 labelText: 'Confirm Password',
-                                prefixIcon: const Icon(Icons.lock_outline),
+                                labelStyle: TextStyle(color: textSecondary),
+                                prefixIcon: Icon(Icons.lock_outline, color: isDarkMode ? SFMSTheme.trustPrimary : null),
                                 hintText: 'Confirm your password',
+                                hintStyle: TextStyle(color: textMuted),
+                                filled: true,
+                                fillColor: isDarkMode ? SFMSTheme.darkBgPrimary : null,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     _showConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                                    color: textSecondary,
                                   ),
                                   onPressed: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFFE5E7EB),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
+                                  borderSide: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.trustPrimary : SFMSTheme.primaryColor,
+                                    width: 2,
+                                  ),
                                 ),
                               ),
                             ),
@@ -283,59 +388,71 @@ class _SignupScreenState extends State<SignupScreen>
                                 Checkbox(
                                   value: _acceptedTerms,
                                   onChanged: (value) => setState(() => _acceptedTerms = value ?? false),
-                                  activeColor: const Color(0xFF2E7D32),
+                                  activeColor: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF2E7D32),
+                                  checkColor: Colors.white,
+                                  side: BorderSide(
+                                    color: isDarkMode ? SFMSTheme.darkBgTertiary : const Color(0xFF6B7280),
+                                  ),
                                 ),
                                 Expanded(
                                   child: GestureDetector(
                                     onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
-                                    child: const Text(
+                                    child: Text(
                                       'I agree to the Terms & Conditions and Privacy Policy',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Color(0xFF6B7280),
+                                        color: textSecondary,
                                       ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            
+
                             const SizedBox(height: 24),
-                            
+
                             // Signup Button
-                            ElevatedButton(
-                              onPressed: _loading ? null : _handleSignup,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2E7D32),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: isDarkMode ? SFMSTheme.darkTrustGradient : SFMSTheme.successGradient,
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: isDarkMode ? SFMSTheme.tealGlowShadow : null,
                               ),
-                              child: _loading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.person_add),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Create Account',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                              child: ElevatedButton(
+                                onPressed: _loading ? null : _handleSignup,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  shadowColor: Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                                child: _loading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
                                         ),
-                                      ],
-                                    ),
+                                      )
+                                    : const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.person_add),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Create Account',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
                             ),
                           ],
                         ),
@@ -349,9 +466,9 @@ class _SignupScreenState extends State<SignupScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Already have an account? ',
-                        style: TextStyle(color: Color(0xFF6B7280)),
+                        style: TextStyle(color: textSecondary),
                       ),
                       TextButton(
                         onPressed: () => widget.onNavigate('login'),
@@ -359,35 +476,41 @@ class _SignupScreenState extends State<SignupScreen>
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Sign in',
                           style: TextStyle(
-                            color: Color(0xFF4E8EF7),
+                            color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF4E8EF7),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Benefits
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.8),
+                      color: isDarkMode
+                        ? SFMSTheme.darkCardBg.withOpacity(0.6)
+                        : Colors.white.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      border: Border.all(
+                        color: isDarkMode
+                          ? SFMSTheme.darkBgTertiary.withOpacity(0.5)
+                          : Colors.white.withOpacity(0.3),
+                      ),
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Why join SFMS? ✨',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D32),
+                            color: isDarkMode ? SFMSTheme.trustPrimary : const Color(0xFF2E7D32),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -408,6 +531,11 @@ class _SignupScreenState extends State<SignupScreen>
   }
 
   Widget _buildBenefitItem(String emoji, String title, String subtitle) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -416,7 +544,9 @@ class _SignupScreenState extends State<SignupScreen>
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFF2E7D32).withOpacity(0.1),
+              color: isDarkMode
+                ? SFMSTheme.trustPrimary.withOpacity(0.2)
+                : const Color(0xFF2E7D32).withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
@@ -430,17 +560,17 @@ class _SignupScreenState extends State<SignupScreen>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1A1A),
+                    color: textPrimary,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF6B7280),
+                    color: textSecondary,
                   ),
                 ),
               ],

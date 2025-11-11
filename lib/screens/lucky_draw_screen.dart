@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:math' as math;
 
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 
 class LuckyDrawScreen extends StatefulWidget {
@@ -142,20 +143,41 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
+    // Background gradient colors
+    final gradientColors = isDarkMode
+        ? [
+            SFMSTheme.darkBgPrimary,
+            SFMSTheme.darkBgSecondary.withOpacity(0.5),
+            SFMSTheme.darkBgPrimary,
+          ]
+        : [
+            const Color(0xFFE0E7FF),
+            const Color(0xFFFDF4FF),
+            const Color(0xFFFFF7ED),
+          ];
+
     return Scaffold(
       body: Stack(
         children: [
           // Main content
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFE0E7FF),
-                  Color(0xFFFDF4FF),
-                  Color(0xFFFFF7ED),
-                ],
+                colors: gradientColors,
               ),
             ),
             child: SafeArea(
@@ -174,8 +196,8 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                               icon: const Icon(Icons.arrow_back, size: 18),
                               label: const Text('Back'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.white.withOpacity(0.8),
-                                foregroundColor: Colors.black,
+                                backgroundColor: cardColor.withOpacity(0.8),
+                                foregroundColor: textPrimary,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
@@ -195,7 +217,7 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: SFMSTheme.cartoonYellow.withOpacity(0.3),
+                                    color: SFMSTheme.cartoonYellow.withOpacity(isDarkMode ? 0.5 : 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -247,19 +269,19 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                           },
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Lucky Draw',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
+                            color: textPrimary,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'Spin the wheel and win amazing prizes!',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                         ),
                         const SizedBox(height: 24),
@@ -271,23 +293,29 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade100,
+                                color: isDarkMode
+                                    ? Colors.green.withOpacity(0.2)
+                                    : Colors.green.shade100,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.green.shade200),
+                                border: Border.all(
+                                  color: isDarkMode
+                                      ? Colors.green.withOpacity(0.3)
+                                      : Colors.green.shade200,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.card_giftcard,
-                                    color: Colors.green,
+                                    color: isDarkMode ? Colors.green.shade300 : Colors.green,
                                     size: 16,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     '$_dailySpins free spins left',
-                                    style: const TextStyle(
-                                      color: Colors.green,
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.green.shade300 : Colors.green,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -299,23 +327,29 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: Colors.blue.shade100,
+                                color: isDarkMode
+                                    ? Colors.blue.withOpacity(0.2)
+                                    : Colors.blue.shade100,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.blue.shade200),
+                                border: Border.all(
+                                  color: isDarkMode
+                                      ? Colors.blue.withOpacity(0.3)
+                                      : Colors.blue.shade200,
+                                ),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.bolt,
-                                    color: Colors.blue,
+                                    color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                                     size: 16,
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
                                     'Next: ${_dailySpins > 0 ? 'FREE' : '$_spinCost pts'}',
-                                    style: const TextStyle(
-                                      color: Colors.blue,
+                                    style: TextStyle(
+                                      color: isDarkMode ? Colors.blue.shade300 : Colors.blue,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -344,16 +378,26 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
                                         border: Border.all(
-                                          color: Colors.white,
+                                          color: isDarkMode
+                                              ? SFMSTheme.darkBgSecondary
+                                              : Colors.white,
                                           width: 8,
                                         ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.2),
-                                            blurRadius: 20,
-                                            offset: const Offset(0, 8),
-                                          ),
-                                        ],
+                                        boxShadow: isDarkMode
+                                            ? [
+                                                BoxShadow(
+                                                  color: SFMSTheme.darkAccentTeal.withOpacity(0.3),
+                                                  blurRadius: 30,
+                                                  offset: const Offset(0, 8),
+                                                ),
+                                              ]
+                                            : [
+                                                BoxShadow(
+                                                  color: Colors.black.withOpacity(0.2),
+                                                  blurRadius: 20,
+                                                  offset: const Offset(0, 8),
+                                                ),
+                                              ],
                                       ),
                                       child: CustomPaint(
                                         painter: WheelPainter(prizes: _prizes),
@@ -368,15 +412,23 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                 width: 60,
                                 height: 60,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: cardColor,
                                   shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
+                                  boxShadow: isDarkMode
+                                      ? [
+                                          BoxShadow(
+                                            color: SFMSTheme.darkAccentTeal.withOpacity(0.2),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(0.1),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
                                 ),
                                 child: AnimatedBuilder(
                                   animation: _floatingController,
@@ -385,9 +437,11 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                       angle: _isSpinning
                                           ? _floatingController.value * 2 * math.pi * 4
                                           : 0,
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.auto_awesome,
-                                        color: Color(0xFF845EC2),
+                                        color: isDarkMode
+                                            ? SFMSTheme.darkAccentTeal
+                                            : const Color(0xFF845EC2),
                                         size: 28,
                                       ),
                                     );
@@ -402,7 +456,7 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                   width: 0,
                                   height: 0,
                                   child: CustomPaint(
-                                    painter: PointerPainter(),
+                                    painter: PointerPainter(isDarkMode: isDarkMode),
                                   ),
                                 ),
                               ),
@@ -420,7 +474,9 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _canSpin && !_isSpinning
                                   ? SFMSTheme.cartoonPurple
-                                  : Colors.grey.shade300,
+                                  : (isDarkMode
+                                      ? SFMSTheme.darkBgTertiary
+                                      : Colors.grey.shade300),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
@@ -451,8 +507,10 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                       : _dailySpins > 0
                                       ? 'Spin FREE!'
                                       : 'Spin ($_spinCost pts)',
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: _canSpin && !_isSpinning
+                                        ? Colors.white
+                                        : (isDarkMode ? textMuted : Colors.grey.shade600),
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -468,33 +526,29 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                           Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: cardColor,
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
+                              boxShadow: cardShadow,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Row(
+                                Row(
                                   children: [
                                     Icon(
                                       Icons.emoji_events,
-                                      color: Colors.amber,
+                                      color: isDarkMode
+                                          ? Colors.amber.shade300
+                                          : Colors.amber,
                                       size: 20,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'Recent Wins',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1F2937),
+                                        color: textPrimary,
                                       ),
                                     ),
                                   ],
@@ -507,7 +561,9 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                       margin: const EdgeInsets.only(bottom: 8),
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.grey.shade50,
+                                        color: isDarkMode
+                                            ? SFMSTheme.darkBgTertiary.withOpacity(0.3)
+                                            : Colors.grey.shade50,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Row(
@@ -523,17 +579,17 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                               children: [
                                                 Text(
                                                   prize.name,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1F2937),
+                                                    color: textPrimary,
                                                   ),
                                                 ),
                                                 Text(
                                                   prize.value,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
-                                                    color: Color(0xFF6B7280),
+                                                    color: textSecondary,
                                                   ),
                                                 ),
                                               ],
@@ -542,15 +598,19 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: Colors.green.shade100,
+                                              color: isDarkMode
+                                                  ? Colors.green.withOpacity(0.2)
+                                                  : Colors.green.shade100,
                                               borderRadius: BorderRadius.circular(8),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               'Won',
                                               style: TextStyle(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.green,
+                                                color: isDarkMode
+                                                    ? Colors.green.shade300
+                                                    : Colors.green,
                                               ),
                                             ),
                                           ),
@@ -568,9 +628,9 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                         // Reset Timer
                         Text(
                           'Free spins reset in: ${_formatTimeUntilReset()}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                         ),
                       ],
@@ -590,15 +650,23 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                   margin: const EdgeInsets.all(24),
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    boxShadow: isDarkMode
+                        ? [
+                            BoxShadow(
+                              color: SFMSTheme.darkAccentTeal.withOpacity(0.3),
+                              blurRadius: 30,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -608,29 +676,29 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                         style: const TextStyle(fontSize: 80),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Congratulations!',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'You won:',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFF6B7280),
+                          color: textSecondary,
                         ),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         _wonPrize!.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       Text(
@@ -638,15 +706,17 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: SFMSTheme.cartoonPurple,
+                          color: isDarkMode
+                              ? SFMSTheme.darkAccentTeal
+                              : SFMSTheme.cartoonPurple,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         _wonPrize!.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6B7280),
+                          color: textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -661,7 +731,9 @@ class _LuckyDrawScreenState extends State<LuckyDrawScreen>
                             });
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: SFMSTheme.cartoonPurple,
+                            backgroundColor: isDarkMode
+                                ? SFMSTheme.darkAccentTeal
+                                : SFMSTheme.cartoonPurple,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -848,10 +920,14 @@ class WheelPainter extends CustomPainter {
 
 // Custom painter for the pointer
 class PointerPainter extends CustomPainter {
+  final bool isDarkMode;
+
+  PointerPainter({this.isDarkMode = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white
+      ..color = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.white
       ..style = PaintingStyle.fill;
 
     final path = Path();
@@ -862,7 +938,9 @@ class PointerPainter extends CustomPainter {
 
     canvas.drawPath(path, paint);
     canvas.drawPath(path, Paint()
-      ..color = Colors.grey.shade300
+      ..color = isDarkMode
+          ? SFMSTheme.darkBgTertiary
+          : Colors.grey.shade300
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2);
   }

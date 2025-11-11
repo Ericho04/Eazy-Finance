@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
 import '../models/budget.dart';
 import '../utils/theme.dart';
@@ -116,6 +117,20 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+    final primaryGradient = isDarkMode ? SFMSTheme.darkGradientTealBlue : SFMSTheme.primaryGradient;
+
     return SingleChildScrollView(
       padding: EdgeInsets.all(SFMSTheme.spacing24),
       child: Column(
@@ -132,7 +147,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   _getGreeting(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: SFMSTheme.textSecondary,
+                        color: textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                 ),
@@ -140,7 +155,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   _getUserName(),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: SFMSTheme.textPrimary,
+                        color: textPrimary,
                         fontWeight: FontWeight.bold,
                       ),
                 ),
@@ -159,9 +174,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: double.infinity,
                 padding: EdgeInsets.all(SFMSTheme.spacing24),
                 decoration: BoxDecoration(
-                  gradient: SFMSTheme.primaryGradient,
+                  gradient: primaryGradient,
                   borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-                  boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
+                  boxShadow: isDarkMode
+                    ? SFMSTheme.tealGlowShadow
+                    : SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Text(
             'Quick Actions',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: SFMSTheme.textPrimary,
+                  color: textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -254,6 +271,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Expanded(
                 child: _buildQuickActionCard(
+                  context,
                   '➕',
                   'Add Expense',
                   'Track your spending',
@@ -264,6 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: _buildQuickActionCard(
+                  context,
                   '🎯',
                   'Add Goal',
                   'Set your targets',
@@ -280,6 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             children: [
               Expanded(
                 child: _buildQuickActionCard(
+                  context,
                   '📋',
                   'Tax Planning',
                   'Plan your taxes',
@@ -290,6 +310,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               SizedBox(width: SFMSTheme.spacing16),
               Expanded(
                 child: _buildQuickActionCard(
+                  context,
                   '🎰',
                   'Lucky Draw',
                   'Win rewards',
@@ -309,7 +330,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               Text(
                 'Recent Transactions',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: SFMSTheme.textPrimary,
+                      color: textPrimary,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -318,7 +339,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: Text(
                   'View All',
                   style: TextStyle(
-                    color: SFMSTheme.primaryColor,
+                    color: isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -334,12 +355,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                   appProvider.getRecentTransactions(limit: 5);
 
               if (recentTransactions.isEmpty) {
-                return _buildEmptyTransactions();
+                return _buildEmptyTransactions(context);
               }
 
               return Column(
                 children: recentTransactions
-                    .map((transaction) => _buildTransactionItem(transaction))
+                    .map((transaction) => _buildTransactionItem(context, transaction))
                     .toList(),
               );
             },
@@ -351,7 +372,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Text(
             'Budget Overview',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: SFMSTheme.textPrimary,
+                  color: textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
@@ -360,13 +381,13 @@ class _DashboardScreenState extends State<DashboardScreen>
           Consumer<AppProvider>(
             builder: (context, appProvider, child) {
               if (appProvider.budgets.isEmpty) {
-                return _buildEmptyBudgets();
+                return _buildEmptyBudgets(context);
               }
 
               return Column(
                 children: appProvider.budgets
                     .take(3)
-                    .map((budget) => _buildBudgetItem(budget))
+                    .map((budget) => _buildBudgetItem(context, budget))
                     .toList(),
               );
             },
@@ -379,22 +400,30 @@ class _DashboardScreenState extends State<DashboardScreen>
   }
 
   Widget _buildQuickActionCard(
+    BuildContext context,
     String emoji,
     String title,
     String subtitle,
     Color color,
     VoidCallback onTap,
   ) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.all(SFMSTheme.spacing20),
         decoration: BoxDecoration(
-          color: SFMSTheme.cardColor,
+          color: cardColor,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
-          boxShadow: SFMSTheme.softCardShadow,
+          boxShadow: cardShadow,
           border: Border.all(
-            color: color.withOpacity(0.2),
+            color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
             width: 2,
           ),
         ),
@@ -407,7 +436,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    color.withOpacity(0.2),
+                    color.withOpacity(isDarkMode ? 0.3 : 0.2),
                     color.withOpacity(0.1),
                   ],
                   begin: Alignment.topLeft,
@@ -426,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: SFMSTheme.textPrimary,
+                    color: textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
             ),
@@ -434,7 +463,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Text(
               subtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: SFMSTheme.textSecondary,
+                    color: textSecondary,
                   ),
             ),
           ],
@@ -443,17 +472,27 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildTransactionItem(Transaction transaction) {
+  Widget _buildTransactionItem(BuildContext context, Transaction transaction) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     final isIncome = transaction.type == TransactionType.income;
-    final color = isIncome ? SFMSTheme.successColor : SFMSTheme.dangerColor;
+    final color = isIncome
+      ? (isDarkMode ? SFMSTheme.darkSuccessColor : SFMSTheme.successColor)
+      : (isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor);
 
     return Container(
       margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
       padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: SFMSTheme.cardColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-        boxShadow: SFMSTheme.softCardShadow,
+        boxShadow: cardShadow,
       ),
       child: Row(
         children: [
@@ -463,7 +502,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  color.withOpacity(0.2),
+                  color.withOpacity(isDarkMode ? 0.3 : 0.2),
                   color.withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
@@ -485,7 +524,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   transaction.description,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: SFMSTheme.textPrimary,
+                        color: textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                 ),
@@ -493,7 +532,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   transaction.category,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: SFMSTheme.textSecondary,
+                        color: textSecondary,
                       ),
                 ),
               ],
@@ -513,7 +552,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               Text(
                 _formatDate(DateTime.parse(transaction.date)),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: SFMSTheme.textMuted,
+                      color: textMuted,
                     ),
               ),
             ],
@@ -523,21 +562,28 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBudgetItem(Budget budget) {
+  Widget _buildBudgetItem(BuildContext context, Budget budget) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     final percentage = budget.utilizationPercentage / 100;
     final color = percentage > 0.8
-        ? SFMSTheme.dangerColor
+        ? (isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor)
         : percentage > 0.6
             ? SFMSTheme.warningColor
-            : SFMSTheme.primaryColor;
+            : (isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.primaryColor);
 
     return Container(
       margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
       padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: SFMSTheme.cardColor,
+        color: cardColor,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-        boxShadow: SFMSTheme.softCardShadow,
+        boxShadow: cardShadow,
       ),
       child: Column(
         children: [
@@ -549,7 +595,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      color.withOpacity(0.2),
+                      color.withOpacity(isDarkMode ? 0.3 : 0.2),
                       color.withOpacity(0.1),
                     ],
                     begin: Alignment.topLeft,
@@ -572,7 +618,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     Text(
                       budget.category,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: SFMSTheme.textPrimary,
+                            color: textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                     ),
@@ -580,7 +626,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     Text(
                       'RM ${budget.spent.toStringAsFixed(2)} / RM ${budget.amount.toStringAsFixed(2)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: SFMSTheme.textSecondary,
+                            color: textSecondary,
                           ),
                     ),
                   ],
@@ -610,12 +656,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildEmptyTransactions() {
+  Widget _buildEmptyTransactions(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
+    final neutralMedium = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.neutralMedium;
+    final neutralDark = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.neutralDark;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+
     return Container(
       padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: SFMSTheme.neutralLight,
+        color: neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
+        boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
       child: Column(
         children: [
@@ -625,8 +680,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  SFMSTheme.neutralMedium.withOpacity(0.3),
-                  SFMSTheme.neutralMedium.withOpacity(0.1),
+                  neutralMedium.withOpacity(0.3),
+                  neutralMedium.withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -636,14 +691,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Icon(
               Icons.receipt_long,
               size: SFMSTheme.iconSizeXLarge,
-              color: SFMSTheme.neutralDark,
+              color: neutralDark,
             ),
           ),
           SizedBox(height: SFMSTheme.spacing16),
           Text(
             'No transactions yet',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: SFMSTheme.textSecondary,
+                  color: textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -651,7 +706,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Text(
             'Start tracking your expenses',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: SFMSTheme.textMuted,
+                  color: textMuted,
                 ),
           ),
         ],
@@ -659,12 +714,21 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildEmptyBudgets() {
+  Widget _buildEmptyBudgets(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
+    final neutralMedium = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.neutralMedium;
+    final neutralDark = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.neutralDark;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+
     return Container(
       padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: SFMSTheme.neutralLight,
+        color: neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
+        boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
       child: Column(
         children: [
@@ -674,8 +738,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  SFMSTheme.neutralMedium.withOpacity(0.3),
-                  SFMSTheme.neutralMedium.withOpacity(0.1),
+                  neutralMedium.withOpacity(0.3),
+                  neutralMedium.withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -685,14 +749,14 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Icon(
               Icons.pie_chart,
               size: SFMSTheme.iconSizeXLarge,
-              color: SFMSTheme.neutralDark,
+              color: neutralDark,
             ),
           ),
           SizedBox(height: SFMSTheme.spacing16),
           Text(
             'No budgets set',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: SFMSTheme.textSecondary,
+                  color: textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -700,7 +764,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           Text(
             'Create budgets to manage spending',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: SFMSTheme.textMuted,
+                  color: textMuted,
                 ),
           ),
         ],
