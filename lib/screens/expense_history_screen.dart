@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
+import '../utils/theme.dart';
 
 
 class ExpenseHistoryScreen extends StatefulWidget {
@@ -53,10 +55,22 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
+        decoration: BoxDecoration(
+          gradient: isDarkMode ? SFMSTheme.darkGradientTealBlue : LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
@@ -78,17 +92,17 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                       onPressed: widget.onBack,
                       icon: const Icon(Icons.arrow_back_rounded),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        foregroundColor: Colors.grey.shade700,
+                        backgroundColor: cardColor.withOpacity(0.9),
+                        foregroundColor: textSecondary,
                       ),
                     ),
                     const SizedBox(width: 12),
-                    const Text(
+                    Text(
                       'Transaction History',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -116,7 +130,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade700,
+                                color: textSecondary,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -124,7 +138,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                               'Start adding transactions to see your history',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey.shade500,
+                                color: textMuted,
                               ),
                             ),
                           ],
@@ -153,15 +167,9 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                   margin: const EdgeInsets.only(bottom: 12),
                                   padding: const EdgeInsets.all(16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: cardColor,
                                     borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                                    boxShadow: cardShadow,
                                   ),
                                   child: Row(
                                     children: [
@@ -172,14 +180,24 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                         decoration: BoxDecoration(
                                           gradient: LinearGradient(
                                             colors: isExpense
-                                                ? [
-                                              Colors.red.shade400,
-                                              Colors.pink.shade500,
-                                            ]
-                                                : [
-                                              Colors.green.shade400,
-                                              Colors.teal.shade500,
-                                            ],
+                                                ? isDarkMode
+                                                    ? [
+                                                      SFMSTheme.darkAccentCoral.withOpacity(0.8),
+                                                      SFMSTheme.darkAccentCoral,
+                                                    ]
+                                                    : [
+                                                      Colors.red.shade400,
+                                                      Colors.pink.shade500,
+                                                    ]
+                                                : isDarkMode
+                                                    ? [
+                                                      SFMSTheme.darkAccentEmerald.withOpacity(0.8),
+                                                      SFMSTheme.darkAccentEmerald,
+                                                    ]
+                                                    : [
+                                                      Colors.green.shade400,
+                                                      Colors.teal.shade500,
+                                                    ],
                                           ),
                                           borderRadius: BorderRadius.circular(25),
                                         ),
@@ -202,10 +220,10 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                           children: [
                                             Text(
                                               transaction.description,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
-                                                color: Color(0xFF1F2937),
+                                                color: textPrimary,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -215,7 +233,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                               transaction.category,
                                               style: TextStyle(
                                                 fontSize: 14,
-                                                color: Colors.grey.shade600,
+                                                color: textSecondary,
                                               ),
                                             ),
                                             const SizedBox(height: 4),
@@ -223,7 +241,7 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                               _formatDate(transaction.date),
                                               style: TextStyle(
                                                 fontSize: 12,
-                                                color: Colors.grey.shade500,
+                                                color: textMuted,
                                               ),
                                             ),
                                           ],
@@ -240,8 +258,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                               fontSize: 16,
                                               fontWeight: FontWeight.bold,
                                               color: isExpense
-                                                  ? Colors.red.shade600
-                                                  : Colors.green.shade600,
+                                                  ? (isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade600)
+                                                  : (isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade600),
                                             ),
                                           ),
                                           const SizedBox(height: 4),
@@ -252,8 +270,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                             ),
                                             decoration: BoxDecoration(
                                               color: isExpense
-                                                  ? Colors.red.shade50
-                                                  : Colors.green.shade50,
+                                                  ? (isDarkMode ? SFMSTheme.darkAccentCoral.withOpacity(0.2) : Colors.red.shade50)
+                                                  : (isDarkMode ? SFMSTheme.darkAccentEmerald.withOpacity(0.2) : Colors.green.shade50),
                                               borderRadius: BorderRadius.circular(8),
                                             ),
                                             child: Text(
@@ -261,8 +279,8 @@ class _ExpenseHistoryScreenState extends State<ExpenseHistoryScreen>
                                               style: TextStyle(
                                                 fontSize: 10,
                                                 color: isExpense
-                                                    ? Colors.red.shade600
-                                                    : Colors.green.shade600,
+                                                    ? (isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade600)
+                                                    : (isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade600),
                                                 fontWeight: FontWeight.w600,
                                               ),
                                             ),

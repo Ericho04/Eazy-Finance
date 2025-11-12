@@ -1,38 +1,91 @@
 import 'package:flutter/material.dart';
 
 class SFMSTheme {
-  // Primary Colors
-  static const Color primaryColor = Color(0xFF2E7D32);
-  static const Color successColor = Color(0xFF4CAF50);
-  static const Color warningColor = Color(0xFFFF9800);
-  static const Color dangerColor = Color(0xFFFF5722);
+  // ==========================================================================
+  // 🎨 COLOR PALETTE VARIATIONS
+  // Modern Flat-Vector Cartoon Style for Financial Apps
+  // Inspired by: Wealthsimple, Plum, Revolut
+  // ==========================================================================
 
-  // Cartoon Colors
-  static const Color cartoonPink = Color(0xFFFF6B9D);
-  static const Color cartoonPurple = Color(0xFF845EC2);
-  static const Color cartoonBlue = Color(0xFF4E8EF7);
-  static const Color cartoonCyan = Color(0xFF00D2FF);
-  static const Color cartoonMint = Color(0xFF4FFBDF);
-  static const Color cartoonYellow = Color(0xFFFFD93D);
-  static const Color cartoonOrange = Color(0xFFFF8C42);
+  // ------ Palette 1: Deep Blue Trust (DEFAULT) ------
+  // Professional, trustworthy, calm - ideal for financial security
+  static const Color palette1Primary = Color(0xFF1E3A8A);      // Deep Blue
+  static const Color palette1PrimaryLight = Color(0xFF3B82F6); // Light Blue
+  static const Color palette1Accent = Color(0xFF10B981);       // Success Green
+  static const Color palette1AccentAlt = Color(0xFFFACC15);    // Gold Highlight
+  static const Color palette1Surface = Color(0xFFF8FAFC);      // Soft White
+  static const Color palette1SurfaceVariant = Color(0xFFEFF6FF); // Light Blue Tint
 
-  // Neutral Colors
-  static const Color neutralLight = Color(0xFFFAFAFA);
-  static const Color neutralMedium = Color(0xFFE0E0E0);
-  static const Color neutralDark = Color(0xFF9E9E9E);
+  // ------ Palette 2: Teal Prosperity ------
+  // Fresh, modern, growth-oriented - emphasizes financial growth
+  static const Color palette2Primary = Color(0xFF0D9488);      // Teal
+  static const Color palette2PrimaryLight = Color(0xFF14B8A6); // Light Teal
+  static const Color palette2Accent = Color(0xFFFACC15);       // Gold
+  static const Color palette2AccentAlt = Color(0xFF10B981);    // Green
+  static const Color palette2Surface = Color(0xFFF0FDFA);      // Mint Tint
+  static const Color palette2SurfaceVariant = Color(0xFFCCFBF1); // Light Teal Tint
 
-  // AI Colors
-  static const Color aiColor = Color(0xFF667eea);
-  static const Color aiLight = Color(0xFFf0f2ff);
+  // ------ Palette 3: Royal Indigo Confidence ------
+  // Sophisticated, premium, confident - for high-value financial apps
+  static const Color palette3Primary = Color(0xFF4338CA);      // Royal Indigo
+  static const Color palette3PrimaryLight = Color(0xFF6366F1); // Light Indigo
+  static const Color palette3Accent = Color(0xFF10B981);       // Success Green
+  static const Color palette3AccentAlt = Color(0xFFF59E0B);    // Amber/Gold
+  static const Color palette3Surface = Color(0xFFFAF5FF);      // Soft Purple Tint
+  static const Color palette3SurfaceVariant = Color(0xFFEDE9FE); // Light Indigo Tint
 
-  // Background Colors
-  static const Color backgroundColor = Color(0xFFf8faff);
+  // ==========================================================================
+  // 🎯 ACTIVE THEME COLORS (Palette 1 by default)
+  // To switch palettes, change these assignments to palette2/palette3
+  // ==========================================================================
+
+  static const Color primaryColor = palette1Primary;
+  static const Color primaryLight = palette1PrimaryLight;
+  static const Color accentColor = palette1Accent;
+  static const Color accentAlt = palette1AccentAlt;
+
+  // Status Colors - Universal across all palettes
+  static const Color successColor = Color(0xFF10B981);  // Green
+  static const Color warningColor = Color(0xFFF59E0B);  // Amber
+  static const Color dangerColor = Color(0xFFEF4444);   // Red
+  static const Color infoColor = Color(0xFF3B82F6);     // Blue
+
+  // Flat-Vector Cartoon Accent Colors
+  // Softer, more professional versions for financial UI
+  static const Color cartoonMint = Color(0xFF6EE7B7);    // Soft Mint
+  static const Color cartoonBlue = Color(0xFF60A5FA);    // Sky Blue
+  static const Color cartoonPurple = Color(0xFFA78BFA);  // Lavender
+  static const Color cartoonPink = Color(0xFFF472B6);    // Rose Pink
+  static const Color cartoonYellow = Color(0xFFFBBF24);  // Sunny Yellow
+  static const Color cartoonOrange = Color(0xFFFB923C);  // Peach Orange
+  static const Color cartoonCyan = Color(0xFF22D3EE);    // Cyan
+  static const Color cartoonTeal = Color(0xFF2DD4BF);    // Teal
+
+  // Neutral Colors - Refined for professional look
+  static const Color neutralLight = Color(0xFFF9FAFB);   // Off-White
+  static const Color neutralMedium = Color(0xFFE5E7EB);  // Light Grey
+  static const Color neutralDark = Color(0xFF6B7280);    // Medium Grey
+  static const Color neutralDarker = Color(0xFF374151); // Dark Grey
+
+  // AI & Premium Features Colors
+  static const Color aiPrimary = Color(0xFF8B5CF6);      // Purple
+  static const Color aiSecondary = Color(0xFFEC4899);    // Pink
+  static const Color aiLight = Color(0xFFFAF5FF);        // Light Purple
+  static const Color aiColor = aiPrimary;                // Alias for convenience
+  static const Color premiumGold = Color(0xFFFBBF24);    // Gold
+
+  // Background Colors with Soft Gradients
+  static const Color backgroundColor = palette1Surface;
+  static const Color backgroundVariant = palette1SurfaceVariant;
   static const Color cardColor = Color(0xFFFFFFFF);
+  static const Color cardColorTinted = Color(0xFFFDFDFD);
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFF1F2937);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textMuted = Color(0xFF9CA3AF);
+  // Text Colors - Optimized for readability
+  static const Color textPrimary = Color(0xFF111827);    // Almost Black
+  static const Color textSecondary = Color(0xFF6B7280);  // Medium Grey
+  static const Color textMuted = Color(0xFF9CA3AF);      // Light Grey
+  static const Color textOnPrimary = Color(0xFFFFFFFF);  // White
+  static const Color textOnAccent = Color(0xFFFFFFFF);   // White
 
   static ThemeData get lightTheme {
     return ThemeData(
@@ -41,12 +94,13 @@ class SFMSTheme {
         seedColor: primaryColor,
         brightness: Brightness.light,
         primary: primaryColor,
-        secondary: successColor,
+        secondary: accentColor,
+        tertiary: accentAlt,
         surface: cardColor,
         background: backgroundColor,
         error: dangerColor,
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
+        onPrimary: textOnPrimary,
+        onSecondary: textOnAccent,
         onSurface: textPrimary,
         onBackground: textPrimary,
         onError: Colors.white,
@@ -55,352 +109,919 @@ class SFMSTheme {
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: textPrimary),
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: textPrimary, size: 24),
         titleTextStyle: TextStyle(
           color: textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
       ),
       cardTheme: CardThemeData(
         color: cardColor,
         elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.04),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          foregroundColor: textOnPrimary,
           elevation: 0,
+          shadowColor: primaryColor.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryColor,
+          side: const BorderSide(color: primaryColor, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: cardColor,
+        fillColor: neutralLight,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.all(16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: neutralMedium, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: primaryColor, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: dangerColor, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: dangerColor, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        hintStyle: TextStyle(
+          color: textMuted,
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: textOnAccent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: cardColor,
+        selectedItemColor: primaryColor,
+        unselectedItemColor: neutralDark,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: neutralLight,
+        selectedColor: primaryColor.withOpacity(0.15),
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: neutralMedium,
+        thickness: 1,
+        space: 1,
       ),
       textTheme: const TextTheme(
+        // Display - Large headlines & hero numbers
         displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontSize: 48,
+          fontWeight: FontWeight.w800,
           color: textPrimary,
+          letterSpacing: -1.5,
+          height: 1.1,
         ),
         displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontSize: 36,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
+          letterSpacing: -1,
+          height: 1.2,
         ),
         displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
+          letterSpacing: -0.5,
+          height: 1.2,
         ),
+        // Headlines - Section titles
         headlineLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
           color: textPrimary,
+          letterSpacing: -0.5,
+          height: 1.3,
         ),
         headlineMedium: TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: -0.25,
+          height: 1.3,
         ),
         headlineSmall: TextStyle(
           fontSize: 18,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
+          height: 1.4,
         ),
+        // Titles - Card headers & labels
         titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.15,
+          height: 1.4,
         ),
         titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.1,
+          height: 1.4,
         ),
         titleSmall: TextStyle(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.1,
+          height: 1.4,
         ),
+        // Body - Main content text
         bodyLarge: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: textPrimary,
+          letterSpacing: 0.15,
+          height: 1.5,
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: textPrimary,
+          letterSpacing: 0.1,
+          height: 1.5,
         ),
         bodySmall: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.normal,
+          fontWeight: FontWeight.w400,
           color: textSecondary,
+          letterSpacing: 0.25,
+          height: 1.5,
         ),
+        // Labels - Buttons, chips, tags
         labelLarge: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
+          fontWeight: FontWeight.w600,
           color: textPrimary,
+          letterSpacing: 0.5,
+          height: 1.2,
         ),
         labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: textPrimary,
+          letterSpacing: 0.4,
+          height: 1.2,
         ),
         labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: textSecondary,
+          letterSpacing: 0.5,
+          height: 1.2,
         ),
       ),
     );
   }
 
+  // ==========================================================================
+  // 🌙 DARK MODE COLOR PALETTE
+  // Elegant, modern, and professional dark mode colors
+  // ==========================================================================
+
+  // Dark Mode Backgrounds
+  static const Color darkBgPrimary = Color(0xFF0F172A);      // Deep Navy
+  static const Color darkBgSecondary = Color(0xFF1E293B);    // Slate Gray
+  static const Color darkBgTertiary = Color(0xFF334155);     // Lighter Slate
+  static const Color darkCardBg = darkBgSecondary;            // Card Background (alias)
+
+  // Dark Mode Accent Colors
+  static const Color darkAccentTeal = Color(0xFF14B8A6);     // Teal Highlight
+  static const Color darkAccentEmerald = Color(0xFF10B981);  // Emerald Success
+  static const Color darkAccentCoral = Color(0xFFF87171);    // Coral Alert
+
+  // Dark Mode Text Colors
+  static const Color darkTextPrimary = Color(0xFFF9FAFB);    // Primary Text
+  static const Color darkTextSecondary = Color(0xFFCBD5E1);  // Secondary Text
+  static const Color darkTextMuted = Color(0xFF64748B);      // Muted Text
+
+  // Dark Mode Status Colors
+  static const Color darkSuccessColor = Color(0xFF34D399);   // Emerald Green
+  static const Color darkWarningColor = Color(0xFFFBBF24);   // Amber
+  static const Color darkDangerColor = Color(0xFFF87171);    // Coral Red
+
+  // Dark Mode Flat-Vector Cartoon Accent Colors
+  static const Color darkCartoonMint = Color(0xFF6EE7B7);    // Soft Mint
+  static const Color darkCartoonBlue = Color(0xFF60A5FA);    // Sky Blue
+  static const Color darkCartoonPurple = Color(0xFFA78BFA);  // Lavender
+  static const Color darkCartoonPink = Color(0xFFF472B6);    // Rose Pink
+  static const Color darkCartoonYellow = Color(0xFFFBBF24);  // Sunny Yellow
+  static const Color darkCartoonOrange = Color(0xFFFB923C);  // Peach Orange
+  static const Color darkCartoonCyan = Color(0xFF22D3EE);    // Cyan
+
+  // ==========================================================================
+  // 🎨 THEME VARIANTS (for Dark Mode)
+  // ==========================================================================
+
+  // Variant 1: Blue-Teal Trust Theme
+  static const Color trustPrimary = Color(0xFF0EA5E9);       // Sky Blue
+  static const Color trustAccent = Color(0xFF14B8A6);        // Teal
+  static const Color trustHighlight = Color(0xFF22D3EE);     // Cyan
+
+  // Variant 2: Emerald-Cyan Growth Theme
+  static const Color growthPrimary = Color(0xFF10B981);      // Emerald
+  static const Color growthAccent = Color(0xFF06B6D4);       // Cyan
+  static const Color growthHighlight = Color(0xFF34D399);    // Light Emerald
+
+  // Active Dark Theme Variant (change to switch themes)
+  static const int darkThemeVariant = 1; // 1 = Blue-Teal Trust, 2 = Emerald-Cyan Growth
+
   static ThemeData get darkTheme {
-    const darkBackgroundColor = Color(0xFF0f1419);
-    const darkCardColor = Color(0xFF1c2128);
-    const darkTextPrimary = Color(0xFFe6edf3);
-    const darkTextSecondary = Color(0xFF8b949e);
+    // Select colors based on variant
+    final isDarkTrustTheme = darkThemeVariant == 1;
+    final primaryAccent = isDarkTrustTheme ? trustPrimary : growthPrimary;
+    final secondaryAccent = isDarkTrustTheme ? trustAccent : growthAccent;
+    final highlightAccent = isDarkTrustTheme ? trustHighlight : growthHighlight;
+
+    const darkBackgroundColor = darkBgPrimary;
+    const darkBackgroundVariant = darkBgSecondary;
+    const darkCardColor = darkBgSecondary;
+    const darkTextPrimaryColor = darkTextPrimary;
+    const darkTextSecondaryColor = darkTextSecondary;
+    const darkNeutralMedium = Color(0xFF334155);
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: primaryColor,
+        seedColor: primaryAccent,
         brightness: Brightness.dark,
-        primary: successColor,
-        secondary: successColor,
+        primary: primaryAccent,
+        secondary: secondaryAccent,
+        tertiary: highlightAccent,
         surface: darkCardColor,
         background: darkBackgroundColor,
-        error: const Color(0xFFF44336),
-        onPrimary: Colors.black,
+        error: darkAccentCoral,
+        onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: darkTextPrimary,
-        onBackground: darkTextPrimary,
+        onSurface: darkTextPrimaryColor,
+        onBackground: darkTextPrimaryColor,
         onError: Colors.white,
       ),
       scaffoldBackgroundColor: darkBackgroundColor,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: darkTextPrimary),
+        surfaceTintColor: Colors.transparent,
+        iconTheme: IconThemeData(color: darkTextPrimaryColor, size: 24),
         titleTextStyle: TextStyle(
-          color: darkTextPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
+          color: darkTextPrimaryColor,
+          fontSize: 22,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.5,
         ),
       ),
       cardTheme: CardThemeData(
         color: darkCardColor,
         elevation: 0,
+        shadowColor: Colors.black.withOpacity(0.3),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: successColor,
-          foregroundColor: Colors.black,
+          backgroundColor: primaryAccent,
+          foregroundColor: Colors.white,
           elevation: 0,
+          shadowColor: primaryAccent.withOpacity(0.3),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: primaryAccent,
+          side: BorderSide(color: primaryAccent, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: primaryAccent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          textStyle: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: darkCardColor,
+        fillColor: darkBackgroundVariant,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.all(16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: darkNeutralMedium, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: primaryAccent, width: 2),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: dangerColor, width: 1.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: BorderSide(color: dangerColor, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        hintStyle: TextStyle(
+          color: darkTextSecondaryColor,
+          fontSize: 15,
+          fontWeight: FontWeight.w400,
+        ),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: accentColor,
+        foregroundColor: textOnAccent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: darkCardColor,
+        selectedItemColor: primaryAccent,
+        unselectedItemColor: darkTextSecondaryColor,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+        selectedLabelStyle: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: darkBackgroundVariant,
+        selectedColor: primaryAccent.withOpacity(0.2),
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
+      dividerTheme: DividerThemeData(
+        color: darkNeutralMedium,
+        thickness: 1,
+        space: 1,
       ),
       textTheme: const TextTheme(
+        // Display - Large headlines & hero numbers
         displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontSize: 48,
+          fontWeight: FontWeight.w800,
+          color: darkTextPrimaryColor,
+          letterSpacing: -1.5,
+          height: 1.1,
         ),
         displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontSize: 36,
+          fontWeight: FontWeight.w700,
+          color: darkTextPrimaryColor,
+          letterSpacing: -1,
+          height: 1.2,
         ),
         displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontSize: 28,
+          fontWeight: FontWeight.w700,
+          color: darkTextPrimaryColor,
+          letterSpacing: -0.5,
+          height: 1.2,
         ),
+        // Headlines - Section titles
         headlineLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: darkTextPrimaryColor,
+          letterSpacing: -0.5,
+          height: 1.3,
         ),
         headlineMedium: TextStyle(
           fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+          color: darkTextPrimaryColor,
+          letterSpacing: -0.25,
+          height: 1.3,
         ),
         headlineSmall: TextStyle(
           fontSize: 18,
-          fontWeight: FontWeight.bold,
-          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+          color: darkTextPrimaryColor,
+          height: 1.4,
         ),
+        // Titles - Card headers & labels
         titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.15,
+          height: 1.4,
         ),
         titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.1,
+          height: 1.4,
         ),
         titleSmall: TextStyle(
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.1,
+          height: 1.4,
         ),
+        // Body - Main content text
         bodyLarge: TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.normal,
-          color: darkTextPrimary,
+          fontWeight: FontWeight.w400,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.15,
+          height: 1.5,
         ),
         bodyMedium: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.normal,
-          color: darkTextPrimary,
+          fontWeight: FontWeight.w400,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.1,
+          height: 1.5,
         ),
         bodySmall: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.normal,
-          color: darkTextSecondary,
+          fontWeight: FontWeight.w400,
+          color: darkTextSecondaryColor,
+          letterSpacing: 0.25,
+          height: 1.5,
         ),
+        // Labels - Buttons, chips, tags
         labelLarge: TextStyle(
           fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: darkTextPrimary,
+          fontWeight: FontWeight.w600,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.5,
+          height: 1.2,
         ),
         labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: darkTextPrimary,
+          color: darkTextPrimaryColor,
+          letterSpacing: 0.4,
+          height: 1.2,
         ),
         labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
-          color: darkTextSecondary,
+          color: darkTextSecondaryColor,
+          letterSpacing: 0.5,
+          height: 1.2,
         ),
       ),
     );
   }
 
-  // Helper methods for gradients
+  // ==========================================================================
+  // 🎨 MODERN FLAT-VECTOR GRADIENTS
+  // Subtle, professional gradients for financial UI elements
+  // ==========================================================================
+
+  // Primary Brand Gradients
+  static LinearGradient get primaryGradient {
+    return const LinearGradient(
+      colors: [primaryColor, primaryLight],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get accentGradient {
+    return const LinearGradient(
+      colors: [accentColor, Color(0xFF34D399)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get goldGradient {
+    return const LinearGradient(
+      colors: [accentAlt, Color(0xFFFDE047)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Status Gradients
   static LinearGradient get successGradient {
-    return LinearGradient(
-      colors: [successColor, successColor.withOpacity(0.8)],
+    return const LinearGradient(
+      colors: [successColor, Color(0xFF34D399)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   static LinearGradient get warningGradient {
-    return LinearGradient(
-      colors: [warningColor, const Color(0xFFFFB74D)],
+    return const LinearGradient(
+      colors: [warningColor, Color(0xFFFBBF24)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   static LinearGradient get dangerGradient {
-    return LinearGradient(
-      colors: [dangerColor, const Color(0xFFFF8A65)],
+    return const LinearGradient(
+      colors: [dangerColor, Color(0xFFF87171)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
+  static LinearGradient get infoGradient {
+    return const LinearGradient(
+      colors: [infoColor, Color(0xFF60A5FA)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // AI & Premium Gradients
   static LinearGradient get aiGradient {
     return const LinearGradient(
-      colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+      colors: [aiPrimary, aiSecondary],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
-  // Cartoon gradients
-  static LinearGradient get cartoonPinkGradient {
-    return LinearGradient(
-      colors: [cartoonPink, const Color(0xFFFF8CC8)],
+  static LinearGradient get premiumGradient {
+    return const LinearGradient(
+      colors: [Color(0xFFFBBF24), Color(0xFFFDE047), Color(0xFFFACC15)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
-  static LinearGradient get cartoonPurpleGradient {
-    return LinearGradient(
-      colors: [cartoonPurple, const Color(0xFFB39BC8)],
+  // Background Gradients - Soft tints for cards and sections
+  static LinearGradient get backgroundGradientBlue {
+    return const LinearGradient(
+      colors: [Color(0xFFEFF6FF), Color(0xFFDBEAFE)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
+  static LinearGradient get backgroundGradientTeal {
+    return const LinearGradient(
+      colors: [Color(0xFFF0FDFA), Color(0xFFCCFBF1)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
+  static LinearGradient get backgroundGradientPurple {
+    return const LinearGradient(
+      colors: [Color(0xFFFAF5FF), Color(0xFFEDE9FE)],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+  }
+
+  // Flat-Vector Cartoon Category Gradients
+  static LinearGradient get cartoonMintGradient {
+    return const LinearGradient(
+      colors: [cartoonMint, Color(0xFF86EFAC)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   static LinearGradient get cartoonBlueGradient {
-    return LinearGradient(
-      colors: [cartoonBlue, const Color(0xFF7BB3FF)],
+    return const LinearGradient(
+      colors: [cartoonBlue, Color(0xFF93C5FD)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
-  static LinearGradient get cartoonCyanGradient {
-    return LinearGradient(
-      colors: [cartoonCyan, const Color(0xFF66E7FF)],
+  static LinearGradient get cartoonPurpleGradient {
+    return const LinearGradient(
+      colors: [cartoonPurple, Color(0xFFC4B5FD)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
-  static LinearGradient get cartoonMintGradient {
-    return LinearGradient(
-      colors: [cartoonMint, const Color(0xFFA0FFE6)],
+  static LinearGradient get cartoonPinkGradient {
+    return const LinearGradient(
+      colors: [cartoonPink, Color(0xFFF9A8D4)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   static LinearGradient get cartoonYellowGradient {
-    return LinearGradient(
-      colors: [cartoonYellow, const Color(0xFFFFE066)],
+    return const LinearGradient(
+      colors: [cartoonYellow, Color(0xFFFDE047)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   static LinearGradient get cartoonOrangeGradient {
-    return LinearGradient(
-      colors: [cartoonOrange, const Color(0xFFFFAB66)],
+    return const LinearGradient(
+      colors: [cartoonOrange, Color(0xFFFDBA74)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get cartoonCyanGradient {
+    return const LinearGradient(
+      colors: [cartoonCyan, Color(0xFF67E8F9)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get cartoonTealGradient {
+    return const LinearGradient(
+      colors: [cartoonTeal, Color(0xFF5EEAD4)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );
   }
 
   // ==========================================================================
-  // ✅ 修复：支出分类（expense_entry_screen.dart:139 需要）
+  // 🌙 DARK MODE GRADIENTS
+  // Elegant gradients for dark mode with glowing effects
+  // ==========================================================================
+
+  // Dark Mode Theme Variant Gradients
+  static LinearGradient get darkTrustGradient {
+    return const LinearGradient(
+      colors: [trustPrimary, trustHighlight],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkGrowthGradient {
+    return const LinearGradient(
+      colors: [growthPrimary, growthHighlight],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Accent Gradients
+  static LinearGradient get darkTealGradient {
+    return const LinearGradient(
+      colors: [darkAccentTeal, Color(0xFF2DD4BF)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkEmeraldGradient {
+    return const LinearGradient(
+      colors: [darkAccentEmerald, Color(0xFF34D399)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  static LinearGradient get darkCoralGradient {
+    return const LinearGradient(
+      colors: [darkAccentCoral, Color(0xFFFCA5A5)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Glowing Gradient (for headers and special elements)
+  static LinearGradient get darkGlowGradient {
+    return const LinearGradient(
+      colors: [
+        darkAccentTeal,
+        Color(0xFF22D3EE),
+        darkAccentEmerald,
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Teal-Blue Gradient (for primary elements)
+  static LinearGradient get darkGradientTealBlue {
+    return const LinearGradient(
+      colors: [darkAccentTeal, trustPrimary],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Animated Background Colors
+  // These colors are used for the animated background gradient in dark mode
+  static const Color darkAnimBg1Start = Color(0xFF0F172A);  // Deep Navy (Option 1 start)
+  static const Color darkAnimBg1End = Color(0xFF1E293B);    // Slate Gray (Option 1 end)
+
+  static const Color darkAnimBg2Start = Color(0xFF1E293B);  // Slate Gray
+  static const Color darkAnimBg2End = Color(0xFF334155);    // Lighter Slate
+
+  static const Color darkAnimBg3Start = Color(0xFF0C4A6E);  // Deep Blue
+  static const Color darkAnimBg3End = Color(0xFF155E75);    // Teal Blue
+
+  // Light Mode Animated Background Colors (for reference)
+  static const Color lightAnimBg1Start = Color(0xFFDBEAFE); // Light Blue
+  static const Color lightAnimBg1End = Color(0xFFEDE9FE);   // Light Purple
+
+  static const Color lightAnimBg2Start = Color(0xFFFAF5FF); // Light Purple
+  static const Color lightAnimBg2End = Color(0xFFFEF3C7);   // Light Yellow
+
+  static const Color lightAnimBg3Start = Color(0xFFFDF2F8); // Light Pink
+  static const Color lightAnimBg3End = Color(0xFFFED7D7);   // Light Red
+
+  // ==========================================================================
+  // ✨ GLOWING EFFECTS FOR DARK MODE
+  // ==========================================================================
+
+  /// Creates a glowing shadow effect for teal accent elements
+  static List<BoxShadow> get tealGlowShadow => [
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a glowing shadow effect for emerald accent elements
+  static List<BoxShadow> get emeraldGlowShadow => [
+        BoxShadow(
+          color: darkAccentEmerald.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentEmerald.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a glowing shadow effect for coral/danger elements
+  static List<BoxShadow> get coralGlowShadow => [
+        BoxShadow(
+          color: darkAccentCoral.withOpacity(0.4),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: darkAccentCoral.withOpacity(0.2),
+          blurRadius: 40,
+          offset: const Offset(0, 8),
+          spreadRadius: 4,
+        ),
+      ];
+
+  /// Creates a subtle glow for dark mode cards
+  static List<BoxShadow> get darkCardGlow => [
+        BoxShadow(
+          color: darkAccentTeal.withOpacity(0.1),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+          spreadRadius: 1,
+        ),
+      ];
+
+  /// Creates a shadow for dark mode cards (alias for darkCardGlow)
+  static List<BoxShadow> get darkCardShadow => darkCardGlow;
+
+  // ==========================================================================
+  // 💳 EXPENSE & INCOME CATEGORIES
+  // Updated with professional flat-vector color scheme
   // ==========================================================================
 
   static final List<Map<String, dynamic>> expenseCategories = [
@@ -409,66 +1030,72 @@ class SFMSTheme {
       'name': 'Food & Dining',
       'emoji': '🍔',
       'color': cartoonOrange,
+      'gradient': cartoonOrangeGradient,
     },
     {
       'id': 'transport',
       'name': 'Transportation',
       'emoji': '🚗',
       'color': cartoonBlue,
+      'gradient': cartoonBlueGradient,
     },
     {
       'id': 'shopping',
       'name': 'Shopping',
       'emoji': '🛍️',
       'color': cartoonPink,
+      'gradient': cartoonPinkGradient,
     },
     {
       'id': 'entertainment',
       'name': 'Entertainment',
       'emoji': '🎬',
       'color': cartoonPurple,
+      'gradient': cartoonPurpleGradient,
     },
     {
       'id': 'bills',
       'name': 'Bills & Utilities',
       'emoji': '💡',
       'color': warningColor,
+      'gradient': warningGradient,
     },
     {
       'id': 'healthcare',
       'name': 'Healthcare',
       'emoji': '⚕️',
       'color': dangerColor,
+      'gradient': dangerGradient,
     },
     {
       'id': 'education',
       'name': 'Education',
       'emoji': '📚',
       'color': cartoonCyan,
+      'gradient': cartoonCyanGradient,
     },
     {
       'id': 'groceries',
       'name': 'Groceries',
       'emoji': '🛒',
       'color': cartoonMint,
+      'gradient': cartoonMintGradient,
     },
     {
       'id': 'personal',
       'name': 'Personal Care',
       'emoji': '💅',
       'color': cartoonPink,
+      'gradient': cartoonPinkGradient,
     },
     {
       'id': 'other',
       'name': 'Other',
       'emoji': '📦',
       'color': neutralDark,
+      'gradient': null,
     },
   ];
-
-  // ==========================================================================
-  // ✅ 修复：收入分类（expense_entry_screen.dart:140 需要）
-  // ==========================================================================
 
   static final List<Map<String, dynamic>> incomeCategories = [
     {
@@ -476,54 +1103,140 @@ class SFMSTheme {
       'name': 'Salary',
       'emoji': '💼',
       'color': successColor,
+      'gradient': successGradient,
     },
     {
       'id': 'business',
       'name': 'Business',
       'emoji': '🏢',
-      'color': cartoonBlue,
+      'color': primaryColor,
+      'gradient': primaryGradient,
     },
     {
       'id': 'investment',
       'name': 'Investment',
       'emoji': '📈',
       'color': cartoonCyan,
+      'gradient': cartoonCyanGradient,
     },
     {
       'id': 'freelance',
       'name': 'Freelance',
       'emoji': '💻',
       'color': cartoonPurple,
+      'gradient': cartoonPurpleGradient,
     },
     {
       'id': 'rental',
       'name': 'Rental Income',
       'emoji': '🏠',
-      'color': cartoonMint,
+      'color': cartoonTeal,
+      'gradient': cartoonTealGradient,
     },
     {
       'id': 'gift',
       'name': 'Gift',
       'emoji': '🎁',
       'color': cartoonPink,
+      'gradient': cartoonPinkGradient,
     },
     {
       'id': 'bonus',
       'name': 'Bonus',
       'emoji': '💰',
-      'color': cartoonYellow,
+      'color': accentAlt,
+      'gradient': goldGradient,
     },
     {
       'id': 'refund',
       'name': 'Refund',
       'emoji': '↩️',
-      'color': cartoonOrange,
+      'color': infoColor,
+      'gradient': infoGradient,
     },
     {
       'id': 'other',
       'name': 'Other',
       'emoji': '💵',
-      'color': neutralDark,
+      'color': successColor,
+      'gradient': successGradient,
     },
   ];
+
+  // ==========================================================================
+  // 🛠️ UTILITY METHODS
+  // Helper methods for creating modern flat-vector UI elements
+  // ==========================================================================
+
+  /// Creates a soft shadow for elevated cards (flat design)
+  static List<BoxShadow> get softCardShadow => [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.04),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
+        ),
+      ];
+
+  /// Creates a prominent shadow for floating elements
+  static List<BoxShadow> get floatingShadow => [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.08),
+          blurRadius: 20,
+          offset: const Offset(0, 8),
+        ),
+      ];
+
+  /// Creates a colored shadow for accent buttons
+  static List<BoxShadow> accentShadow(Color color) => [
+        BoxShadow(
+          color: color.withOpacity(0.3),
+          blurRadius: 16,
+          offset: const Offset(0, 6),
+        ),
+      ];
+
+  /// Returns a status color based on budget health or goal progress
+  static Color getStatusColor(double percentage) {
+    if (percentage >= 90) return dangerColor;
+    if (percentage >= 70) return warningColor;
+    if (percentage >= 50) return infoColor;
+    return successColor;
+  }
+
+  /// Returns a gradient based on budget health or goal progress
+  static LinearGradient getStatusGradient(double percentage) {
+    if (percentage >= 90) return dangerGradient;
+    if (percentage >= 70) return warningGradient;
+    if (percentage >= 50) return infoGradient;
+    return successGradient;
+  }
+
+  /// Creates a shimmer effect color for loading states
+  static Color get shimmerBaseColor => neutralLight;
+  static Color get shimmerHighlightColor => Colors.white;
+
+  /// Icon sizes following consistent visual hierarchy
+  static const double iconSizeSmall = 16.0;
+  static const double iconSizeMedium = 20.0;
+  static const double iconSizeLarge = 24.0;
+  static const double iconSizeXLarge = 32.0;
+  static const double iconSizeHero = 48.0;
+
+  /// Border radius values for consistent rounded corners
+  static const double radiusSmall = 12.0;
+  static const double radiusMedium = 16.0;
+  static const double radiusLarge = 20.0;
+  static const double radiusXLarge = 24.0;
+  static const double radiusFull = 9999.0;
+
+  /// Spacing values for consistent layout
+  static const double spacing4 = 4.0;
+  static const double spacing8 = 8.0;
+  static const double spacing12 = 12.0;
+  static const double spacing16 = 16.0;
+  static const double spacing20 = 20.0;
+  static const double spacing24 = 24.0;
+  static const double spacing32 = 32.0;
+  static const double spacing40 = 40.0;
+  static const double spacing48 = 48.0;
 }
