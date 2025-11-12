@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 import '../providers/theme_provider.dart';
 
@@ -42,62 +43,61 @@ class _FinancialScreenState extends State<FinancialScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Dark Mode Support
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
     // Theme-aware colors
     final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
-    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
-    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 32),
-          
-          // Header
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, -50 * (1 - _animationController.value)),
-                child: Opacity(
-                  opacity: _animationController.value,
-                  child: Row(
-                    children: [
-                      AnimatedBuilder(
-                        animation: _floatingController,
-                        builder: (context, child) {
-                          return Transform.rotate(
-                            angle: math.sin(_floatingController.value * 2 * math.pi) * 0.1,
-                            child: const Text(
-                              '💰',
-                              style: TextStyle(fontSize: 40),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 16),
-                      Text(
-                        'Financial Tools',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
+    return Container(
+      color: bgColor,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 32),
+
+            // Header
+            AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, -50 * (1 - _animationController.value)),
+                  child: Opacity(
+                    opacity: _animationController.value,
+                    child: Row(
+                      children: [
+                        AnimatedBuilder(
+                          animation: _floatingController,
+                          builder: (context, child) {
+                            return Transform.rotate(
+                              angle: math.sin(_floatingController.value * 2 * math.pi) * 0.1,
+                              child: const Text(
+                                '💰',
+                                style: TextStyle(fontSize: 40),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+                        Text(
+                          'Financial Tools',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
           const SizedBox(height: 24),
           
           // Financial Tools Grid
@@ -130,13 +130,15 @@ class _FinancialScreenState extends State<FinancialScreen>
                               end: Alignment.bottomRight,
                             ),
                             borderRadius: BorderRadius.circular(24),
-                            boxShadow: [
-                              BoxShadow(
-                                color: tool.colors.first.withOpacity(0.3),
-                                blurRadius: 12,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
+                            boxShadow: isDarkMode
+                                ? SFMSTheme.darkCardGlow
+                                : [
+                                    BoxShadow(
+                                      color: tool.colors.first.withOpacity(0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
                           ),
                           child: Stack(
                             children: [
@@ -241,10 +243,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                     decoration: BoxDecoration(
                       gradient: isDarkMode
                           ? LinearGradient(
-                              colors: [
-                                SFMSTheme.darkCardBg,
-                                SFMSTheme.darkCardBg.withOpacity(0.95)
-                              ],
+                              colors: [cardBg, cardBg.withOpacity(0.8)],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                             )
@@ -254,7 +253,13 @@ class _FinancialScreenState extends State<FinancialScreen>
                               end: Alignment.bottomRight,
                             ),
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: cardShadow,
+                      boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,16 +305,18 @@ class _FinancialScreenState extends State<FinancialScreen>
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
+
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: isDarkMode
-                                ? SFMSTheme.aiColor.withOpacity(0.15)
+                                ? SFMSTheme.accentTeal.withOpacity(0.1)
                                 : SFMSTheme.aiLight,
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: SFMSTheme.aiColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                              color: isDarkMode
+                                  ? SFMSTheme.accentTeal.withOpacity(0.3)
+                                  : SFMSTheme.aiColor.withOpacity(0.2),
                               width: 1,
                             ),
                           ),
@@ -350,16 +357,23 @@ class _FinancialScreenState extends State<FinancialScreen>
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  SFMSTheme.cartoonYellow.withOpacity(0.1),
-                  SFMSTheme.cartoonOrange.withOpacity(0.1),
-                ],
+                colors: isDarkMode
+                    ? [
+                        SFMSTheme.accentTeal.withOpacity(0.1),
+                        SFMSTheme.accentEmerald.withOpacity(0.1),
+                      ]
+                    : [
+                        SFMSTheme.cartoonYellow.withOpacity(0.1),
+                        SFMSTheme.cartoonOrange.withOpacity(0.1),
+                      ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: SFMSTheme.cartoonYellow.withOpacity(0.3),
+                color: isDarkMode
+                    ? SFMSTheme.accentTeal.withOpacity(0.3)
+                    : SFMSTheme.cartoonYellow.withOpacity(0.3),
                 width: 2,
               ),
             ),
@@ -396,7 +410,8 @@ class _FinancialScreenState extends State<FinancialScreen>
             ),
           ),
           const SizedBox(height: 100), // Extra padding for bottom navigation
-        ],
+          ],
+        ),
       ),
     );
   }

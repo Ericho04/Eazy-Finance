@@ -117,51 +117,49 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Dark Mode Support
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
     // Theme-aware colors
     final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
-    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
-    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
-    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
-    final primaryGradient = isDarkMode ? SFMSTheme.darkGradientTealBlue : SFMSTheme.primaryGradient;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextSecondary.withOpacity(0.7) : SFMSTheme.textMuted;
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(SFMSTheme.spacing24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: SFMSTheme.spacing20),
+    return Container(
+      color: bgColor,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(SFMSTheme.spacing24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: SFMSTheme.spacing20),
 
-          // Greeting Section - Using theme colors
-          FadeTransition(
-            opacity: _greetingAnimation,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getGreeting(),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: textSecondary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                ),
-                SizedBox(height: SFMSTheme.spacing4),
-                Text(
-                  _getUserName(),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: textPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
+            // Greeting Section - Using theme colors
+            FadeTransition(
+              opacity: _greetingAnimation,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getGreeting(),
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                  ),
+                  SizedBox(height: SFMSTheme.spacing4),
+                  Text(
+                    _getUserName(),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                          color: textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
           SizedBox(height: SFMSTheme.spacing32),
 
@@ -277,6 +275,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   'Track your spending',
                   SFMSTheme.cartoonPurple,
                   () => widget.onNavigate('add-expense'),
+                  isDarkMode,
+                  cardBg,
+                  textPrimary,
+                  textSecondary,
                 ),
               ),
               SizedBox(width: SFMSTheme.spacing16),
@@ -288,6 +290,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   'Set your targets',
                   SFMSTheme.primaryLight,
                   () => widget.onNavigate('goals'),
+                  isDarkMode,
+                  cardBg,
+                  textPrimary,
+                  textSecondary,
                 ),
               ),
             ],
@@ -305,6 +311,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   'Plan your taxes',
                   SFMSTheme.cartoonCyan,
                   () => widget.onNavigate('tax-planning'),
+                  isDarkMode,
+                  cardBg,
+                  textPrimary,
+                  textSecondary,
                 ),
               ),
               SizedBox(width: SFMSTheme.spacing16),
@@ -316,6 +326,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                   'Win rewards',
                   SFMSTheme.cartoonYellow,
                   () => widget.onNavigate('lucky-draw'),
+                  isDarkMode,
+                  cardBg,
+                  textPrimary,
+                  textSecondary,
                 ),
               ),
             ],
@@ -339,7 +353,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 child: Text(
                   'View All',
                   style: TextStyle(
-                    color: isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.primaryColor,
+                    color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -355,12 +369,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                   appProvider.getRecentTransactions(limit: 5);
 
               if (recentTransactions.isEmpty) {
-                return _buildEmptyTransactions(context);
+                return _buildEmptyTransactions(isDarkMode, cardBg, textSecondary, textMuted);
               }
 
               return Column(
                 children: recentTransactions
-                    .map((transaction) => _buildTransactionItem(context, transaction))
+                    .map((transaction) => _buildTransactionItem(transaction, isDarkMode, cardBg, textPrimary, textSecondary, textMuted))
                     .toList(),
               );
             },
@@ -381,20 +395,21 @@ class _DashboardScreenState extends State<DashboardScreen>
           Consumer<AppProvider>(
             builder: (context, appProvider, child) {
               if (appProvider.budgets.isEmpty) {
-                return _buildEmptyBudgets(context);
+                return _buildEmptyBudgets(isDarkMode, cardBg, textSecondary, textMuted);
               }
 
               return Column(
                 children: appProvider.budgets
                     .take(3)
-                    .map((budget) => _buildBudgetItem(context, budget))
+                    .map((budget) => _buildBudgetItem(budget, isDarkMode, cardBg, textPrimary, textSecondary))
                     .toList(),
               );
             },
           ),
 
           const SizedBox(height: 100), // Extra space for bottom navigation
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -406,6 +421,10 @@ class _DashboardScreenState extends State<DashboardScreen>
     String subtitle,
     Color color,
     VoidCallback onTap,
+    bool isDarkMode,
+    Color cardBg,
+    Color textPrimary,
+    Color textSecondary,
   ) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
@@ -419,9 +438,9 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Container(
         padding: EdgeInsets.all(SFMSTheme.spacing20),
         decoration: BoxDecoration(
-          color: cardColor,
+          color: cardBg,
           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
-          boxShadow: cardShadow,
+          boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
           border: Border.all(
             color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
             width: 2,
@@ -472,27 +491,26 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildTransactionItem(BuildContext context, Transaction transaction) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
-    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
-    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
-    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
-
+  Widget _buildTransactionItem(
+    Transaction transaction,
+    bool isDarkMode,
+    Color cardBg,
+    Color textPrimary,
+    Color textSecondary,
+    Color textMuted,
+  ) {
     final isIncome = transaction.type == TransactionType.income;
     final color = isIncome
-      ? (isDarkMode ? SFMSTheme.darkSuccessColor : SFMSTheme.successColor)
-      : (isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor);
+        ? (isDarkMode ? SFMSTheme.accentEmerald : SFMSTheme.successColor)
+        : (isDarkMode ? SFMSTheme.accentCoral : SFMSTheme.dangerColor);
 
     return Container(
       margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
       padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: cardBg,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-        boxShadow: cardShadow,
+        boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
       ),
       child: Row(
         children: [
@@ -562,28 +580,27 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildBudgetItem(BuildContext context, Budget budget) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
-    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
-    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
-
+  Widget _buildBudgetItem(
+    Budget budget,
+    bool isDarkMode,
+    Color cardBg,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
     final percentage = budget.utilizationPercentage / 100;
     final color = percentage > 0.8
-        ? (isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor)
+        ? (isDarkMode ? SFMSTheme.accentCoral : SFMSTheme.dangerColor)
         : percentage > 0.6
             ? SFMSTheme.warningColor
-            : (isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.primaryColor);
+            : (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor);
 
     return Container(
       margin: EdgeInsets.only(bottom: SFMSTheme.spacing12),
       padding: EdgeInsets.all(SFMSTheme.spacing16),
       decoration: BoxDecoration(
-        color: cardColor,
+        color: cardBg,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusMedium),
-        boxShadow: cardShadow,
+        boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
       ),
       child: Column(
         children: [
@@ -656,19 +673,16 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildEmptyTransactions(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
-    final neutralMedium = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.neutralMedium;
-    final neutralDark = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.neutralDark;
-    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
-
+  Widget _buildEmptyTransactions(
+    bool isDarkMode,
+    Color cardBg,
+    Color textSecondary,
+    Color textMuted,
+  ) {
     return Container(
       padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: neutralLight,
+        color: isDarkMode ? cardBg.withOpacity(0.5) : SFMSTheme.neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
         boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
@@ -680,8 +694,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  neutralMedium.withOpacity(0.3),
-                  neutralMedium.withOpacity(0.1),
+                  (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.neutralMedium).withOpacity(0.3),
+                  (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.neutralMedium).withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -691,7 +705,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Icon(
               Icons.receipt_long,
               size: SFMSTheme.iconSizeXLarge,
-              color: neutralDark,
+              color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.neutralDark,
             ),
           ),
           SizedBox(height: SFMSTheme.spacing16),
@@ -714,19 +728,16 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildEmptyBudgets(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final neutralLight = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.neutralLight;
-    final neutralMedium = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.neutralMedium;
-    final neutralDark = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.neutralDark;
-    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
-
+  Widget _buildEmptyBudgets(
+    bool isDarkMode,
+    Color cardBg,
+    Color textSecondary,
+    Color textMuted,
+  ) {
     return Container(
       padding: EdgeInsets.all(SFMSTheme.spacing32),
       decoration: BoxDecoration(
-        color: neutralLight,
+        color: isDarkMode ? cardBg.withOpacity(0.5) : SFMSTheme.neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
         boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
@@ -738,8 +749,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  neutralMedium.withOpacity(0.3),
-                  neutralMedium.withOpacity(0.1),
+                  (isDarkMode ? SFMSTheme.accentEmerald : SFMSTheme.neutralMedium).withOpacity(0.3),
+                  (isDarkMode ? SFMSTheme.accentEmerald : SFMSTheme.neutralMedium).withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -749,7 +760,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             child: Icon(
               Icons.pie_chart,
               size: SFMSTheme.iconSizeXLarge,
-              color: neutralDark,
+              color: isDarkMode ? SFMSTheme.accentEmerald : SFMSTheme.neutralDark,
             ),
           ),
           SizedBox(height: SFMSTheme.spacing16),

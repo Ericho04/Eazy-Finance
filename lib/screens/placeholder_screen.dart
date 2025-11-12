@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import '../utils/theme.dart';
 
 class PlaceholderScreen extends StatelessWidget {
   final String screenName;
@@ -14,12 +17,22 @@ class PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextSecondary.withOpacity(0.7) : SFMSTheme.textMuted;
+    final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+
     return Scaffold(
-      appBar: onBack != null 
+      appBar: onBack != null
           ? AppBar(
-              title: Text(screenName),
+              title: Text(screenName, style: TextStyle(color: textPrimary)),
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: Icon(Icons.arrow_back, color: textPrimary),
                 onPressed: onBack,
               ),
               backgroundColor: Colors.transparent,
@@ -27,17 +40,19 @@ class PlaceholderScreen extends StatelessWidget {
             )
           : null,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
-            ],
-          ),
-        ),
+        decoration: isDarkMode
+            ? BoxDecoration(color: bgColor)
+            : const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFDBEAFE),
+                    Color(0xFFFAF5FF),
+                    Color(0xFFFDF2F8),
+                  ],
+                ),
+              ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -46,64 +61,58 @@ class PlaceholderScreen extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.9),
+                  color: cardBg,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
+                  boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.construction,
                   size: 60,
-                  color: Color(0xFF845EC2),
+                  color: isDarkMode ? SFMSTheme.accentTeal : const Color(0xFF845EC2),
                 ),
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               Text(
                 screenName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 16),
-              
-              const Text(
+
+              Text(
                 'This screen is under development 🚧',
                 style: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFF6B7280),
+                  color: textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 8),
-              
-              const Text(
+
+              Text(
                 'Coming soon in the next update!',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Color(0xFF9CA3AF),
+                  color: textMuted,
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: 40),
-              
+
               if (onBack != null)
                 ElevatedButton(
                   onPressed: onBack,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4E8EF7),
+                    backgroundColor: isDarkMode ? SFMSTheme.accentTeal : const Color(0xFF4E8EF7),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
