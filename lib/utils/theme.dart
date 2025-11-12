@@ -50,6 +50,11 @@ class SFMSTheme {
   static const Color dangerColor = Color(0xFFEF4444);   // Red
   static const Color infoColor = Color(0xFF3B82F6);     // Blue
 
+  // Accent Colors (aliases for consistency with dark mode)
+  static const Color accentTeal = Color(0xFF2DD4BF);    // Teal (same as cartoonTeal)
+  static const Color accentEmerald = successColor;       // Emerald (alias for successColor)
+  static const Color accentCoral = dangerColor;          // Coral (alias for dangerColor)
+
   // Flat-Vector Cartoon Accent Colors
   // Softer, more professional versions for financial UI
   static const Color cartoonMint = Color(0xFF6EE7B7);    // Soft Mint

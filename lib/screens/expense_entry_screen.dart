@@ -303,16 +303,22 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
                   children: [
                     Expanded(
                       child: _buildTypeButton(
+                        context,
                         'Expense',
                         TransactionType.expense,
                         primaryColor,
+                        isDarkMode,
+                        textSecondary,
                       ),
                     ),
                     Expanded(
                       child: _buildTypeButton(
+                        context,
                         'Income',
                         TransactionType.income,
                         primaryColor,
+                        isDarkMode,
+                        textSecondary,
                       ),
                     ),
                   ],
@@ -384,7 +390,7 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
               const SizedBox(height: 24),
 
               // Category
-              _buildCategorySelector(primaryColor, secondaryColor),
+              _buildCategorySelector(context, primaryColor, secondaryColor, isDarkMode, cardColor, textPrimary, textSecondary),
               const SizedBox(height: 24),
 
               // Date
