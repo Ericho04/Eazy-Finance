@@ -263,25 +263,31 @@ class _InsightsScreenState extends State<InsightsScreen>
 
           // Financial Tools Cards
           ...financialTools.map((tool) {
+            final colors = tool['colors'] as List<Color>;
+            final icon = tool['icon'] as IconData;
+            final title = tool['title'] as String;
+            final description = tool['description'] as String;
+            final route = tool['route'] as String;
+
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  onTap: () => widget.onNavigate(tool['route']),
+                  onTap: () => widget.onNavigate(route),
                   borderRadius: BorderRadius.circular(16),
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: tool['colors'],
+                        colors: colors,
                       ),
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: isDarkMode
                           ? SFMSTheme.tealGlowShadow
                           : [
                               BoxShadow(
-                                color: tool['colors'][0].withOpacity(0.3),
+                                color: colors[0].withOpacity(0.3),
                                 blurRadius: 8,
                                 offset: const Offset(0, 4),
                               ),
@@ -296,7 +302,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
-                            tool['icon'],
+                            icon,
                             color: Colors.white,
                             size: 24,
                           ),
@@ -307,7 +313,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                tool['title'],
+                                title,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -316,7 +322,7 @@ class _InsightsScreenState extends State<InsightsScreen>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                tool['description'],
+                                description,
                                 style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.white70,
