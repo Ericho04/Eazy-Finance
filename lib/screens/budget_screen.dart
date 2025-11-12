@@ -457,12 +457,17 @@ class _BudgetScreenState extends State<BudgetScreen>
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
+    // Get budgets for hasBudgets variable
+    final appProvider = Provider.of<AppProvider>(context);
+    final hasBudgets = appProvider.budgets.where((b) => b.isActive).isNotEmpty;
+
     // Theme-aware colors
     final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
     final cardBg = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
     final textMuted = isDarkMode ? SFMSTheme.darkTextSecondary.withOpacity(0.7) : SFMSTheme.textMuted;
+    final dangerColor = isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor;
 
     return Stack(
       children: [
@@ -969,6 +974,7 @@ class _BudgetScreenState extends State<BudgetScreen>
             },
           ),
         ),
+        ),
 
         // Create New Budget Button (显示不同文本根据是否有 budget)
         Positioned(
@@ -1023,8 +1029,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ),
               );
             },
           ),
@@ -1141,8 +1147,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.all(16),
                             child: _setupStep == 1
-                                ? _buildCategorySelection(context, _getAvailableCategories())
-                                : _buildAmountInput(context),
+                                ? _buildCategorySelection(_getAvailableCategories())
+                                : _buildAmountInput(),
                           ),
                         ),
 
