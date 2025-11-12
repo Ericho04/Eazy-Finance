@@ -424,13 +424,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     Color textPrimary,
     Color textSecondary,
   ) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDarkMode = themeProvider.isDarkMode;
-    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
-    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
-    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
-    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
