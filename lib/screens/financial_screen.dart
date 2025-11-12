@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'dart:math' as math;
 import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
-import '../providers/theme_provider.dart';
 
 class FinancialScreen extends StatefulWidget {
   final Function(String) onNavigate;
@@ -408,8 +407,7 @@ class _FinancialScreenState extends State<FinancialScreen>
             ),
           ),
           const SizedBox(height: 100), // Extra padding for bottom navigation
-          ],
-        ),
+        ],
       ),
     );
   }
