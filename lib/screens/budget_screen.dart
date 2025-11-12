@@ -1008,34 +1008,20 @@ class _BudgetScreenState extends State<BudgetScreen>
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
-                          elevation: 8,
-                          shadowColor: SFMSTheme.successColor.withOpacity(0.5),
+                          child: Icon(
+                            hasBudgets ? Icons.add : Icons.rocket_launch,
+                            size: 20,
+                          ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                hasBudgets ? Icons.add : Icons.rocket_launch,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              hasBudgets ? 'Create New Budget' : 'Setup Budget',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                        const SizedBox(width: 12),
+                        Text(
+                          hasBudgets ? 'Create New Budget' : 'Setup Budget',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   );
                 },
@@ -1343,6 +1329,8 @@ class _BudgetScreenState extends State<BudgetScreen>
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     final isDarkMode = themeProvider.isDarkMode;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final successColor = isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor;
     final cardBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
     final borderColor = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.grey.shade200;
     final inputBg = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.white;

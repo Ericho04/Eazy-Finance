@@ -172,7 +172,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: double.infinity,
                 padding: EdgeInsets.all(SFMSTheme.spacing24),
                 decoration: BoxDecoration(
-                  gradient: primaryGradient,
+                  gradient: SFMSTheme.primaryGradient,
                   borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
                   boxShadow: isDarkMode
                     ? SFMSTheme.tealGlowShadow
