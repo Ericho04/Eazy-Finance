@@ -127,9 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
     final textMuted = isDarkMode ? SFMSTheme.darkTextSecondary.withOpacity(0.7) : SFMSTheme.textMuted;
 
-    return Container(
-      color: bgColor,
-      child: SingleChildScrollView(
+    return SingleChildScrollView(
         padding: EdgeInsets.all(SFMSTheme.spacing24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
