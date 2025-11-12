@@ -933,6 +933,27 @@ class SFMSTheme {
     );
   }
 
+  // Dark Mode Animated Background Colors
+  // These colors are used for the animated background gradient in dark mode
+  static const Color darkAnimBg1Start = Color(0xFF0F172A);  // Deep Navy (Option 1 start)
+  static const Color darkAnimBg1End = Color(0xFF1E293B);    // Slate Gray (Option 1 end)
+
+  static const Color darkAnimBg2Start = Color(0xFF1E293B);  // Slate Gray
+  static const Color darkAnimBg2End = Color(0xFF334155);    // Lighter Slate
+
+  static const Color darkAnimBg3Start = Color(0xFF0C4A6E);  // Deep Blue
+  static const Color darkAnimBg3End = Color(0xFF155E75);    // Teal Blue
+
+  // Light Mode Animated Background Colors (for reference)
+  static const Color lightAnimBg1Start = Color(0xFFDBEAFE); // Light Blue
+  static const Color lightAnimBg1End = Color(0xFFEDE9FE);   // Light Purple
+
+  static const Color lightAnimBg2Start = Color(0xFFFAF5FF); // Light Purple
+  static const Color lightAnimBg2End = Color(0xFFFEF3C7);   // Light Yellow
+
+  static const Color lightAnimBg3Start = Color(0xFFFDF2F8); // Light Pink
+  static const Color lightAnimBg3End = Color(0xFFFED7D7);   // Light Red
+
   // ==========================================================================
   // ✨ GLOWING EFFECTS FOR DARK MODE
   // ==========================================================================
