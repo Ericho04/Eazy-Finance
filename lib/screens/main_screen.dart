@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/budget_screen.dart';
 import '../screens/financial_screen.dart';
@@ -116,19 +117,31 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : const Color(0xFFF8FAFF);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFF),
+      backgroundColor: bgColor,
       extendBody: true,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
-            ],
+            colors: isDarkMode
+                ? [
+                    SFMSTheme.darkBgPrimary,
+                    SFMSTheme.darkBgSecondary,
+                    SFMSTheme.darkBgPrimary,
+                  ]
+                : [
+                    const Color(0xFFDBEAFE),
+                    const Color(0xFFFAF5FF),
+                    const Color(0xFFFDF2F8),
+                  ],
           ),
         ),
         child: PageView(
@@ -152,18 +165,30 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildBottomNavigationBar() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final navBgColor = isDarkMode
+        ? SFMSTheme.darkCardBg.withOpacity(0.9)
+        : Colors.white.withOpacity(0.9);
+    final unselectedColor = isDarkMode
+        ? SFMSTheme.darkTextSecondary
+        : Colors.grey.shade600;
+
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.9),
+        color: navBgColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: isDarkMode
+            ? SFMSTheme.darkCardGlow
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                ),
+              ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
@@ -174,7 +199,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.grey.shade600,
+          unselectedItemColor: unselectedColor,
           selectedLabelStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -231,7 +256,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
                     Icon(
                       item.icon,
                       size: 24,
-                      color: isSelected ? Colors.white : Colors.grey.shade600,
+                      color: isSelected ? Colors.white : unselectedColor,
                     ),
                   ],
                 ),
