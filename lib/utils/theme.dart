@@ -379,6 +379,20 @@ class SFMSTheme {
   static const Color darkTextSecondary = Color(0xFFCBD5E1);  // Secondary Text
   static const Color darkTextMuted = Color(0xFF64748B);      // Muted Text
 
+  // Dark Mode Status Colors
+  static const Color darkSuccessColor = Color(0xFF34D399);   // Emerald Green
+  static const Color darkWarningColor = Color(0xFFFBBF24);   // Amber
+  static const Color darkDangerColor = Color(0xFFF87171);    // Coral Red
+
+  // Dark Mode Flat-Vector Cartoon Accent Colors
+  static const Color darkCartoonMint = Color(0xFF6EE7B7);    // Soft Mint
+  static const Color darkCartoonBlue = Color(0xFF60A5FA);    // Sky Blue
+  static const Color darkCartoonPurple = Color(0xFFA78BFA);  // Lavender
+  static const Color darkCartoonPink = Color(0xFFF472B6);    // Rose Pink
+  static const Color darkCartoonYellow = Color(0xFFFBBF24);  // Sunny Yellow
+  static const Color darkCartoonOrange = Color(0xFFFB923C);  // Peach Orange
+  static const Color darkCartoonCyan = Color(0xFF22D3EE);    // Cyan
+
   // ==========================================================================
   // 🎨 THEME VARIANTS (for Dark Mode)
   // ==========================================================================
@@ -905,6 +919,15 @@ class SFMSTheme {
         Color(0xFF22D3EE),
         darkAccentEmerald,
       ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Teal-Blue Gradient (for primary elements)
+  static LinearGradient get darkGradientTealBlue {
+    return const LinearGradient(
+      colors: [darkAccentTeal, trustPrimary],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     );

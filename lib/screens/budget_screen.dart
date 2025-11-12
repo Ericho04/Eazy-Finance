@@ -539,7 +539,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                       end: Alignment.bottomRight,
                                     ),
                               borderRadius: BorderRadius.circular(20),
-                              boxShadow: [cardShadow],
+                              boxShadow: cardShadow,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

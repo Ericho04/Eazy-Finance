@@ -254,7 +254,7 @@ class _FinancialScreenState extends State<FinancialScreen>
                               end: Alignment.bottomRight,
                             ),
                       borderRadius: BorderRadius.circular(24),
-                      boxShadow: [cardShadow],
+                      boxShadow: cardShadow,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
