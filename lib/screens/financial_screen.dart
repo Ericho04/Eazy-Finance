@@ -409,7 +409,7 @@ class _FinancialScreenState extends State<FinancialScreen>
           ),
           const SizedBox(height: 100), // Extra padding for bottom navigation
           ],
-        ),
+        )
       ),
     );
   }
