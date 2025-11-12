@@ -471,9 +471,7 @@ class _BudgetScreenState extends State<BudgetScreen>
 
     return Stack(
       children: [
-        Container(
-          color: bgColor,
-          child: SingleChildScrollView(
+        SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Consumer<AppProvider>(
               builder: (context, appProvider, child) {
@@ -973,7 +971,6 @@ class _BudgetScreenState extends State<BudgetScreen>
               );
             },
           ),
-        ),
         ),
 
         // Create New Budget Button (显示不同文本根据是否有 budget)
