@@ -98,16 +98,30 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
       final description = _descriptionController.text;
 
 
+
+      // ✅ 修复：获取 category 的 name 而不是 id
+      // 这样才能与 budget.category 匹配，触发器才能自动更新 budget.spent
+      final categoryList = _getCategoryList();
+      final selectedCategoryInfo = categoryList.firstWhere(
+            (cat) => cat['id'] == _selectedCategory,
+        orElse: () => categoryList.first,
+      );
+      final categoryName = selectedCategoryInfo['name'] as String;
+
+      print('📝 Saving transaction:');
+      print('   Category ID: $_selectedCategory');
+      print('   Category Name: $categoryName');
+      print('   Amount: RM $amount');
+
       await supabase.from('transactions').insert({
         'user_id': userId,
         'amount': amount,
         'description': description,
-        'category': _selectedCategory,
+        'category': categoryName,  // ✅ 使用 name 而不是 id
         'type': _transactionType.name,
         'transaction_date': _selectedDate.toIso8601String(),
         'source': 'manual'
       });
-
 
       await context.read<AppProvider>().fetchTransactions();
 
@@ -231,131 +245,99 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
           ),
         ],
       ),
-    child: SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _transactionType == TransactionType.expense
-                      ? 'Add Expense'
-                      : 'Add Income',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: _isSubmitting ? null : widget.onBack,
-                  color: Colors.grey.shade600,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Type Toggle
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _buildTypeButton(
-                      'Expense',
-                      TransactionType.expense,
-                      primaryColor,
+                  Text(
+                    _transactionType == TransactionType.expense
+                        ? 'Add Expense'
+                        : 'Add Income',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  Expanded(
-                    child: _buildTypeButton(
-                      'Income',
-                      TransactionType.income,
-                      primaryColor,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: _isSubmitting ? null : widget.onBack,
+                    color: Colors.grey.shade600,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Amount
-            TextFormField(
-              controller: _amountController,
-              decoration: InputDecoration(
-                labelText: 'Amount (RM)',
-                prefixIcon:
-                const Icon(Icons.attach_money_rounded, color: Color(0xFF6B7280)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
+              // Type Toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
-                ),
-              ),
-              keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter an amount';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Invalid number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Description',
-                prefixIcon: const Icon(Icons.description_rounded,
-                    color: Color(0xFF6B7280)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTypeButton(
+                        'Expense',
+                        TransactionType.expense,
+                        primaryColor,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildTypeButton(
+                        'Income',
+                        TransactionType.income,
+                        primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a description';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Category
-            _buildCategorySelector(primaryColor, secondaryColor),
-            const SizedBox(height: 24),
-
-            // Date
-            InkWell(
-              onTap: () => _selectDate(context),
-              child: InputDecorator(
+              // Amount
+              TextFormField(
+                controller: _amountController,
                 decoration: InputDecoration(
-                  labelText: 'Date',
-                  prefixIcon: const Icon(Icons.calendar_today_rounded,
+                  labelText: 'Amount (RM)',
+                  prefixIcon:
+                  const Icon(Icons.attach_money_rounded, color: Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
+                ),
+                keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an amount';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Invalid number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Description
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  prefixIcon: const Icon(Icons.description_rounded,
                       color: Color(0xFF6B7280)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
@@ -368,43 +350,75 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
                 ),
-                child: Text(
-                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                  style: const TextStyle(fontSize: 16),
-                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-            // Submit Button
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              // Category
+              _buildCategorySelector(primaryColor, secondaryColor),
+              const SizedBox(height: 24),
+
+              // Date
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Date',
+                    prefixIcon: const Icon(Icons.calendar_today_rounded,
+                        color: Color(0xFF6B7280)),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: primaryColor, width: 2),
+                    ),
+                  ),
+                  child: Text(
+                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
-                shadowColor: primaryColor.withOpacity(0.4),
-                elevation: 10,
               ),
-              child: _isSubmitting
-                  ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-                  : const Text(
-                'Add Transaction',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              const SizedBox(height: 32),
+
+              // Submit Button
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  shadowColor: primaryColor.withOpacity(0.4),
+                  elevation: 10,
+                ),
+                child: _isSubmitting
+                    ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
+                    : const Text(
+                  'Add Transaction',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 

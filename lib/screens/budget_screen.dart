@@ -107,8 +107,9 @@ class _BudgetScreenState extends State<BudgetScreen>
   }
 
   // ✅ 修复问题3：保存时检查并合并相同类别的 budgets
+  // ✅ 修复：保存预算方法 - 解决 "Bad state: No element" 错误
   Future<void> _handleSaveBudgets() async {
-    // 检查所有金额
+    // 1. 检查所有金额是否已输入
     for (var categoryId in _selectedCategories) {
       if ((_categoryAmounts[categoryId] ?? 0) <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -127,23 +128,29 @@ class _BudgetScreenState extends State<BudgetScreen>
       final endDate = DateTime(now.year, now.month + 1, 0);
       final provider = context.read<AppProvider>();
 
+      // 2. 遍历所有选中的类别
       for (var categoryId in _selectedCategories) {
         final amount = _categoryAmounts[categoryId]!;
 
-        // ✅ 检查是否已存在相同类别的 budget
-        final existingBudget = provider.budgets.firstWhere(
+        // ✅ 修复：先安全地检查是否存在相同类别的预算
+        final hasExistingBudget = provider.budgets.any(
               (b) => b.category == categoryId && b.isActive,
-          orElse: () => provider.budgets.first, // dummy
         );
 
-        if (provider.budgets.any((b) => b.category == categoryId && b.isActive)) {
-          // 如果存在，更新金额
+        if (hasExistingBudget) {
+          // 如果存在，找到它并更新
+          final existingBudget = provider.budgets.firstWhere(
+                (b) => b.category == categoryId && b.isActive,
+          );
+
+          print('🔄 Updating existing budget for $categoryId');
           await provider.updateBudget(
             budgetId: existingBudget.id,
             amount: amount,
           );
         } else {
           // 如果不存在，创建新的
+          print('➕ Creating new budget for $categoryId');
           await provider.createBudget(
             category: categoryId,
             amount: amount,
@@ -154,11 +161,12 @@ class _BudgetScreenState extends State<BudgetScreen>
         }
       }
 
-      // ✅ 清理 controllers
+      // 3. 清理 controllers
       for (var controller in _amountControllers.values) {
         controller.dispose();
       }
 
+      // 4. 重置状态
       setState(() {
         _showSetupBudget = false;
         _selectedCategories.clear();
@@ -167,19 +175,26 @@ class _BudgetScreenState extends State<BudgetScreen>
         _setupStep = 1;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Budgets created successfully! 💰'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      // 5. 显示成功消息
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Budgets created successfully! 💰'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // 6. 错误处理
+      print('❌ Error saving budgets: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -891,58 +906,67 @@ class _BudgetScreenState extends State<BudgetScreen>
           ),
         ),
 
-        // Create New Budget Button
+        // Create New Budget Button (显示不同文本根据是否有 budget)
         Positioned(
           left: 16,
           right: 16,
           bottom: 16,
-          child: AnimatedBuilder(
-            animation: _animationController,
-            builder: (context, child) {
-              return Transform.translate(
-                offset: Offset(0, 100 * (1 - _animationController.value)),
-                child: Opacity(
-                  opacity: _animationController.value,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        _showSetupBudget = true;
-                        _setupStep = 1;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: SFMSTheme.successColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 18),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+          child: Consumer<AppProvider>(
+            builder: (context, appProvider, child) {
+              final hasBudgets = appProvider.budgets.where((b) => b.isActive).isNotEmpty;
+
+              return AnimatedBuilder(
+                animation: _animationController,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: Offset(0, 100 * (1 - _animationController.value)),
+                    child: Opacity(
+                      opacity: _animationController.value,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _showSetupBudget = true;
+                            _setupStep = 1;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SFMSTheme.successColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 18),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          elevation: 8,
+                          shadowColor: SFMSTheme.successColor.withOpacity(0.5),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                hasBudgets ? Icons.add : Icons.rocket_launch,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              hasBudgets ? 'Create New Budget' : 'Setup Budget',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      elevation: 8,
-                      shadowColor: SFMSTheme.successColor.withOpacity(0.5),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.add, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Create New Budget',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),
@@ -971,7 +995,10 @@ class _BudgetScreenState extends State<BudgetScreen>
                   onTap: () {}, // 防止点击对话框内容时关闭
                   child: Container(
                     margin: const EdgeInsets.all(24),
-                    constraints: const BoxConstraints(maxWidth: 500),
+                    constraints: const BoxConstraints(
+                      maxWidth: 500,
+                      maxHeight: 600, // 添加最大高度限制
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
@@ -981,7 +1008,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                       children: [
                         // Dialog Header
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: SFMSTheme.successColor.withOpacity(0.1),
                             borderRadius: const BorderRadius.only(
@@ -1051,9 +1078,9 @@ class _BudgetScreenState extends State<BudgetScreen>
 
                         // Dialog Content
                         Container(
-                          constraints: const BoxConstraints(maxHeight: 400),
+                          constraints: const BoxConstraints(maxHeight: 300),
                           child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(16),
                             child: _setupStep == 1
                                 ? _buildCategorySelection(_getAvailableCategories())
                                 : _buildAmountInput(),
@@ -1062,7 +1089,7 @@ class _BudgetScreenState extends State<BudgetScreen>
 
                         // Dialog Actions
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.grey.shade50,
                             borderRadius: const BorderRadius.only(
@@ -1289,6 +1316,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                   // ✅ 修复：正确解析并保存金额
                   final amount = double.tryParse(value) ?? 0;
                   setState(() {
+                    _categoryAmounts[categoryId] = amount;
+                    print('✅ Category: $categoryId, Amount: $amount'); // Debug
                     _categoryAmounts[categoryId] = amount;
                   });
                   print('Category: $categoryId, Amount: $amount'); // Debug
