@@ -172,9 +172,11 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: double.infinity,
                 padding: EdgeInsets.all(SFMSTheme.spacing24),
                 decoration: BoxDecoration(
-                  gradient: SFMSTheme.primaryGradient,
+                  gradient: primaryGradient,
                   borderRadius: BorderRadius.circular(SFMSTheme.radiusXLarge),
-                  boxShadow: SFMSTheme.accentShadow(SFMSTheme.primaryColor),
+                  boxShadow: isDarkMode
+                    ? SFMSTheme.tealGlowShadow
+                    : SFMSTheme.accentShadow(SFMSTheme.primaryColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,6 +426,13 @@ class _DashboardScreenState extends State<DashboardScreen>
     Color textPrimary,
     Color textSecondary,
   ) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -433,7 +442,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
           boxShadow: isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow,
           border: Border.all(
-            color: color.withOpacity(0.2),
+            color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
             width: 2,
           ),
         ),
@@ -446,7 +455,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    color.withOpacity(0.2),
+                    color.withOpacity(isDarkMode ? 0.3 : 0.2),
                     color.withOpacity(0.1),
                   ],
                   begin: Alignment.topLeft,
@@ -511,7 +520,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  color.withOpacity(0.2),
+                  color.withOpacity(isDarkMode ? 0.3 : 0.2),
                   color.withOpacity(0.1),
                 ],
                 begin: Alignment.topLeft,
@@ -603,7 +612,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      color.withOpacity(0.2),
+                      color.withOpacity(isDarkMode ? 0.3 : 0.2),
                       color.withOpacity(0.1),
                     ],
                     begin: Alignment.topLeft,
@@ -675,6 +684,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       decoration: BoxDecoration(
         color: isDarkMode ? cardBg.withOpacity(0.5) : SFMSTheme.neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
+        boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
       child: Column(
         children: [
@@ -729,6 +739,7 @@ class _DashboardScreenState extends State<DashboardScreen>
       decoration: BoxDecoration(
         color: isDarkMode ? cardBg.withOpacity(0.5) : SFMSTheme.neutralLight,
         borderRadius: BorderRadius.circular(SFMSTheme.radiusLarge),
+        boxShadow: isDarkMode ? SFMSTheme.darkCardShadow : null,
       ),
       child: Column(
         children: [

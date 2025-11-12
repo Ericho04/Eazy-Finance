@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/theme_provider.dart';
+import '../utils/theme.dart';
 
 // Bottom Navigation Widget
 class BottomNavigation extends StatelessWidget {
@@ -13,6 +16,18 @@ class BottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final navBgColor = isDarkMode ? SFMSTheme.darkCardBg : Colors.white;
+    final selectedColor = isDarkMode ? SFMSTheme.darkAccentTeal : const Color(0xFF2E7D32);
+    final unselectedColor = isDarkMode ? SFMSTheme.darkTextMuted : Colors.grey;
+    final shadowColor = isDarkMode
+        ? SFMSTheme.darkAccentTeal.withOpacity(0.3)
+        : Colors.black.withOpacity(0.1);
+
     final tabs = [
       {'id': 'dashboard', 'label': 'Home', 'icon': Icons.home_rounded},
       {'id': 'budget', 'label': 'Budget', 'icon': Icons.pie_chart_rounded},
@@ -28,11 +43,11 @@ class BottomNavigation extends StatelessWidget {
     return Container(
       height: 100 + MediaQuery.of(context).padding.bottom,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: navBgColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: shadowColor,
             blurRadius: 20,
             spreadRadius: 0,
             offset: const Offset(0, -5),
@@ -47,8 +62,8 @@ class BottomNavigation extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: const Color(0xFF2E7D32),
-          unselectedItemColor: Colors.grey,
+          selectedItemColor: selectedColor,
+          unselectedItemColor: unselectedColor,
           selectedLabelStyle: const TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
@@ -64,7 +79,7 @@ class BottomNavigation extends StatelessWidget {
                 const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
                   color: activeTab == tab['id']
-                      ? const Color(0xFF2E7D32).withOpacity(0.1)
+                      ? selectedColor.withOpacity(isDarkMode ? 0.2 : 0.1)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                 ),

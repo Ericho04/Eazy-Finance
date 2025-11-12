@@ -5,6 +5,7 @@ import 'package:sfms_flutter/providers/auth_provider.dart';
 import 'dart:math' as math;
 
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/goal.dart';
 import '../utils/theme.dart';
 
@@ -64,8 +65,7 @@ class _GoalsScreenState extends State<GoalsScreen>
     return 'RM ${amount.toStringAsFixed(2)}';
   }
 
-// ✅ 新增方法 1：处理贡献金额
-  Future<void> _handleContribute() async {
+  Future<void> _handleContribute(BuildContext context) async {
     if (_contributeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -111,8 +111,13 @@ class _GoalsScreenState extends State<GoalsScreen>
     }
   }
 
-// ✅ 新增方法 2：自定义金额对话框
-  Widget _buildContributeDialog() {
+  Widget _buildContributeDialog(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+
     return Container(
       color: Colors.black.withOpacity(0.5),
       child: Center(
@@ -120,7 +125,7 @@ class _GoalsScreenState extends State<GoalsScreen>
           margin: const EdgeInsets.all(32),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: cardColor,
             borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
@@ -129,11 +134,12 @@ class _GoalsScreenState extends State<GoalsScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Add Money',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
+                      color: textPrimary,
                     ),
                   ),
                   IconButton(
@@ -143,7 +149,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                         _contributeController.clear();
                       });
                     },
-                    icon: const Icon(Icons.close),
+                    icon: Icon(Icons.close, color: textSecondary),
                   ),
                 ],
               ),
@@ -151,9 +157,12 @@ class _GoalsScreenState extends State<GoalsScreen>
               TextField(
                 controller: _contributeController,
                 keyboardType: TextInputType.number,
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Enter amount',
+                  hintStyle: TextStyle(color: textSecondary),
                   prefixText: 'RM ',
+                  prefixStyle: TextStyle(color: textPrimary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -167,7 +176,7 @@ class _GoalsScreenState extends State<GoalsScreen>
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _handleContribute,
+                  onPressed: () => _handleContribute(context),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: SFMSTheme.cartoonPurple,
                     foregroundColor: Colors.white,
@@ -260,6 +269,22 @@ class _GoalsScreenState extends State<GoalsScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+    final successColor = isDarkMode ? SFMSTheme.darkAccentEmerald : SFMSTheme.successColor;
+    final neutralLight = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.neutralLight;
+    final neutralMedium = isDarkMode ? SFMSTheme.darkBgTertiary : SFMSTheme.neutralMedium;
+    final borderColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200;
+
     return Stack(
       children: [
         SingleChildScrollView(
@@ -307,12 +332,12 @@ class _GoalsScreenState extends State<GoalsScreen>
                                         },
                                       ),
                                       const SizedBox(height: 8),
-                                      const Text(
+                                      Text(
                                         'Financial Goals',
                                         style: TextStyle(
                                           fontSize: 28,
                                           fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1F2937),
+                                          color: textPrimary,
                                         ),
                                       ),
                                     ],
@@ -371,6 +396,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 children: [
                                   Expanded(
                                     child: _buildQuickActionButton(
+                                      context,
                                       '🎰',
                                       'Lucky Draw',
                                       SFMSTheme.cartoonPink,
@@ -380,6 +406,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: _buildQuickActionButton(
+                                      context,
                                       '🎁',
                                       'Rewards Shop',
                                       SFMSTheme.cartoonPurple,
@@ -408,21 +435,20 @@ class _GoalsScreenState extends State<GoalsScreen>
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  Colors.white,
-                                  SFMSTheme.cartoonPurple.withOpacity(0.1),
-                                ],
+                                colors: isDarkMode
+                                  ? [
+                                      SFMSTheme.darkCardBg,
+                                      SFMSTheme.darkBgTertiary.withOpacity(0.5),
+                                    ]
+                                  : [
+                                      Colors.white,
+                                      SFMSTheme.cartoonPurple.withOpacity(0.1),
+                                    ],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
                               borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 20,
-                                  offset: const Offset(0, 8),
-                                ),
-                              ],
+                              boxShadow: cardShadow,
                             ),
                             child: Column(
                               children: [
@@ -433,35 +459,35 @@ class _GoalsScreenState extends State<GoalsScreen>
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text(
+                                          Text(
                                             'Total Goals Value',
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color: Color(0xFF6B7280),
+                                              color: textSecondary,
                                             ),
                                           ),
                                           Text(
                                             _formatCurrency(totalGoalsValue),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               fontSize: 32,
                                               fontWeight: FontWeight.bold,
-                                              color: Color(0xFF1F2937),
+                                              color: textPrimary,
                                             ),
-                                            overflow: TextOverflow.ellipsis,  // ✅ 添加这行
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ),
                                     ),
-                                    const SizedBox(width: 16),  // ✅ 添加间距
-                                    Flexible(  // ✅ 添加 Flexible
+                                    const SizedBox(width: 16),
+                                    Flexible(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                          const Text(
+                                          Text(
                                             'Saved',
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color: Color(0xFF6B7280),
+                                              color: textSecondary,
                                             ),
                                           ),
                                           Text(
@@ -469,9 +495,9 @@ class _GoalsScreenState extends State<GoalsScreen>
                                             style: TextStyle(
                                               fontSize: 24,
                                               fontWeight: FontWeight.bold,
-                                              color: SFMSTheme.successColor,
+                                              color: successColor,
                                             ),
-                                            overflow: TextOverflow.ellipsis,  // ✅ 添加这行
+                                            overflow: TextOverflow.ellipsis,
                                           ),
                                         ],
                                       ),
@@ -484,7 +510,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 Container(
                                   height: 12,
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.shade200,
+                                    color: neutralMedium,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: FractionallySizedBox(
@@ -495,10 +521,9 @@ class _GoalsScreenState extends State<GoalsScreen>
                                     child: Container(
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
-                                          colors: [
-                                            SFMSTheme.cartoonPurple,
-                                            SFMSTheme.cartoonPink,
-                                          ],
+                                          colors: isDarkMode
+                                            ? [SFMSTheme.darkAccentTeal, SFMSTheme.darkAccentEmerald]
+                                            : [SFMSTheme.cartoonPurple, SFMSTheme.cartoonPink],
                                         ),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
@@ -515,14 +540,14 @@ class _GoalsScreenState extends State<GoalsScreen>
                                       style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey.shade600,
+                                        color: textSecondary,
                                       ),
                                     ),
                                     Text(
                                       '${activeGoals.length} Active Goals',
                                       style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey.shade600,
+                                        color: textSecondary,
                                       ),
                                     ),
                                   ],
@@ -539,12 +564,12 @@ class _GoalsScreenState extends State<GoalsScreen>
 
                   // Active Goals Section
                   if (activeGoals.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Active Goals',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -557,19 +582,13 @@ class _GoalsScreenState extends State<GoalsScreen>
                         margin: const EdgeInsets.only(bottom: 16),
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cardColor,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.grey.shade200,
+                            color: borderColor,
                             width: 1,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          boxShadow: cardShadow,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,10 +608,10 @@ class _GoalsScreenState extends State<GoalsScreen>
                                       children: [
                                         Text(
                                           goal.title,
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1F2937),
+                                            color: textPrimary,
                                           ),
                                         ),
                                         if (goal.description.isNotEmpty)
@@ -600,7 +619,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                             goal.description,
                                             style: TextStyle(
                                               fontSize: 14,
-                                              color: Colors.grey.shade600,
+                                              color: textSecondary,
                                             ),
                                           ),
                                       ],
@@ -610,7 +629,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: _getPriorityBackgroundColor(goal.priority),
+                                    color: _getPriorityBackgroundColor(context, goal.priority),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -618,7 +637,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
-                                      color: _getPriorityTextColor(goal.priority),
+                                      color: _getPriorityTextColor(context, goal.priority),
                                     ),
                                   ),
                                 ),
@@ -635,14 +654,14 @@ class _GoalsScreenState extends State<GoalsScreen>
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: SFMSTheme.cartoonPurple,
+                                    color: isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.cartoonPurple,
                                   ),
                                 ),
                                 Text(
                                   _formatCurrency(goal.targetAmount),
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey.shade600,
+                                    color: textSecondary,
                                   ),
                                 ),
                               ],
@@ -653,7 +672,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                             Container(
                               height: 8,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade200,
+                                color: neutralMedium,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: FractionallySizedBox(
@@ -662,7 +681,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 child: Container(
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
-                                      colors: _getCategoryGradient(index),
+                                      colors: _getCategoryGradient(context, index),
                                     ),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
@@ -679,23 +698,23 @@ class _GoalsScreenState extends State<GoalsScreen>
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.grey.shade600,
+                                    color: textSecondary,
                                   ),
                                 ),
                                 if (goal.deadline.isNotEmpty)
                                   Row(
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.calendar_today,
                                         size: 12,
-                                        color: Colors.grey,
+                                        color: textMuted,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
                                         goal.deadline,
                                         style: TextStyle(
                                           fontSize: 12,
-                                          color: Colors.grey.shade600,
+                                          color: textSecondary,
                                         ),
                                       ),
                                     ],
@@ -712,14 +731,13 @@ class _GoalsScreenState extends State<GoalsScreen>
                                   child:
                                   ElevatedButton.icon(
                                     onPressed: () {
-                                      // ✅ 修改：显示自定义金额对话框
                                       setState(() {
                                         _selectedGoalId = goal.id;
                                         _showContributeDialog = true;
                                       });
                                     },
                                     icon: const Icon(Icons.add_rounded, size: 20),
-                                    label: const Text('Add Money'),  // ✅ 修改：改名
+                                    label: const Text('Add Money'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: SFMSTheme.cartoonPurple,
                                       foregroundColor: Colors.white,
@@ -736,12 +754,13 @@ class _GoalsScreenState extends State<GoalsScreen>
                                     final confirmed = await showDialog<bool>(
                                       context: context,
                                       builder: (context) => AlertDialog(
-                                        title: const Text('Delete Goal?'),
-                                        content: Text('Delete "${goal.title}"?'),
+                                        backgroundColor: cardColor,
+                                        title: Text('Delete Goal?', style: TextStyle(color: textPrimary)),
+                                        content: Text('Delete "${goal.title}"?', style: TextStyle(color: textSecondary)),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.pop(context, false),
-                                            child: const Text('Cancel'),
+                                            child: Text('Cancel', style: TextStyle(color: textSecondary)),
                                           ),
                                           TextButton(
                                             onPressed: () => Navigator.pop(context, true),
@@ -771,7 +790,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                                     }
                                   },
                                   icon: const Icon(Icons.more_vert),
-                                  color: Colors.grey.shade600,
+                                  color: textSecondary,
                                 ),
                               ],
                             ),
@@ -784,10 +803,10 @@ class _GoalsScreenState extends State<GoalsScreen>
                     Container(
                       padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: cardColor,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.grey.shade200,
+                          color: borderColor,
                           width: 1,
                         ),
                       ),
@@ -798,12 +817,12 @@ class _GoalsScreenState extends State<GoalsScreen>
                             style: TextStyle(fontSize: 64),
                           ),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             'No active goals yet',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1F2937),
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -812,7 +831,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey.shade600,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -824,25 +843,30 @@ class _GoalsScreenState extends State<GoalsScreen>
 
                   // Completed Goals Section
                   if (completedGoals.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Completed Goals 🎉',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
 
                     ...completedGoals.map((goal) {
+                      final completedBg = isDarkMode ? SFMSTheme.darkAccentEmerald.withOpacity(0.2) : Colors.green.shade50;
+                      final completedBorder = isDarkMode ? SFMSTheme.darkAccentEmerald.withOpacity(0.3) : Colors.green.shade200;
+                      final completedIconBg = isDarkMode ? SFMSTheme.darkAccentEmerald.withOpacity(0.3) : Colors.green.shade100;
+                      final completedIcon = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green;
+
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade50,
+                          color: completedBg,
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: Colors.green.shade200,
+                            color: completedBorder,
                             width: 1,
                           ),
                         ),
@@ -851,12 +875,12 @@ class _GoalsScreenState extends State<GoalsScreen>
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.green.shade100,
+                                color: completedIconBg,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.check_circle,
-                                color: Colors.green,
+                                color: completedIcon,
                                 size: 24,
                               ),
                             ),
@@ -867,17 +891,17 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 children: [
                                   Text(
                                     goal.title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1F2937),
+                                      color: textPrimary,
                                     ),
                                   ),
                                   Text(
                                     _formatCurrency(goal.targetAmount),
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey.shade600,
+                                      color: textSecondary,
                                     ),
                                   ),
                                 ],
@@ -886,22 +910,22 @@ class _GoalsScreenState extends State<GoalsScreen>
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(
-                                color: Colors.amber.shade100,
+                                color: isDarkMode ? SFMSTheme.cartoonYellow.withOpacity(0.3) : Colors.amber.shade100,
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.star,
                                     size: 16,
-                                    color: Colors.amber,
+                                    color: isDarkMode ? SFMSTheme.cartoonYellow : Colors.amber,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
                                     '+${(goal.targetAmount * 0.1).toInt()}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 10,
-                                      color: Colors.amber,
+                                      color: isDarkMode ? SFMSTheme.cartoonYellow : Colors.amber,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
@@ -930,7 +954,7 @@ class _GoalsScreenState extends State<GoalsScreen>
                 margin: const EdgeInsets.all(24),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: cardColor,
                   borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
@@ -945,32 +969,38 @@ class _GoalsScreenState extends State<GoalsScreen>
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Create New Goal',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 20),
 
                       TextField(
                         controller: _titleController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textPrimary),
+                        decoration: InputDecoration(
                           labelText: 'Goal Title',
+                          labelStyle: TextStyle(color: textSecondary),
                           hintText: 'e.g., New Car',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(color: textMuted),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       TextField(
                         controller: _descriptionController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textPrimary),
+                        decoration: InputDecoration(
                           labelText: 'Description',
+                          labelStyle: TextStyle(color: textSecondary),
                           hintText: 'Brief description',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(color: textMuted),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -978,20 +1008,26 @@ class _GoalsScreenState extends State<GoalsScreen>
                       TextField(
                         controller: _targetAmountController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textPrimary),
+                        decoration: InputDecoration(
                           labelText: 'Target Amount (RM)',
+                          labelStyle: TextStyle(color: textSecondary),
                           hintText: '0',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(color: textMuted),
+                          border: const OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       TextField(
                         controller: _deadlineController,
-                        decoration: const InputDecoration(
+                        style: TextStyle(color: textPrimary),
+                        decoration: InputDecoration(
                           labelText: 'Deadline',
+                          labelStyle: TextStyle(color: textSecondary),
                           hintText: 'YYYY-MM-DD',
-                          border: OutlineInputBorder(),
+                          hintStyle: TextStyle(color: textMuted),
+                          border: const OutlineInputBorder(),
                         ),
                         onTap: () async {
                           final date = await showDatePicker(
@@ -1017,16 +1053,16 @@ class _GoalsScreenState extends State<GoalsScreen>
                                 });
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade300,
+                                backgroundColor: neutralMedium,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: textPrimary,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -1061,10 +1097,10 @@ class _GoalsScreenState extends State<GoalsScreen>
             ),
           ),
 
-
-        // ✅ 新增：自定义金额对话框
+        // Contribute Dialog
         if (_showContributeDialog)
-          _buildContributeDialog(),
+          _buildContributeDialog(context),
+
         // Floating Action Button for Add Goal
         Positioned(
           right: 16,
@@ -1084,6 +1120,7 @@ class _GoalsScreenState extends State<GoalsScreen>
   }
 
   Widget _buildQuickActionButton(
+      BuildContext context,
       String emoji,
       String label,
       Color color,
@@ -1135,42 +1172,64 @@ class _GoalsScreenState extends State<GoalsScreen>
     );
   }
 
-  List<Color> _getCategoryGradient(int index) {
-    final gradients = [
-      [SFMSTheme.cartoonPink, const Color(0xFFFF8CC8)],
-      [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
-      [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
-      [SFMSTheme.cartoonCyan, const Color(0xFF66E7FF)],
-      [SFMSTheme.cartoonMint, const Color(0xFFA0FFE6)],
-      [SFMSTheme.cartoonYellow, const Color(0xFFFFE066)],
-      [SFMSTheme.cartoonOrange, const Color(0xFFFFAB66)],
-    ];
-    return gradients[index % gradients.length];
-  }
+  List<Color> _getCategoryGradient(BuildContext context, int index) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
 
-  Color _getPriorityBackgroundColor(String priority) {
-    switch (priority) {
-      case 'high':
-        return Colors.red.shade100;
-      case 'medium':
-        return Colors.yellow.shade100;
-      case 'low':
-        return Colors.green.shade100;
-      default:
-        return Colors.grey.shade100;
+    if (isDarkMode) {
+      final gradients = [
+        [SFMSTheme.darkAccentTeal, SFMSTheme.darkAccentEmerald],
+        [SFMSTheme.trustPrimary, SFMSTheme.trustHighlight],
+        [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
+        [SFMSTheme.cartoonCyan, const Color(0xFF66E7FF)],
+        [SFMSTheme.cartoonMint, const Color(0xFFA0FFE6)],
+        [SFMSTheme.cartoonYellow, const Color(0xFFFFE066)],
+        [SFMSTheme.cartoonOrange, const Color(0xFFFFAB66)],
+      ];
+      return gradients[index % gradients.length];
+    } else {
+      final gradients = [
+        [SFMSTheme.cartoonPink, const Color(0xFFFF8CC8)],
+        [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
+        [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
+        [SFMSTheme.cartoonCyan, const Color(0xFF66E7FF)],
+        [SFMSTheme.cartoonMint, const Color(0xFFA0FFE6)],
+        [SFMSTheme.cartoonYellow, const Color(0xFFFFE066)],
+        [SFMSTheme.cartoonOrange, const Color(0xFFFFAB66)],
+      ];
+      return gradients[index % gradients.length];
     }
   }
 
-  Color _getPriorityTextColor(String priority) {
+  Color _getPriorityBackgroundColor(BuildContext context, String priority) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
     switch (priority) {
       case 'high':
-        return Colors.red.shade800;
+        return isDarkMode ? SFMSTheme.dangerColor.withOpacity(0.2) : Colors.red.shade100;
       case 'medium':
-        return Colors.yellow.shade800;
+        return isDarkMode ? SFMSTheme.warningColor.withOpacity(0.2) : Colors.yellow.shade100;
       case 'low':
-        return Colors.green.shade800;
+        return isDarkMode ? SFMSTheme.successColor.withOpacity(0.2) : Colors.green.shade100;
       default:
-        return Colors.grey.shade800;
+        return isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade100;
+    }
+  }
+
+  Color _getPriorityTextColor(BuildContext context, String priority) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    switch (priority) {
+      case 'high':
+        return isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade800;
+      case 'medium':
+        return isDarkMode ? SFMSTheme.warningColor : Colors.yellow.shade800;
+      case 'low':
+        return isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade800;
+      default:
+        return isDarkMode ? SFMSTheme.darkTextSecondary : Colors.grey.shade800;
     }
   }
 }

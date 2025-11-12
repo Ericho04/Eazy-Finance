@@ -89,8 +89,8 @@ class _BudgetScreenState extends State<BudgetScreen>
   void _handleNext() {
     if (_selectedCategories.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one category'),
+        SnackBar(
+          content: const Text('Please select at least one category'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -108,13 +108,14 @@ class _BudgetScreenState extends State<BudgetScreen>
   }
 
   // ✅ 修复问题3：保存时检查并合并相同类别的 budgets
+  // ✅ 修复：保存预算方法 - 解决 "Bad state: No element" 错误
   Future<void> _handleSaveBudgets() async {
-    // 检查所有金额
+    // 1. 检查所有金额是否已输入
     for (var categoryId in _selectedCategories) {
       if ((_categoryAmounts[categoryId] ?? 0) <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter amount for all categories'),
+          SnackBar(
+            content: const Text('Please enter amount for all categories'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -128,23 +129,29 @@ class _BudgetScreenState extends State<BudgetScreen>
       final endDate = DateTime(now.year, now.month + 1, 0);
       final provider = context.read<AppProvider>();
 
+      // 2. 遍历所有选中的类别
       for (var categoryId in _selectedCategories) {
         final amount = _categoryAmounts[categoryId]!;
 
-        // ✅ 检查是否已存在相同类别的 budget
-        final existingBudget = provider.budgets.firstWhere(
+        // ✅ 修复：先安全地检查是否存在相同类别的预算
+        final hasExistingBudget = provider.budgets.any(
               (b) => b.category == categoryId && b.isActive,
-          orElse: () => provider.budgets.first, // dummy
         );
 
-        if (provider.budgets.any((b) => b.category == categoryId && b.isActive)) {
-          // 如果存在，更新金额
+        if (hasExistingBudget) {
+          // 如果存在，找到它并更新
+          final existingBudget = provider.budgets.firstWhere(
+                (b) => b.category == categoryId && b.isActive,
+          );
+
+          print('🔄 Updating existing budget for $categoryId');
           await provider.updateBudget(
             budgetId: existingBudget.id,
             amount: amount,
           );
         } else {
           // 如果不存在，创建新的
+          print('➕ Creating new budget for $categoryId');
           await provider.createBudget(
             category: categoryId,
             amount: amount,
@@ -155,11 +162,12 @@ class _BudgetScreenState extends State<BudgetScreen>
         }
       }
 
-      // ✅ 清理 controllers
+      // 3. 清理 controllers
       for (var controller in _amountControllers.values) {
         controller.dispose();
       }
 
+      // 4. 重置状态
       setState(() {
         _showSetupBudget = false;
         _selectedCategories.clear();
@@ -168,24 +176,41 @@ class _BudgetScreenState extends State<BudgetScreen>
         _setupStep = 1;
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Budgets created successfully! 💰'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Budgets created successfully! 💰'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // 6. 错误处理
+      print('❌ Error saving budgets: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   // ✅ 新增：编辑 budget
   void _editBudget(BuildContext context, dynamic budget) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final successColor = isDarkMode ? SFMSTheme.darkSuccessColor : SFMSTheme.successColor;
+    final inputFillColor = isDarkMode ? SFMSTheme.darkBgSecondary : Colors.grey.shade50;
+
     final TextEditingController controller = TextEditingController(
       text: budget.amount.toString(),
     );
@@ -194,6 +219,7 @@ class _BudgetScreenState extends State<BudgetScreen>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -201,7 +227,10 @@ class _BudgetScreenState extends State<BudgetScreen>
             children: [
               const Text('✏️', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 12),
-              const Text('Edit Budget'),
+              Text(
+                'Edit Budget',
+                style: TextStyle(color: textPrimary),
+              ),
             ],
           ),
           content: Column(
@@ -210,9 +239,10 @@ class _BudgetScreenState extends State<BudgetScreen>
             children: [
               Text(
                 budget.category,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
+                  color: textPrimary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -220,14 +250,17 @@ class _BudgetScreenState extends State<BudgetScreen>
                 controller: controller,
                 keyboardType: TextInputType.number,
                 autofocus: true,
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   labelText: 'Monthly Budget',
+                  labelStyle: TextStyle(color: textSecondary),
                   prefixText: 'RM ',
+                  prefixStyle: TextStyle(color: textPrimary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   filled: true,
-                  fillColor: Colors.grey.shade50,
+                  fillColor: inputFillColor,
                 ),
               ),
             ],
@@ -235,15 +268,18 @@ class _BudgetScreenState extends State<BudgetScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
                 final amount = double.tryParse(controller.text);
                 if (amount == null || amount <= 0) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a valid amount'),
+                    SnackBar(
+                      content: const Text('Please enter a valid amount'),
                       backgroundColor: Colors.orange,
                     ),
                   );
@@ -258,8 +294,8 @@ class _BudgetScreenState extends State<BudgetScreen>
 
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Budget updated successfully! ✅'),
+                    SnackBar(
+                      content: const Text('Budget updated successfully! ✅'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -273,7 +309,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: SFMSTheme.successColor,
+                backgroundColor: successColor,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -288,10 +325,21 @@ class _BudgetScreenState extends State<BudgetScreen>
 
   // ✅ 新增：删除 budget
   void _deleteBudget(BuildContext context, dynamic budget) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final dangerColor = isDarkMode ? SFMSTheme.darkDangerColor : SFMSTheme.dangerColor;
+    final dangerBg = isDarkMode ? SFMSTheme.darkDangerColor.withOpacity(0.1) : Colors.red.shade50;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: cardColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -299,19 +347,25 @@ class _BudgetScreenState extends State<BudgetScreen>
             children: [
               const Text('🗑️', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 12),
-              const Text('Delete Budget'),
+              Text(
+                'Delete Budget',
+                style: TextStyle(color: textPrimary),
+              ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Are you sure you want to delete this budget?'),
+              Text(
+                'Are you sure you want to delete this budget?',
+                style: TextStyle(color: textPrimary),
+              ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: dangerBg,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -327,14 +381,15 @@ class _BudgetScreenState extends State<BudgetScreen>
                         children: [
                           Text(
                             budget.category,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
+                              color: textPrimary,
                             ),
                           ),
                           Text(
                             _formatCurrency(budget.amount),
                             style: TextStyle(
-                              color: Colors.grey.shade600,
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -348,7 +403,10 @@ class _BudgetScreenState extends State<BudgetScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: textSecondary),
+              ),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -356,8 +414,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                   await context.read<AppProvider>().deleteBudget(budget.id);
                   Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Budget deleted successfully! 🗑️'),
+                    SnackBar(
+                      content: const Text('Budget deleted successfully! 🗑️'),
                       backgroundColor: Colors.green,
                     ),
                   );
@@ -371,7 +429,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
+                backgroundColor: dangerColor,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -675,7 +734,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                           ? (spent / budget.amount * 100).clamp(0, 100)
                           : 0.0;
                       final remaining = (budget.amount - spent).clamp(0, double.infinity);
-                      final colors = _getCategoryGradient(index);
+                      final colors = _getCategoryGradient(context, index);
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 16),
@@ -760,6 +819,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
+                                        color: cardColor,
                                         onSelected: (value) {
                                           if (value == 'edit') {
                                             _editBudget(context, budget);
@@ -768,25 +828,25 @@ class _BudgetScreenState extends State<BudgetScreen>
                                           }
                                         },
                                         itemBuilder: (BuildContext context) => [
-                                          const PopupMenuItem<String>(
+                                          PopupMenuItem<String>(
                                             value: 'edit',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.edit, size: 20),
-                                                SizedBox(width: 12),
-                                                Text('Edit Budget'),
+                                                Icon(Icons.edit, size: 20, color: textPrimary),
+                                                const SizedBox(width: 12),
+                                                Text('Edit Budget', style: TextStyle(color: textPrimary)),
                                               ],
                                             ),
                                           ),
-                                          const PopupMenuItem<String>(
+                                          PopupMenuItem<String>(
                                             value: 'delete',
                                             child: Row(
                                               children: [
-                                                Icon(Icons.delete, size: 20, color: Colors.red),
-                                                SizedBox(width: 12),
+                                                Icon(Icons.delete, size: 20, color: dangerColor),
+                                                const SizedBox(width: 12),
                                                 Text(
                                                   'Delete Budget',
-                                                  style: TextStyle(color: Colors.red),
+                                                  style: TextStyle(color: dangerColor),
                                                 ),
                                               ],
                                             ),
@@ -910,7 +970,7 @@ class _BudgetScreenState extends State<BudgetScreen>
           ),
         ),
 
-        // Create New Budget Button
+        // Create New Budget Button (显示不同文本根据是否有 budget)
         Positioned(
           left: 16,
           right: 16,
@@ -948,20 +1008,37 @@ class _BudgetScreenState extends State<BudgetScreen>
                             color: Colors.white.withOpacity(0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.add, size: 20),
+                          elevation: 8,
+                          shadowColor: SFMSTheme.successColor.withOpacity(0.5),
                         ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Create New Budget',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                hasBudgets ? Icons.add : Icons.rocket_launch,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              hasBudgets ? 'Create New Budget' : 'Setup Budget',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           ),
@@ -990,7 +1067,10 @@ class _BudgetScreenState extends State<BudgetScreen>
                   onTap: () {}, // 防止点击对话框内容时关闭
                   child: Container(
                     margin: const EdgeInsets.all(24),
-                    constraints: const BoxConstraints(maxWidth: 500),
+                    constraints: const BoxConstraints(
+                      maxWidth: 500,
+                      maxHeight: 600, // 添加最大高度限制
+                    ),
                     decoration: BoxDecoration(
                       color: cardBg,
                       borderRadius: BorderRadius.circular(24),
@@ -1000,7 +1080,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                       children: [
                         // Dialog Header
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: (isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.successColor).withOpacity(0.1),
                             borderRadius: const BorderRadius.only(
@@ -1063,7 +1143,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                     _setupStep = 1;
                                   });
                                 },
-                                icon: const Icon(Icons.close),
+                                icon: Icon(Icons.close, color: textPrimary),
                               ),
                             ],
                           ),
@@ -1071,18 +1151,18 @@ class _BudgetScreenState extends State<BudgetScreen>
 
                         // Dialog Content
                         Container(
-                          constraints: const BoxConstraints(maxHeight: 400),
+                          constraints: const BoxConstraints(maxHeight: 300),
                           child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(16),
                             child: _setupStep == 1
-                                ? _buildCategorySelection(_getAvailableCategories())
-                                : _buildAmountInput(),
+                                ? _buildCategorySelection(context, _getAvailableCategories())
+                                : _buildAmountInput(context),
                           ),
                         ),
 
                         // Dialog Actions
                         Container(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
                             borderRadius: const BorderRadius.only(
@@ -1106,6 +1186,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                                       });
                                     },
                                     style: OutlinedButton.styleFrom(
+                                      foregroundColor: textPrimary,
+                                      side: BorderSide(color: textSecondary),
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
@@ -1307,11 +1389,23 @@ class _BudgetScreenState extends State<BudgetScreen>
                 // ✅ 使用状态变量中的 controller
                 controller: _amountControllers[categoryId],
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                style: TextStyle(color: textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Enter monthly budget',
+                  hintStyle: TextStyle(color: textSecondary.withOpacity(0.6)),
                   prefixText: 'RM ',
+                  prefixStyle: TextStyle(color: textPrimary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: borderColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: successColor, width: 2),
                   ),
                   filled: true,
                   fillColor: inputBg,
@@ -1324,6 +1418,8 @@ class _BudgetScreenState extends State<BudgetScreen>
                   // ✅ 修复：正确解析并保存金额
                   final amount = double.tryParse(value) ?? 0;
                   setState(() {
+                    _categoryAmounts[categoryId] = amount;
+                    print('✅ Category: $categoryId, Amount: $amount'); // Debug
                     _categoryAmounts[categoryId] = amount;
                   });
                   print('Category: $categoryId, Amount: $amount'); // Debug
@@ -1349,16 +1445,35 @@ class _BudgetScreenState extends State<BudgetScreen>
     );
   }
 
-  List<Color> _getCategoryGradient(int index) {
-    final gradients = [
-      [SFMSTheme.cartoonPink, const Color(0xFFFF8CC8)],
-      [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
-      [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
-      [SFMSTheme.cartoonCyan, const Color(0xFF66E7FF)],
-      [SFMSTheme.cartoonMint, const Color(0xFFA0FFE6)],
-      [SFMSTheme.cartoonYellow, const Color(0xFFFFE066)],
-      [SFMSTheme.cartoonOrange, const Color(0xFFFFAB66)],
-    ];
-    return gradients[index % gradients.length];
+  List<Color> _getCategoryGradient(BuildContext context, int index) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    if (isDarkMode) {
+      // Dark mode gradients - darker, more muted colors
+      final gradients = [
+        [SFMSTheme.darkCartoonPink, const Color(0xFF8B2F5E)],
+        [SFMSTheme.darkCartoonPurple, const Color(0xFF5A4B6E)],
+        [SFMSTheme.darkCartoonBlue, const Color(0xFF2E5C8C)],
+        [SFMSTheme.darkCartoonCyan, const Color(0xFF2E6B7A)],
+        [SFMSTheme.darkCartoonMint, const Color(0xFF2E6B5A)],
+        [SFMSTheme.darkCartoonYellow, const Color(0xFF8C6E2E)],
+        [SFMSTheme.darkCartoonOrange, const Color(0xFF8C4E2E)],
+      ];
+      return gradients[index % gradients.length];
+    } else {
+      // Light mode gradients - bright, vibrant colors
+      final gradients = [
+        [SFMSTheme.cartoonPink, const Color(0xFFFF8CC8)],
+        [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
+        [SFMSTheme.cartoonBlue, const Color(0xFF7BB3FF)],
+        [SFMSTheme.cartoonCyan, const Color(0xFF66E7FF)],
+        [SFMSTheme.cartoonMint, const Color(0xFFA0FFE6)],
+        [SFMSTheme.cartoonYellow, const Color(0xFFFFE066)],
+        [SFMSTheme.cartoonOrange, const Color(0xFFFFAB66)],
+      ];
+      return gradients[index % gradients.length];
+    }
   }
 }

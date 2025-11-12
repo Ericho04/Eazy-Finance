@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../providers/auth_provider.dart';
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
 import '../utils/theme.dart';
 
@@ -98,16 +99,30 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
       final description = _descriptionController.text;
 
 
+
+      // ✅ 修复：获取 category 的 name 而不是 id
+      // 这样才能与 budget.category 匹配，触发器才能自动更新 budget.spent
+      final categoryList = _getCategoryList();
+      final selectedCategoryInfo = categoryList.firstWhere(
+            (cat) => cat['id'] == _selectedCategory,
+        orElse: () => categoryList.first,
+      );
+      final categoryName = selectedCategoryInfo['name'] as String;
+
+      print('📝 Saving transaction:');
+      print('   Category ID: $_selectedCategory');
+      print('   Category Name: $categoryName');
+      print('   Amount: RM $amount');
+
       await supabase.from('transactions').insert({
         'user_id': userId,
         'amount': amount,
         'description': description,
-        'category': _selectedCategory,
+        'category': categoryName,  // ✅ 使用 name 而不是 id
         'type': _transactionType.name,
         'transaction_date': _selectedDate.toIso8601String(),
         'source': 'manual'
       });
-
 
       await context.read<AppProvider>().fetchTransactions();
 
@@ -148,6 +163,10 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -156,13 +175,22 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: _transactionType == TransactionType.expense
-                  ? SFMSTheme.dangerColor
-                  : SFMSTheme.successColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDarkMode
+                ? ColorScheme.dark(
+                    primary: _transactionType == TransactionType.expense
+                        ? SFMSTheme.darkAccentCoral
+                        : SFMSTheme.darkAccentEmerald,
+                    onPrimary: Colors.white,
+                    surface: SFMSTheme.darkCardBg,
+                    onSurface: SFMSTheme.darkTextPrimary,
+                  )
+                : ColorScheme.light(
+                    primary: _transactionType == TransactionType.expense
+                        ? SFMSTheme.dangerColor
+                        : SFMSTheme.successColor,
+                    onPrimary: Colors.white,
+                    onSurface: Colors.black,
+                  ),
           ),
           child: child!,
         );
@@ -177,12 +205,24 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     final primaryColor = _transactionType == TransactionType.expense
-        ? SFMSTheme.dangerColor
-        : SFMSTheme.successColor;
+        ? (isDarkMode ? SFMSTheme.darkAccentCoral : SFMSTheme.dangerColor)
+        : (isDarkMode ? SFMSTheme.darkAccentEmerald : SFMSTheme.successColor);
     final secondaryColor = _transactionType == TransactionType.expense
-        ? const Color(0xFFFFECEB)
-        : const Color(0xFFE6F7EB);
+        ? (isDarkMode ? const Color(0xFF4A2626) : const Color(0xFFFFECEB))
+        : (isDarkMode ? const Color(0xFF1F3A2E) : const Color(0xFFE6F7EB));
 
     return Material(
       color: Colors.transparent,
@@ -203,8 +243,8 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
               );
             },
             child: _showSuccess
-                ? _buildSuccessView(context, primaryColor)
-                : _buildFormView(context, primaryColor, secondaryColor),
+                ? _buildSuccessView(context, primaryColor, isDarkMode, cardColor, textPrimary, textMuted)
+                : _buildFormView(context, primaryColor, secondaryColor, isDarkMode, cardColor, cardShadow, textPrimary, textSecondary, textMuted),
           ),
         ),
       ),
@@ -215,148 +255,78 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
   // --- 你的 UI 代码 (保持不变) ---
   //
 
-  Widget _buildFormView(BuildContext context, Color primaryColor, Color secondaryColor) {
+  Widget _buildFormView(BuildContext context, Color primaryColor, Color secondaryColor, bool isDarkMode, Color cardColor, List<BoxShadow> cardShadow, Color textPrimary, Color textSecondary, Color textMuted) {
     return Container(
       key: const ValueKey('form'),
       padding: const EdgeInsets.all(24),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 30,
-            spreadRadius: 5,
-          ),
-        ],
+        boxShadow: cardShadow,
       ),
-    child: SingleChildScrollView(
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _transactionType == TransactionType.expense
-                      ? 'Add Expense'
-                      : 'Add Income',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded),
-                  onPressed: _isSubmitting ? null : widget.onBack,
-                  color: Colors.grey.shade600,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Type Toggle
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
+      child: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(
-                    child: _buildTypeButton(
-                      'Expense',
-                      TransactionType.expense,
-                      primaryColor,
+                  Text(
+                    _transactionType == TransactionType.expense
+                        ? 'Add Expense'
+                        : 'Add Income',
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  Expanded(
-                    child: _buildTypeButton(
-                      'Income',
-                      TransactionType.income,
-                      primaryColor,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: _isSubmitting ? null : widget.onBack,
+                    color: Colors.grey.shade600,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Amount
-            TextFormField(
-              controller: _amountController,
-              decoration: InputDecoration(
-                labelText: 'Amount (RM)',
-                prefixIcon:
-                const Icon(Icons.attach_money_rounded, color: Color(0xFF6B7280)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
+              // Type Toggle
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
-                ),
-              ),
-              keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter an amount';
-                }
-                if (double.tryParse(value) == null) {
-                  return 'Invalid number';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-
-            // Description
-            TextFormField(
-              controller: _descriptionController,
-              decoration: InputDecoration(
-                labelText: 'Description',
-                prefixIcon: const Icon(Icons.description_rounded,
-                    color: Color(0xFF6B7280)),
-                filled: true,
-                fillColor: Colors.grey.shade50,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide(color: primaryColor, width: 2),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildTypeButton(
+                        'Expense',
+                        TransactionType.expense,
+                        primaryColor,
+                      ),
+                    ),
+                    Expanded(
+                      child: _buildTypeButton(
+                        'Income',
+                        TransactionType.income,
+                        primaryColor,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter a description';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Category
-            _buildCategorySelector(primaryColor, secondaryColor),
-            const SizedBox(height: 24),
-
-            // Date
-            InkWell(
-              onTap: () => _selectDate(context),
-              child: InputDecorator(
+              // Amount
+              TextFormField(
+                controller: _amountController,
                 decoration: InputDecoration(
-                  labelText: 'Date',
-                  prefixIcon: const Icon(Icons.calendar_today_rounded,
-                      color: Color(0xFF6B7280)),
+                  labelText: 'Amount (RM)',
+                  prefixIcon:
+                  const Icon(Icons.attach_money_rounded, color: Color(0xFF6B7280)),
                   filled: true,
                   fillColor: Colors.grey.shade50,
                   border: OutlineInputBorder(
@@ -368,48 +338,116 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
                     borderSide: BorderSide(color: primaryColor, width: 2),
                   ),
                 ),
-                child: Text(
-                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                  style: const TextStyle(fontSize: 16),
-                ),
+                keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter an amount';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Invalid number';
+                  }
+                  return null;
+                },
               ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 16),
 
-            // Submit Button
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _submitForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                minimumSize: const Size(double.infinity, 56),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+              // Description
+              TextFormField(
+                controller: _descriptionController,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  prefixIcon: const Icon(Icons.description_rounded,
+                      color: Color(0xFF6B7280)),
+                  filled: true,
+                  fillColor: isDarkMode ? SFMSTheme.darkBgSecondary : Colors.grey.shade50,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: primaryColor, width: 2),
+                  ),
                 ),
-                shadowColor: primaryColor.withOpacity(0.4),
-                elevation: 10,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a description';
+                  }
+                  return null;
+                },
               ),
-              child: _isSubmitting
-                  ? const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              )
-                  : const Text(
-                'Add Transaction',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              const SizedBox(height: 24),
+
+              // Category
+              _buildCategorySelector(primaryColor, secondaryColor),
+              const SizedBox(height: 24),
+
+              // Date
+              InkWell(
+                onTap: () => _selectDate(context),
+                child: InputDecorator(
+                  decoration: InputDecoration(
+                    labelText: 'Date',
+                    prefixIcon: const Icon(Icons.calendar_today_rounded,
+                        color: Color(0xFF6B7280)),
+                    filled: true,
+                    fillColor: Colors.grey.shade50,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide(color: primaryColor, width: 2),
+                    ),
+                  ),
+                  child: Text(
+                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+
+              // Submit Button
+              ElevatedButton(
+                onPressed: _isSubmitting ? null : _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  minimumSize: const Size(double.infinity, 56),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  shadowColor: primaryColor.withOpacity(0.4),
+                  elevation: 10,
+                ),
+                child: _isSubmitting
+                    ? const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                )
+                    : const Text(
+                  'Add Transaction',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
   Widget _buildTypeButton(
-      String title, TransactionType type, Color primaryColor) {
+      BuildContext context, String title, TransactionType type, Color primaryColor, bool isDarkMode, Color textSecondary) {
     final bool isSelected = _transactionType == type;
     return GestureDetector(
       onTap: () => _onTypeChanged(type),
@@ -426,7 +464,7 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : Colors.grey.shade600,
+              color: isSelected ? Colors.white : textSecondary,
             ),
           ),
         ),
@@ -434,17 +472,17 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
     );
   }
 
-  Widget _buildCategorySelector(Color primaryColor, Color secondaryColor) {
+  Widget _buildCategorySelector(BuildContext context, Color primaryColor, Color secondaryColor, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary) {
     final categories = _getCategoryList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Category',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF374151),
+            color: textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -467,17 +505,17 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
                   _selectedCategory = category['id'] as String;
                 });
               },
-              backgroundColor: Colors.white,
+              backgroundColor: isDarkMode ? SFMSTheme.darkBgSecondary : Colors.white,
               selectedColor: primaryColor,
               labelStyle: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: isSelected ? Colors.white : Colors.black,
+                color: isSelected ? Colors.white : textPrimary,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
                 side: BorderSide(
-                  color: isSelected ? primaryColor : Colors.grey.shade300,
+                  color: isSelected ? primaryColor : (isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300),
                 ),
               ),
               pressElevation: 0,
@@ -488,13 +526,13 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
     );
   }
 
-  Widget _buildSuccessView(BuildContext context, Color primaryColor) {
+  Widget _buildSuccessView(BuildContext context, Color primaryColor, bool isDarkMode, Color cardColor, Color textPrimary, Color textMuted) {
     return Container(
       key: const ValueKey('success'),
       padding: const EdgeInsets.all(32),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Center(
@@ -546,18 +584,18 @@ class _ExpenseEntryScreenState extends State<ExpenseEntryScreen>
                         const SizedBox(height: 32),
                         Text(
                           '${_transactionType == TransactionType.expense ? 'Expense' : 'Income'} Added!',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
+                            color: textPrimary,
                           ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'RM $amountText ${_transactionType == TransactionType.expense ? 'expense' : 'income'} recorded successfully',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
-                            color: Color(0xFF6B7280),
+                            color: textMuted,
                           ),
                           textAlign: TextAlign.center,
                         ),

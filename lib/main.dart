@@ -11,6 +11,9 @@ import 'providers/app_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 
+//import utils
+import 'utils/theme.dart';
+
 //import widgets
 import 'widget/bottom_navigation.dart';
 
@@ -626,6 +629,10 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
       return _buildAuthView();
     }
 
+    // Get theme provider for dark mode detection
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
     // Main authenticated app
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -640,23 +647,43 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color.lerp(
-                        const Color(0xFFDBEAFE),
-                        const Color(0xFFEDE9FE),
-                        (_backgroundController.value * 2) % 1,
-                      )!,
-                      Color.lerp(
-                        const Color(0xFFFAF5FF),
-                        const Color(0xFFFEF3C7),
-                        (_backgroundController.value * 2) % 1,
-                      )!,
-                      Color.lerp(
-                        const Color(0xFFFDF2F8),
-                        const Color(0xFFFED7D7),
-                        (_backgroundController.value * 2) % 1,
-                      )!,
-                    ],
+                    colors: isDarkMode
+                        ? [
+                            // Dark Mode: Gradient from Deep Navy → Slate Gray → Teal Blue
+                            Color.lerp(
+                              SFMSTheme.darkAnimBg1Start,
+                              SFMSTheme.darkAnimBg1End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                            Color.lerp(
+                              SFMSTheme.darkAnimBg2Start,
+                              SFMSTheme.darkAnimBg2End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                            Color.lerp(
+                              SFMSTheme.darkAnimBg3Start,
+                              SFMSTheme.darkAnimBg3End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                          ]
+                        : [
+                            // Light Mode: Original light gradients
+                            Color.lerp(
+                              SFMSTheme.lightAnimBg1Start,
+                              SFMSTheme.lightAnimBg1End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                            Color.lerp(
+                              SFMSTheme.lightAnimBg2Start,
+                              SFMSTheme.lightAnimBg2End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                            Color.lerp(
+                              SFMSTheme.lightAnimBg3Start,
+                              SFMSTheme.lightAnimBg3End,
+                              (_backgroundController.value * 2) % 1,
+                            )!,
+                          ],
                   ),
                 ),
                 child: Stack(
@@ -689,12 +716,19 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     gradient: LinearGradient(
-                                      colors: [
-                                        const Color(0xFF8B5CF6)
-                                            .withOpacity(0.1),
-                                        const Color(0xFFEC4899)
-                                            .withOpacity(0.1),
-                                      ],
+                                      colors: isDarkMode
+                                          ? [
+                                              SFMSTheme.darkAccentTeal
+                                                  .withOpacity(0.15),
+                                              SFMSTheme.darkAccentEmerald
+                                                  .withOpacity(0.15),
+                                            ]
+                                          : [
+                                              const Color(0xFF8B5CF6)
+                                                  .withOpacity(0.1),
+                                              const Color(0xFFEC4899)
+                                                  .withOpacity(0.1),
+                                            ],
                                     ),
                                   ),
                                 ),
@@ -768,9 +802,15 @@ class _AppContentState extends State<AppContent> with TickerProviderStateMixin {
                           _previousView = currentView;
                           currentView = 'settings';
                         }),
-                        backgroundColor: Colors.white.withOpacity(0.9),
-                        child:
-                        const Icon(Icons.settings, color: Colors.black87),
+                        backgroundColor: isDarkMode
+                            ? SFMSTheme.darkCardBg.withOpacity(0.9)
+                            : Colors.white.withOpacity(0.9),
+                        child: Icon(
+                          Icons.settings,
+                          color: isDarkMode
+                              ? SFMSTheme.darkTextPrimary
+                              : Colors.black87,
+                        ),
                       ),
                     ),
                   )

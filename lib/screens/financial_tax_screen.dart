@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'package:provider/provider.dart';
 
 import '../utils/theme.dart';
+import '../providers/theme_provider.dart';
 
 class FinancialTaxScreen extends StatefulWidget {
   final VoidCallback onBack;
@@ -176,26 +178,47 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkCardBg : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardShadow : SFMSTheme.softCardShadow;
+
     final taxCalculation = _calculateTax();
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFDBEAFE),
-              Color(0xFFFAF5FF),
-              Color(0xFFFDF2F8),
-            ],
-          ),
+        decoration: BoxDecoration(
+          gradient: isDarkMode
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    SFMSTheme.darkBgPrimary,
+                    SFMSTheme.darkBgSecondary,
+                  ],
+                )
+              : const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFDBEAFE),
+                    Color(0xFFFAF5FF),
+                    Color(0xFFFDF2F8),
+                  ],
+                ),
         ),
         child: SafeArea(
           child: Column(
             children: [
               // Header
-              _buildHeader(),
+              _buildHeader(context, isDarkMode, cardColor, textPrimary, textSecondary),
 
               Expanded(
                 child: SingleChildScrollView(
@@ -203,31 +226,31 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                   child: Column(
                     children: [
                       // Tax Year Selection
-                      _buildTaxYearSelection(),
+                      _buildTaxYearSelection(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
                       const SizedBox(height: 24),
 
                       // Tax Summary Cards
-                      _buildTaxSummaryCards(taxCalculation),
+                      _buildTaxSummaryCards(context, taxCalculation, isDarkMode),
                       const SizedBox(height: 24),
 
                       // Quick Actions
-                      _buildQuickActions(),
+                      _buildQuickActions(context, isDarkMode),
                       const SizedBox(height: 24),
 
                       // Tax Calculator
                       if (_showCalculator) ...[
-                        _buildTaxCalculator(),
+                        _buildTaxCalculator(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
                         const SizedBox(height: 24),
                       ],
 
                       // Tax Deductions Guide
                       if (_showDeductions) ...[
-                        _buildDeductionsGuide(),
+                        _buildDeductionsGuide(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
                         const SizedBox(height: 24),
                       ],
 
                       // Tax Tips
-                      _buildTaxTips(),
+                      _buildTaxTips(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -240,7 +263,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -250,8 +273,8 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
             icon: const Icon(Icons.arrow_back, size: 18),
             label: const Text('Back'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.9),
-              foregroundColor: Colors.black,
+              backgroundColor: cardColor.withOpacity(0.9),
+              foregroundColor: textPrimary,
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -263,20 +286,20 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Row(
                   children: [
-                    Text(
+                    const Text(
                       '📊',
                       style: TextStyle(fontSize: 24),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Tax Planning',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -285,7 +308,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                   'Plan and calculate your taxes',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF6B7280),
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -296,7 +319,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildTaxYearSelection() {
+  Widget _buildTaxYearSelection(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
@@ -307,15 +330,9 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: cardColor,
                 borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                boxShadow: cardShadow,
               ),
               child: Row(
                 children: [
@@ -343,11 +360,11 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Tax Year',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF6B7280),
+                            color: textSecondary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -355,15 +372,16 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                           value: _selectedTaxYear,
                           onChanged: (value) => setState(() => _selectedTaxYear = value!),
                           underline: const SizedBox(),
+                          dropdownColor: cardColor,
                           items: ['2024', '2023', '2022'].map((year) {
                             return DropdownMenuItem(
                               value: year,
                               child: Text(
                                 year,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF1F2937),
+                                  color: textPrimary,
                                 ),
                               ),
                             );
@@ -381,20 +399,23 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildTaxSummaryCards(Map<String, double> calculation) {
+  Widget _buildTaxSummaryCards(BuildContext context, Map<String, double> calculation, bool isDarkMode) {
+    final dangerColor = isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade400;
+    final successColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade400;
+
     final cards = [
       {
         'title': 'Estimated Tax',
         'value': 'RM ${calculation['totalTax']!.toStringAsFixed(2)}',
         'icon': Icons.receipt_long,
-        'color': Colors.red.shade400,
+        'color': dangerColor,
         'subtitle': '${calculation['effectiveRate']!.toStringAsFixed(1)}% effective rate',
       },
       {
         'title': 'Take Home',
         'value': 'RM ${calculation['takeHome']!.toStringAsFixed(2)}',
         'icon': Icons.account_balance_wallet,
-        'color': Colors.green.shade400,
+        'color': successColor,
         'subtitle': 'After tax income',
       },
       {
@@ -503,7 +524,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildQuickActions() {
+  Widget _buildQuickActions(BuildContext context, bool isDarkMode) {
     return Row(
       children: [
         Expanded(
@@ -596,36 +617,32 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildTaxCalculator() {
+  Widget _buildTaxCalculator(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
+    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 '🧮',
                 style: TextStyle(fontSize: 24),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Tax Calculator',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: textPrimary,
                 ),
               ),
             ],
@@ -636,16 +653,19 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           TextFormField(
             controller: _incomeController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
               labelText: 'Annual Income (RM)',
+              labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
+              hintStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: inputFillColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: const Icon(Icons.attach_money),
+              prefixIcon: Icon(Icons.attach_money, color: textSecondary),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -655,17 +675,21 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           TextFormField(
             controller: _epfController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
               labelText: 'EPF Contribution (RM)',
+              labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
+              hintStyle: TextStyle(color: textMuted),
               helperText: 'Max: RM 4,000',
+              helperStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: inputFillColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: const Icon(Icons.savings),
+              prefixIcon: Icon(Icons.savings, color: textSecondary),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -675,17 +699,21 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           TextFormField(
             controller: _insuranceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
               labelText: 'Life Insurance (RM)',
+              labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
+              hintStyle: TextStyle(color: textMuted),
               helperText: 'Max: RM 3,000',
+              helperStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: inputFillColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: const Icon(Icons.security),
+              prefixIcon: Icon(Icons.security, color: textSecondary),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -695,17 +723,21 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           TextFormField(
             controller: _educationController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
               labelText: 'Education Fees (RM)',
+              labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
+              hintStyle: TextStyle(color: textMuted),
               helperText: 'Max: RM 7,000',
+              helperStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: inputFillColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: const Icon(Icons.school),
+              prefixIcon: Icon(Icons.school, color: textSecondary),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -715,17 +747,21 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
           TextFormField(
             controller: _medicalController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: TextStyle(color: textPrimary),
             decoration: InputDecoration(
               labelText: 'Medical Expenses (RM)',
+              labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
+              hintStyle: TextStyle(color: textMuted),
               helperText: 'Max: RM 8,000',
+              helperStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: Colors.grey.shade50,
+              fillColor: inputFillColor,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: const Icon(Icons.local_hospital),
+              prefixIcon: Icon(Icons.local_hospital, color: textSecondary),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -734,36 +770,33 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildDeductionsGuide() {
+  Widget _buildDeductionsGuide(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
+    final neutralBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
+    final borderColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200;
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 '📋',
                 style: TextStyle(fontSize: 24),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Tax Deductions Guide',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: textPrimary,
                 ),
               ),
             ],
@@ -779,9 +812,9 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                 margin: const EdgeInsets.only(bottom: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50,
+                  color: neutralBg,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: borderColor),
                 ),
                 child: Row(
                   children: [
@@ -807,18 +840,18 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                         children: [
                           Text(
                             deduction['title'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1F2937),
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             deduction['description'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF6B7280),
+                              color: textSecondary,
                             ),
                           ),
                         ],
@@ -843,7 +876,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildTaxTips() {
+  Widget _buildTaxTips(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
     final tips = [
       {
         'title': 'Keep Receipts',
@@ -874,32 +907,26 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Text(
+              const Text(
                 '💡',
                 style: TextStyle(fontSize: 24),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Tax Planning Tips',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
+                  color: textPrimary,
                 ),
               ),
             ],
@@ -937,18 +964,18 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                         children: [
                           Text(
                             tip['title'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF1F2937),
+                              color: textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             tip['description'] as String,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF6B7280),
+                              color: textSecondary,
                             ),
                           ),
                         ],

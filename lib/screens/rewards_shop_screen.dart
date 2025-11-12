@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'dart:math' as math;
 
 import '../providers/app_provider.dart';
+import '../providers/theme_provider.dart';
 import '../utils/theme.dart';
 
 class RewardsShopScreen extends StatefulWidget {
@@ -94,20 +95,41 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
 
   @override
   Widget build(BuildContext context) {
+    // Dark Mode Support
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
+    // Theme-aware colors
+    final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
+    final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
+    final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
+    final textMuted = isDarkMode ? SFMSTheme.darkTextMuted : SFMSTheme.textMuted;
+    final cardColor = isDarkMode ? SFMSTheme.darkBgSecondary : SFMSTheme.cardColor;
+    final cardShadow = isDarkMode ? SFMSTheme.darkCardGlow : SFMSTheme.softCardShadow;
+
+    // Background gradient colors
+    final gradientColors = isDarkMode
+        ? [
+            SFMSTheme.darkBgPrimary,
+            SFMSTheme.darkBgSecondary.withOpacity(0.5),
+            SFMSTheme.darkBgPrimary,
+          ]
+        : [
+            const Color(0xFFDBEAFE),
+            const Color(0xFFFAF5FF),
+            const Color(0xFFFDF2F8),
+          ];
+
     return Scaffold(
       body: Stack(
         children: [
           // Main content
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFDBEAFE),
-                  Color(0xFFFAF5FF),
-                  Color(0xFFFDF2F8),
-                ],
+                colors: gradientColors,
               ),
             ),
             child: SafeArea(
@@ -124,8 +146,8 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                           icon: const Icon(Icons.arrow_back, size: 18),
                           label: const Text('Back'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.8),
-                            foregroundColor: Colors.black,
+                            backgroundColor: cardColor.withOpacity(0.8),
+                            foregroundColor: textPrimary,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -147,7 +169,7 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                 borderRadius: BorderRadius.circular(20),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: SFMSTheme.cartoonYellow.withOpacity(0.3),
+                                    color: SFMSTheme.cartoonYellow.withOpacity(isDarkMode ? 0.5 : 0.3),
                                     blurRadius: 8,
                                     offset: const Offset(0, 4),
                                   ),
@@ -193,23 +215,23 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                     builder: (context, child) {
                       return Transform.scale(
                         scale: 1.0 + math.sin(_floatingController.value * 2 * math.pi) * 0.05,
-                        child: const Column(
+                        child: Column(
                           children: [
-                            Text('🛒', style: TextStyle(fontSize: 60)),
-                            SizedBox(height: 16),
+                            const Text('🛒', style: TextStyle(fontSize: 60)),
+                            const SizedBox(height: 16),
                             Text(
                               'Rewards Shop',
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF1F2937),
+                                color: textPrimary,
                               ),
                             ),
                             Text(
                               'Exchange your points for amazing rewards!',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF6B7280),
+                                color: textSecondary,
                               ),
                             ),
                           ],
@@ -224,15 +246,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: cardColor,
                       borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: cardShadow,
                     ),
                     child: Row(
                       children: _categories.map((category) {
@@ -270,7 +286,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: isActive ? Colors.white : Colors.grey.shade700,
+                                      color: isActive
+                                          ? Colors.white
+                                          : (isDarkMode ? textSecondary : Colors.grey.shade700),
                                     ),
                                   ),
                                 ],
@@ -310,15 +328,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                     opacity: _animationController.value,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: Colors.white,
+                                        color: cardColor,
                                         borderRadius: BorderRadius.circular(20),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withOpacity(0.05),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
+                                        boxShadow: cardShadow,
                                       ),
                                       child: Stack(
                                         children: [
@@ -333,15 +345,19 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                   Container(
                                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.orange.shade100,
+                                                      color: isDarkMode
+                                                          ? Colors.orange.withOpacity(0.2)
+                                                          : Colors.orange.shade100,
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
-                                                    child: const Text(
+                                                    child: Text(
                                                       '🔥 Popular',
                                                       style: TextStyle(
                                                         fontSize: 10,
                                                         fontWeight: FontWeight.bold,
-                                                        color: Colors.orange,
+                                                        color: isDarkMode
+                                                            ? Colors.orange.shade300
+                                                            : Colors.orange,
                                                       ),
                                                     ),
                                                   ),
@@ -350,15 +366,19 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                     margin: const EdgeInsets.only(top: 4),
                                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                                     decoration: BoxDecoration(
-                                                      color: Colors.red.shade100,
+                                                      color: isDarkMode
+                                                          ? Colors.red.withOpacity(0.2)
+                                                          : Colors.red.shade100,
                                                       borderRadius: BorderRadius.circular(8),
                                                     ),
-                                                    child: const Text(
+                                                    child: Text(
                                                       '⚡ Limited',
                                                       style: TextStyle(
                                                         fontSize: 10,
                                                         fontWeight: FontWeight.bold,
-                                                        color: Colors.red,
+                                                        color: isDarkMode
+                                                            ? Colors.red.shade300
+                                                            : Colors.red,
                                                       ),
                                                     ),
                                                   ),
@@ -373,10 +393,12 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                 color: Colors.green.withOpacity(0.2),
                                                 borderRadius: BorderRadius.circular(20),
                                               ),
-                                              child: const Center(
+                                              child: Center(
                                                 child: CircleAvatar(
-                                                  backgroundColor: Colors.green,
-                                                  child: Icon(
+                                                  backgroundColor: isDarkMode
+                                                      ? Colors.green.shade700
+                                                      : Colors.green,
+                                                  child: const Icon(
                                                     Icons.check,
                                                     color: Colors.white,
                                                   ),
@@ -404,10 +426,10 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                 // Item details
                                                 Text(
                                                   item.name,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 14,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Color(0xFF1F2937),
+                                                    color: textPrimary,
                                                   ),
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
@@ -415,9 +437,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   item.description,
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
-                                                    color: Color(0xFF6B7280),
+                                                    color: textSecondary,
                                                   ),
                                                   maxLines: 2,
                                                   overflow: TextOverflow.ellipsis,
@@ -428,7 +450,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                   style: TextStyle(
                                                     fontSize: 16,
                                                     fontWeight: FontWeight.bold,
-                                                    color: SFMSTheme.cartoonPurple,
+                                                    color: isDarkMode
+                                                        ? SFMSTheme.darkAccentTeal
+                                                        : SFMSTheme.cartoonPurple,
                                                   ),
                                                 ),
                                                 const SizedBox(height: 8),
@@ -439,27 +463,29 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                   children: [
                                                     Row(
                                                       children: [
-                                                        const Icon(
+                                                        Icon(
                                                           Icons.star,
-                                                          color: Colors.amber,
+                                                          color: isDarkMode
+                                                              ? Colors.amber.shade300
+                                                              : Colors.amber,
                                                           size: 14,
                                                         ),
                                                         const SizedBox(width: 4),
                                                         Text(
                                                           '${item.pointsCost}',
-                                                          style: const TextStyle(
+                                                          style: TextStyle(
                                                             fontSize: 12,
                                                             fontWeight: FontWeight.bold,
-                                                            color: Color(0xFF1F2937),
+                                                            color: textPrimary,
                                                           ),
                                                         ),
                                                       ],
                                                     ),
                                                     Text(
                                                       '${item.availability} left',
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         fontSize: 10,
-                                                        color: Color(0xFF6B7280),
+                                                        color: textSecondary,
                                                       ),
                                                     ),
                                                   ],
@@ -476,10 +502,12 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                         : () => _handlePurchase(item),
                                                     style: ElevatedButton.styleFrom(
                                                       backgroundColor: isPurchased
-                                                          ? Colors.green
+                                                          ? (isDarkMode ? Colors.green.shade700 : Colors.green)
                                                           : canAfford && item.availability > 0
                                                           ? SFMSTheme.cartoonPurple
-                                                          : Colors.grey.shade300,
+                                                          : (isDarkMode
+                                                              ? SFMSTheme.darkBgTertiary
+                                                              : Colors.grey.shade300),
                                                       elevation: 0,
                                                       shape: RoundedRectangleBorder(
                                                         borderRadius: BorderRadius.circular(12),
@@ -496,7 +524,7 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                                       style: TextStyle(
                                                         color: isPurchased || (canAfford && item.availability > 0)
                                                             ? Colors.white
-                                                            : Colors.grey.shade600,
+                                                            : (isDarkMode ? textMuted : Colors.grey.shade600),
                                                         fontSize: 12,
                                                         fontWeight: FontWeight.bold,
                                                       ),
@@ -532,15 +560,23 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                   margin: const EdgeInsets.all(24),
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: cardColor,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    boxShadow: isDarkMode
+                        ? [
+                            BoxShadow(
+                              color: SFMSTheme.darkAccentTeal.withOpacity(0.3),
+                              blurRadius: 30,
+                              offset: const Offset(0, 8),
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.2),
+                              blurRadius: 20,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -550,20 +586,20 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                         style: const TextStyle(fontSize: 60),
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Confirm Purchase',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         'Are you sure you want to redeem this item?',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color(0xFF6B7280),
+                          color: textSecondary,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -571,10 +607,10 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
 
                       Text(
                         _selectedItem!.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
+                          color: textPrimary,
                         ),
                       ),
                       Text(
@@ -582,7 +618,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: SFMSTheme.cartoonPurple,
+                          color: isDarkMode
+                              ? SFMSTheme.darkAccentTeal
+                              : SFMSTheme.cartoonPurple,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -590,7 +628,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
+                          color: isDarkMode
+                              ? SFMSTheme.darkBgTertiary.withOpacity(0.3)
+                              : Colors.grey.shade50,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Consumer<AppProvider>(
@@ -600,18 +640,20 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.star,
-                                      color: Colors.amber,
+                                      color: isDarkMode
+                                          ? Colors.amber.shade300
+                                          : Colors.amber,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       '${_selectedItem!.pointsCost} points',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1F2937),
+                                        color: textPrimary,
                                       ),
                                     ),
                                   ],
@@ -619,9 +661,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                 const SizedBox(height: 8),
                                 Text(
                                   'Remaining balance: ${appProvider.rewardPoints - _selectedItem!.pointsCost} points',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Color(0xFF6B7280),
+                                    color: textSecondary,
                                   ),
                                 ),
                               ],
@@ -641,16 +683,18 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                                 });
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade300,
+                                backgroundColor: isDarkMode
+                                    ? SFMSTheme.darkBgTertiary
+                                    : Colors.grey.shade300,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  color: Colors.black,
+                                  color: isDarkMode ? textPrimary : Colors.black,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -661,7 +705,9 @@ class _RewardsShopScreenState extends State<RewardsShopScreen>
                             child: ElevatedButton(
                               onPressed: _confirmPurchase,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: SFMSTheme.cartoonPurple,
+                                backgroundColor: isDarkMode
+                                    ? SFMSTheme.darkAccentTeal
+                                    : SFMSTheme.cartoonPurple,
                                 elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),

@@ -367,6 +367,7 @@ class SFMSTheme {
   static const Color darkBgPrimary = Color(0xFF0F172A);      // Deep Navy
   static const Color darkBgSecondary = Color(0xFF1E293B);    // Slate Gray
   static const Color darkBgTertiary = Color(0xFF334155);     // Lighter Slate
+  static const Color darkCardBg = darkBgSecondary;            // Card Background (alias)
 
   // Dark Mode Accent Colors
   static const Color darkAccentTeal = Color(0xFF14B8A6);     // Teal Highlight
@@ -377,6 +378,20 @@ class SFMSTheme {
   static const Color darkTextPrimary = Color(0xFFF9FAFB);    // Primary Text
   static const Color darkTextSecondary = Color(0xFFCBD5E1);  // Secondary Text
   static const Color darkTextMuted = Color(0xFF64748B);      // Muted Text
+
+  // Dark Mode Status Colors
+  static const Color darkSuccessColor = Color(0xFF34D399);   // Emerald Green
+  static const Color darkWarningColor = Color(0xFFFBBF24);   // Amber
+  static const Color darkDangerColor = Color(0xFFF87171);    // Coral Red
+
+  // Dark Mode Flat-Vector Cartoon Accent Colors
+  static const Color darkCartoonMint = Color(0xFF6EE7B7);    // Soft Mint
+  static const Color darkCartoonBlue = Color(0xFF60A5FA);    // Sky Blue
+  static const Color darkCartoonPurple = Color(0xFFA78BFA);  // Lavender
+  static const Color darkCartoonPink = Color(0xFFF472B6);    // Rose Pink
+  static const Color darkCartoonYellow = Color(0xFFFBBF24);  // Sunny Yellow
+  static const Color darkCartoonOrange = Color(0xFFFB923C);  // Peach Orange
+  static const Color darkCartoonCyan = Color(0xFF22D3EE);    // Cyan
 
   // ==========================================================================
   // 🎨 THEME VARIANTS (for Dark Mode)
@@ -909,6 +924,36 @@ class SFMSTheme {
     );
   }
 
+  // Dark Mode Teal-Blue Gradient (for primary elements)
+  static LinearGradient get darkGradientTealBlue {
+    return const LinearGradient(
+      colors: [darkAccentTeal, trustPrimary],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+  }
+
+  // Dark Mode Animated Background Colors
+  // These colors are used for the animated background gradient in dark mode
+  static const Color darkAnimBg1Start = Color(0xFF0F172A);  // Deep Navy (Option 1 start)
+  static const Color darkAnimBg1End = Color(0xFF1E293B);    // Slate Gray (Option 1 end)
+
+  static const Color darkAnimBg2Start = Color(0xFF1E293B);  // Slate Gray
+  static const Color darkAnimBg2End = Color(0xFF334155);    // Lighter Slate
+
+  static const Color darkAnimBg3Start = Color(0xFF0C4A6E);  // Deep Blue
+  static const Color darkAnimBg3End = Color(0xFF155E75);    // Teal Blue
+
+  // Light Mode Animated Background Colors (for reference)
+  static const Color lightAnimBg1Start = Color(0xFFDBEAFE); // Light Blue
+  static const Color lightAnimBg1End = Color(0xFFEDE9FE);   // Light Purple
+
+  static const Color lightAnimBg2Start = Color(0xFFFAF5FF); // Light Purple
+  static const Color lightAnimBg2End = Color(0xFFFEF3C7);   // Light Yellow
+
+  static const Color lightAnimBg3Start = Color(0xFFFDF2F8); // Light Pink
+  static const Color lightAnimBg3End = Color(0xFFFED7D7);   // Light Red
+
   // ==========================================================================
   // ✨ GLOWING EFFECTS FOR DARK MODE
   // ==========================================================================
@@ -970,6 +1015,9 @@ class SFMSTheme {
           spreadRadius: 1,
         ),
       ];
+
+  /// Creates a shadow for dark mode cards (alias for darkCardGlow)
+  static List<BoxShadow> get darkCardShadow => darkCardGlow;
 
   // ==========================================================================
   // 💳 EXPENSE & INCOME CATEGORIES
