@@ -824,7 +824,7 @@ class _BudgetScreenState extends State<BudgetScreen>
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(12),
                                         ),
-                                        color: cardColor,
+                                        color: cardBg,
                                         onSelected: (value) {
                                           if (value == 'edit') {
                                             _editBudget(context, budget);
