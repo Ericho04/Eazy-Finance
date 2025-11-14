@@ -583,13 +583,13 @@ class _FinancialAccountsScreenState extends State<FinancialAccountsScreen>
                             ),
                           ),
                           items: _accountTypes.map((type) {
-                            return DropdownMenuItem(
-                              value: type['value'],
+                            return DropdownMenuItem<String>(
+                              value: type['value'] as String,
                               child: Row(
                                 children: [
-                                  Text(type['icon'], style: const TextStyle(fontSize: 20)),
+                                  Text(type['icon'] as String, style: const TextStyle(fontSize: 20)),
                                   const SizedBox(width: 8),
-                                  Text(type['label']),
+                                  Text(type['label'] as String),
                                 ],
                               ),
                             );
