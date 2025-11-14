@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/theme.dart';
 import '../providers/theme_provider.dart';
@@ -21,67 +22,34 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _paymentController;
+  final supabase = Supabase.instance.client;
 
   bool _showAddDebtModal = false;
   bool _showPaymentModal = false;
   String? _selectedDebtId;
+  bool _isLoading = true;
+  String? _error;
 
   final _debtNameController = TextEditingController();
   final _debtAmountController = TextEditingController();
   final _interestRateController = TextEditingController();
   final _paymentAmountController = TextEditingController();
+  final _creditorNameController = TextEditingController();
+  final _minimumPaymentController = TextEditingController();
 
-  String _selectedDebtType = 'Credit Card';
+  String _selectedDebtType = 'credit_card';
 
-  final List<String> _debtTypes = [
-    'Credit Card',
-    'Personal Loan',
-    'Car Loan',
-    'Student Loan',
-    'Mortgage',
-    'Business Loan',
-    'Other',
+  final List<Map<String, dynamic>> _debtTypes = [
+    {'value': 'credit_card', 'label': 'Credit Card', 'icon': '💳'},
+    {'value': 'personal_loan', 'label': 'Personal Loan', 'icon': '🏦'},
+    {'value': 'car_loan', 'label': 'Car Loan', 'icon': '🚗'},
+    {'value': 'home_loan', 'label': 'Home Loan', 'icon': '🏠'},
+    {'value': 'student_loan', 'label': 'Student Loan', 'icon': '🎓'},
+    {'value': 'business_loan', 'label': 'Business Loan', 'icon': '🏢'},
+    {'value': 'other', 'label': 'Other', 'icon': '💰'},
   ];
 
-  // Mock debts data - in real app this would come from your data source
-  List<Map<String, dynamic>> _debts = [
-    {
-      'id': '1',
-      'name': 'Credit Card - CIMB',
-      'type': 'Credit Card',
-      'totalAmount': 15000.0,
-      'currentBalance': 8500.0,
-      'interestRate': 18.0,
-      'minimumPayment': 400.0,
-      'dueDate': '2024-02-15',
-      'color': 0xFFFF6B9D,
-      'emoji': '💳',
-    },
-    {
-      'id': '2',
-      'name': 'Car Loan - Honda Civic',
-      'type': 'Car Loan',
-      'totalAmount': 85000.0,
-      'currentBalance': 42000.0,
-      'interestRate': 3.5,
-      'minimumPayment': 1200.0,
-      'dueDate': '2024-02-10',
-      'color': 0xFF4E8EF7,
-      'emoji': '🚗',
-    },
-    {
-      'id': '3',
-      'name': 'Personal Loan - Bank Islam',
-      'type': 'Personal Loan',
-      'totalAmount': 25000.0,
-      'currentBalance': 12500.0,
-      'interestRate': 8.5,
-      'minimumPayment': 650.0,
-      'dueDate': '2024-02-20',
-      'color': 0xFF845EC2,
-      'emoji': '🏦',
-    },
-  ];
+  List<Map<String, dynamic>> _debts = [];
 
   @override
   void initState() {
@@ -97,6 +65,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     );
 
     _animationController.forward();
+    _fetchDebts();
   }
 
   @override
@@ -107,34 +76,185 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     _debtAmountController.dispose();
     _interestRateController.dispose();
     _paymentAmountController.dispose();
+    _creditorNameController.dispose();
+    _minimumPaymentController.dispose();
     super.dispose();
   }
 
+  Future<void> _fetchDebts() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) {
+      setState(() {
+        _error = 'User not logged in';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await supabase
+          .from('financial_debts')
+          .select()
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .order('created_at', ascending: false);
+
+      setState(() {
+        _debts = response as List<Map<String, dynamic>>;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load debts: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _addDebt() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    if (_debtNameController.text.isEmpty ||
+        _debtAmountController.text.isEmpty ||
+        _creditorNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
+
+    try {
+      final originalAmount = double.parse(_debtAmountController.text);
+
+      await supabase.from('financial_debts').insert({
+        'user_id': user.id,
+        'debt_name': _debtNameController.text,
+        'debt_type': _selectedDebtType,
+        'original_amount': originalAmount,
+        'current_balance': originalAmount,
+        'interest_rate': double.tryParse(_interestRateController.text) ?? 0.0,
+        'minimum_payment': double.tryParse(_minimumPaymentController.text) ??
+            (originalAmount * 0.03), // Default 3% of balance
+        'creditor_name': _creditorNameController.text,
+        'due_date': DateTime.now().add(const Duration(days: 30)).toIso8601String(),
+        'is_active': true,
+      });
+
+      // Clear form
+      _debtNameController.clear();
+      _debtAmountController.clear();
+      _interestRateController.clear();
+      _creditorNameController.clear();
+      _minimumPaymentController.clear();
+
+      setState(() {
+        _showAddDebtModal = false;
+      });
+
+      await _fetchDebts();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debt added successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add debt: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _makePayment(String debtId, double amount) async {
+    try {
+      // Get current debt details
+      final debt = _debts.firstWhere((d) => d['id'] == debtId);
+      final newBalance = math.max(0.0, (debt['current_balance'] ?? 0.0) - amount);
+
+      // Update in Supabase
+      await supabase
+          .from('financial_debts')
+          .update({
+        'current_balance': newBalance,
+        'last_payment_date': DateTime.now().toIso8601String(),
+      })
+          .eq('id', debtId);
+
+      setState(() {
+        _showPaymentModal = false;
+      });
+      _paymentAmountController.clear();
+
+      await _fetchDebts();
+
+      _paymentController.forward().then((_) => _paymentController.reset());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(newBalance == 0
+                ? '🎉 Debt paid off completely!'
+                : 'Payment of RM ${amount.toStringAsFixed(2)} successful!'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to make payment: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteDebt(String debtId) async {
+    try {
+      await supabase
+          .from('financial_debts')
+          .update({'is_active': false})
+          .eq('id', debtId);
+
+      await _fetchDebts();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Debt deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete debt: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   double get _totalDebt {
-    return _debts.fold(0.0, (sum, debt) => sum + (debt['currentBalance'] as double));
+    return _debts.fold(0.0, (sum, debt) => sum + (debt['current_balance'] ?? 0.0));
   }
 
   double get _totalMinPayment {
-    return _debts.fold(0.0, (sum, debt) => sum + (debt['minimumPayment'] as double));
+    return _debts.fold(0.0, (sum, debt) => sum + (debt['minimum_payment'] ?? 0.0));
   }
 
   String _getDebtTypeEmoji(String type) {
-    switch (type) {
-      case 'Credit Card':
-        return '💳';
-      case 'Car Loan':
-        return '🚗';
-      case 'Personal Loan':
-        return '🏦';
-      case 'Student Loan':
-        return '🎓';
-      case 'Mortgage':
-        return '🏠';
-      case 'Business Loan':
-        return '🏢';
-      default:
-        return '💰';
-    }
+    final debtType = _debtTypes.firstWhere(
+          (t) => t['value'] == type,
+      orElse: () => {'icon': '💰'},
+    );
+    return debtType['icon'];
+  }
+
+  String _getDebtTypeLabel(String type) {
+    final debtType = _debtTypes.firstWhere(
+          (t) => t['value'] == type,
+      orElse: () => {'label': 'Debt'},
+    );
+    return debtType['label'];
   }
 
   Color _getDebtStatusColor(BuildContext context, double currentBalance, double totalAmount) {
@@ -151,59 +271,11 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     return isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green;
   }
 
-  void _addDebt() {
-    if (_debtNameController.text.isEmpty || _debtAmountController.text.isEmpty) {
-      return;
-    }
-
-    final newDebt = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'name': _debtNameController.text,
-      'type': _selectedDebtType,
-      'totalAmount': double.parse(_debtAmountController.text),
-      'currentBalance': double.parse(_debtAmountController.text),
-      'interestRate': double.tryParse(_interestRateController.text) ?? 0.0,
-      'minimumPayment': double.parse(_debtAmountController.text) * 0.03, // 3% of balance
-      'dueDate': DateTime.now().add(const Duration(days: 30)).toIso8601String().split('T')[0],
-      'color': [0xFFFF6B9D, 0xFF4E8EF7, 0xFF845EC2, 0xFF00D2FF][math.Random().nextInt(4)],
-      'emoji': _getDebtTypeEmoji(_selectedDebtType),
-    };
-
-    setState(() {
-      _debts.add(newDebt);
-      _showAddDebtModal = false;
-    });
-
-    _debtNameController.clear();
-    _debtAmountController.clear();
-    _interestRateController.clear();
-  }
-
-  void _makePayment(String debtId, double amount) {
-    setState(() {
-      final debtIndex = _debts.indexWhere((debt) => debt['id'] == debtId);
-      if (debtIndex != -1) {
-        _debts[debtIndex]['currentBalance'] =
-            math.max(0.0, (_debts[debtIndex]['currentBalance'] as double) - amount);
-
-        if (_debts[debtIndex]['currentBalance'] == 0) {
-          // Debt paid off celebration could be added here
-        }
-      }
-      _showPaymentModal = false;
-    });
-
-    _paymentAmountController.clear();
-    _paymentController.forward().then((_) => _paymentController.reset());
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Dark Mode Support
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    // Theme-aware colors
     final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
@@ -214,50 +286,69 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Main content
           Container(
             decoration: BoxDecoration(
               gradient: isDarkMode
                   ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        SFMSTheme.darkBgPrimary,
-                        SFMSTheme.darkBgSecondary,
-                      ],
-                    )
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  SFMSTheme.darkBgPrimary,
+                  SFMSTheme.darkBgSecondary,
+                ],
+              )
                   : const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFFDBEAFE),
-                        Color(0xFFFAF5FF),
-                        Color(0xFFFDF2F8),
-                      ],
-                    ),
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFFDBDB),
+                  Color(0xFFFFF5F5),
+                  Color(0xFFFDF2F8),
+                ],
+              ),
             ),
             child: SafeArea(
               child: Column(
                 children: [
                   // Header
-                  _buildHeader(context, isDarkMode, cardColor, textPrimary, textSecondary),
+                  _buildHeader(context, isDarkMode, cardColor, textPrimary),
 
+                  // Content
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: _isLoading
+                        ? Center(
+                      child: CircularProgressIndicator(
+                        color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor,
+                      ),
+                    )
+                        : _error != null
+                        ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline,
+                              size: 64,
+                              color: SFMSTheme.dangerColor),
+                          const SizedBox(height: 16),
+                          Text(_error!,
+                              style: TextStyle(color: textPrimary),
+                              textAlign: TextAlign.center),
+                        ],
+                      ),
+                    )
+                        : SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Column(
                         children: [
-                          // Debt Overview Cards
-                          _buildOverviewCards(context, isDarkMode, cardShadow),
+                          // Summary Cards
+                          _buildSummaryCards(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
                           const SizedBox(height: 24),
 
-                          // Debt List Header
-                          _buildDebtListHeader(context, textPrimary, textSecondary),
-                          const SizedBox(height: 16),
-
-                          // Debt List
-                          _buildDebtList(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
-                          const SizedBox(height: 100), // Space for FAB
+                          // Debts List
+                          if (_debts.isEmpty)
+                            _buildEmptyState(textSecondary, textMuted)
+                          else
+                            _buildDebtsList(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
                         ],
                       ),
                     ),
@@ -267,572 +358,304 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
             ),
           ),
 
-          // Modals
-          if (_showAddDebtModal) _buildAddDebtModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
-          if (_showPaymentModal) _buildPaymentModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
+          // Add Debt Modal
+          if (_showAddDebtModal)
+            _buildAddDebtModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
+
+          // Payment Modal
+          if (_showPaymentModal && _selectedDebtId != null)
+            _buildPaymentModal(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
         ],
       ),
-
-      // Floating Action Button
-      floatingActionButton: AnimatedBuilder(
-        animation: _animationController,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _animationController.value,
-            child: FloatingActionButton.extended(
-              onPressed: () => setState(() => _showAddDebtModal = true),
-              backgroundColor: SFMSTheme.cartoonPurple,
-              foregroundColor: Colors.white,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Debt'),
-            ),
-          );
-        },
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => setState(() => _showAddDebtModal = true),
+        backgroundColor: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary) {
+  Widget _buildHeader(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          ElevatedButton.icon(
+          IconButton(
             onPressed: widget.onBack,
-            icon: const Icon(Icons.arrow_back, size: 18),
-            label: const Text('Back'),
-            style: ElevatedButton.styleFrom(
+            icon: const Icon(Icons.arrow_back_rounded),
+            style: IconButton.styleFrom(
               backgroundColor: cardColor.withOpacity(0.9),
               foregroundColor: textPrimary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
+          Text(
+            'Debt Manager',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          Expanded(
+  Widget _buildSummaryCards(BuildContext context, bool isDarkMode, Color cardColor,
+      Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [SFMSTheme.dangerColor, const Color(0xFFFF8A65)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: cardShadow,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Text(
-                      '📊',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Debt Management',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  'Track and manage your debts',
+                const Icon(Icons.trending_down_rounded,
+                    color: Colors.white, size: 28),
+                const SizedBox(height: 12),
+                const Text(
+                  'Total Debt',
                   style: TextStyle(
                     fontSize: 14,
-                    color: textSecondary,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'RM ${_totalDebt.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
           ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [const Color(0xFFFF9800), const Color(0xFFFFB74D)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: cardShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.calendar_today_rounded,
+                    color: Colors.white, size: 28),
+                const SizedBox(height: 12),
+                const Text(
+                  'Min. Payment',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'RM ${_totalMinPayment.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(Color textSecondary, Color textMuted) {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        children: [
+          const Icon(Icons.celebration_outlined, size: 64, color: Colors.green),
+          const SizedBox(height: 16),
+          Text(
+            'No Debts!',
+            style: TextStyle(
+              fontSize: 18,
+              color: textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Great job! You\'re debt-free.',
+            style: TextStyle(fontSize: 14, color: textMuted),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildOverviewCards(BuildContext context, bool isDarkMode, List<BoxShadow> cardShadow) {
-    final dangerColor = isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade400;
-    final dangerColor2 = isDarkMode ? Color(0xFFFF6B9D) : Colors.orange.shade500;
-    final accentBlue = isDarkMode ? SFMSTheme.darkAccentTeal : SFMSTheme.cartoonBlue;
-    final accentCyan = isDarkMode ? Color(0xFF06B6D4) : SFMSTheme.cartoonCyan;
-
+  Widget _buildDebtsList(BuildContext context, bool isDarkMode, Color cardColor,
+      Color textPrimary, Color textSecondary, Color textMuted,
+      List<BoxShadow> cardShadow) {
     return Column(
-      children: [
-        // Total Debt Card
-        AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, 20 * (1 - _animationController.value)),
-              child: Opacity(
-                opacity: _animationController.value,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        dangerColor,
-                        dangerColor2,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: dangerColor.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: const Icon(
-                              Icons.trending_down,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
+      children: _debts.map((debt) {
+        final currentBalance = debt['current_balance'] ?? 0.0;
+        final originalAmount = debt['original_amount'] ?? 1.0;
+        final progress = 1 - (currentBalance / originalAmount);
 
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Total Debt',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'RM ${_totalDebt.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const Icon(
-                            Icons.warning,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: cardShadow,
+          ),
+          child: Dismissible(
+            key: Key(debt['id']),
+            direction: DismissDirection.endToStart,
+            background: Container(
+              decoration: BoxDecoration(
+                color: SFMSTheme.dangerColor,
+                borderRadius: BorderRadius.circular(20),
               ),
-            );
-          },
-        ),
-        const SizedBox(height: 16),
-
-        // Minimum Payment Card
-        AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(0, 20 * (1 - _animationController.value)),
-              child: Opacity(
-                opacity: _animationController.value,
-                child: Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        accentBlue,
-                        accentCyan,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: accentBlue.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(24),
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 20),
+              child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+            ),
+            onDismissed: (direction) => _deleteDebt(debt['id']),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedDebtId = debt['id'];
+                  _showPaymentModal = true;
+                });
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: _getDebtStatusColor(context, currentBalance, originalAmount)
+                                .withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                          child: Center(
+                            child: Text(
+                              _getDebtTypeEmoji(debt['debt_type']),
+                              style: const TextStyle(fontSize: 24),
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.payment,
-                          color: Colors.white,
-                          size: 24,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                debt['debt_name'],
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${debt['creditor_name']} • ${debt['interest_rate'] ?? 0}% APR',
+                                style: TextStyle(fontSize: 12, color: textSecondary),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
-                              'Monthly Minimum',
+                            Text(
+                              'RM ${currentBalance.toStringAsFixed(2)}',
                               style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: _getDebtStatusColor(context, currentBalance, originalAmount),
                               ),
                             ),
-                            const SizedBox(height: 4),
                             Text(
-                              'RM ${_totalMinPayment.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              'of RM ${originalAmount.toStringAsFixed(0)}',
+                              style: TextStyle(fontSize: 11, color: textMuted),
                             ),
                           ],
                         ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Progress Bar
+                    Container(
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(3),
                       ),
-                    ],
-                  ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(3),
+                        child: LinearProgressIndicator(
+                          value: progress,
+                          backgroundColor: Colors.transparent,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getDebtStatusColor(context, currentBalance, originalAmount),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${(progress * 100).toStringAsFixed(1)}% Paid',
+                          style: TextStyle(fontSize: 12, color: textSecondary),
+                        ),
+                        Text(
+                          'Min: RM ${(debt['minimum_payment'] ?? 0.0).toStringAsFixed(2)}/mo',
+                          style: TextStyle(fontSize: 12, color: textMuted),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDebtListHeader(BuildContext context, Color textPrimary, Color textSecondary) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Your Debts',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
+            ),
           ),
-        ),
-        Text(
-          '${_debts.length} total',
-          style: TextStyle(
-            fontSize: 14,
-            color: textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDebtList(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
-    if (_debts.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: cardShadow,
-        ),
-        child: Column(
-          children: [
-            const Text(
-              '🎉',
-              style: TextStyle(fontSize: 48),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No debts!',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'You\'re debt-free! Keep up the great work.',
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Column(
-      children: _debts.asMap().entries.map((entry) {
-        final index = entry.key;
-        final debt = entry.value;
-
-        return AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(
-                50 * (1 - _animationController.value),
-                0,
-              ),
-              child: Opacity(
-                opacity: _animationController.value,
-                child: Container(
-                  margin: EdgeInsets.only(
-                    bottom: index < _debts.length - 1 ? 16 : 0,
-                  ),
-                  child: _buildDebtCard(context, debt, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
-                ),
-              ),
-            );
-          },
         );
       }).toList(),
     );
   }
 
-  Widget _buildDebtCard(BuildContext context, Map<String, dynamic> debt, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
-    final double totalAmount = debt['totalAmount'] as double;
-    final double currentBalance = debt['currentBalance'] as double;
-    final progressPercentage = 1 - (currentBalance / totalAmount);
-    final statusColor = _getDebtStatusColor(context, currentBalance, totalAmount);
-    final iconBgColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade100;
-    final iconFgColor = isDarkMode ? Colors.white : Colors.green.shade700;
-    final dateMutedColor = isDarkMode ? textMuted : Colors.grey.shade600;
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: cardShadow,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Color(debt['color'] as int).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Center(
-                  child: Text(
-                    debt['emoji'] as String,
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      debt['name'] as String,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Color(debt['color'] as int).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            debt['type'] as String,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Color(debt['color'] as int),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${debt['interestRate']}% APR',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              IconButton(
-                onPressed: () {
-                  setState(() {
-                    _selectedDebtId = debt['id'] as String;
-                    _showPaymentModal = true;
-                  });
-                },
-                icon: const Icon(Icons.payment),
-                style: IconButton.styleFrom(
-                  backgroundColor: iconBgColor,
-                  foregroundColor: iconFgColor,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Amounts
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Current Balance',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'RM ${currentBalance.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Min. Payment',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'RM ${(debt['minimumPayment'] as double).toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Progress Bar
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Progress',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondary,
-                    ),
-                  ),
-                  Text(
-                    '${(progressPercentage * 100).toStringAsFixed(1)}% paid',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              Container(
-                height: 8,
-                decoration: BoxDecoration(
-                  color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progressPercentage,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Due Date
-          Row(
-            children: [
-              Icon(Icons.schedule, size: 16, color: dateMutedColor),
-              const SizedBox(width: 4),
-              Text(
-                'Due: ${DateTime.parse(debt['dueDate'] as String).toString().split(' ')[0]}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: dateMutedColor,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddDebtModal(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted) {
-    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
-    final buttonCancelBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300;
-
+  Widget _buildAddDebtModal(BuildContext context, bool isDarkMode, Color cardColor,
+      Color textPrimary, Color textSecondary, Color textMuted) {
     return Container(
       color: Colors.black.withOpacity(0.5),
       child: Center(
@@ -850,180 +673,150 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               ),
             ],
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  const Text(
-                    '💳',
-                    style: TextStyle(fontSize: 24),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Add New Debt',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => setState(() => _showAddDebtModal = false),
-                    icon: Icon(Icons.close, color: textPrimary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Debt Name
-              TextFormField(
-                controller: _debtNameController,
-                style: TextStyle(color: textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Debt Name',
-                  labelStyle: TextStyle(color: textSecondary),
-                  hintText: 'e.g., Credit Card - CIMB',
-                  hintStyle: TextStyle(color: textMuted),
-                  filled: true,
-                  fillColor: inputFillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Debt Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _selectedDebtType,
-                onChanged: (value) => setState(() => _selectedDebtType = value!),
-                dropdownColor: cardColor,
-                style: TextStyle(color: textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Debt Type',
-                  labelStyle: TextStyle(color: textSecondary),
-                  filled: true,
-                  fillColor: inputFillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                items: _debtTypes.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Row(
-                      children: [
-                        Text(_getDebtTypeEmoji(type)),
-                        const SizedBox(width: 8),
-                        Text(type),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-
-              // Amount
-              TextFormField(
-                controller: _debtAmountController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Amount (RM)',
-                  labelStyle: TextStyle(color: textSecondary),
-                  hintText: '0.00',
-                  hintStyle: TextStyle(color: textMuted),
-                  filled: true,
-                  fillColor: inputFillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Interest Rate
-              TextFormField(
-                controller: _interestRateController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                style: TextStyle(color: textPrimary),
-                decoration: InputDecoration(
-                  labelText: 'Interest Rate (%)',
-                  labelStyle: TextStyle(color: textSecondary),
-                  hintText: '0.0',
-                  hintStyle: TextStyle(color: textMuted),
-                  filled: true,
-                  fillColor: inputFillColor,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Add New Debt',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
+                    IconButton(
                       onPressed: () => setState(() => _showAddDebtModal = false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonCancelBg,
-                        foregroundColor: textPrimary,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('Cancel'),
+                      icon: Icon(Icons.close, color: textPrimary),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _addDebt,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: SFMSTheme.cartoonPurple,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Form fields
+                _buildFormField('Debt Name *', _debtNameController, 'e.g., Credit Card CIMB',
+                    isDarkMode, textPrimary, textSecondary, textMuted),
+                const SizedBox(height: 16),
+
+                _buildFormField('Creditor Name *', _creditorNameController, 'e.g., CIMB Bank',
+                    isDarkMode, textPrimary, textSecondary, textMuted),
+                const SizedBox(height: 16),
+
+                _buildFormField('Total Amount (RM) *', _debtAmountController, '0.00',
+                    isDarkMode, textPrimary, textSecondary, textMuted,
+                    isNumber: true),
+                const SizedBox(height: 16),
+
+                _buildDebtTypeDropdown(isDarkMode, cardColor, textPrimary, textSecondary, textMuted),
+                const SizedBox(height: 16),
+
+                _buildFormField('Interest Rate (%)', _interestRateController, 'e.g., 18',
+                    isDarkMode, textPrimary, textSecondary, textMuted,
+                    isNumber: true),
+                const SizedBox(height: 16),
+
+                _buildFormField('Minimum Payment (RM)', _minimumPaymentController, '0.00',
+                    isDarkMode, textPrimary, textSecondary, textMuted,
+                    isNumber: true),
+                const SizedBox(height: 24),
+
+                // Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => setState(() => _showAddDebtModal = false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300,
+                          foregroundColor: textPrimary,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         ),
+                        child: const Text('Cancel'),
                       ),
-                      child: const Text('Add Debt'),
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _addDebt,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SFMSTheme.dangerColor,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text('Add Debt'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildPaymentModal(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted) {
+  Widget _buildFormField(String label, TextEditingController controller, String hint,
+      bool isDarkMode, Color textPrimary, Color textSecondary, Color textMuted,
+      {bool isNumber = false}) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: isNumber ? const TextInputType.numberWithOptions(decimal: true) : TextInputType.text,
+      style: TextStyle(color: textPrimary),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: textSecondary),
+        hintText: hint,
+        hintStyle: TextStyle(color: textMuted),
+        filled: true,
+        fillColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDebtTypeDropdown(bool isDarkMode, Color cardColor, Color textPrimary,
+      Color textSecondary, Color textMuted) {
+    return DropdownButtonFormField<String>(
+      value: _selectedDebtType,
+      style: TextStyle(color: textPrimary),
+      dropdownColor: cardColor,
+      decoration: InputDecoration(
+        labelText: 'Debt Type *',
+        labelStyle: TextStyle(color: textSecondary),
+        filled: true,
+        fillColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      items: _debtTypes.map((type) {
+        return DropdownMenuItem(
+          value: type['value'],
+          child: Row(
+            children: [
+              Text(type['icon'], style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 8),
+              Text(type['label']),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: (value) => setState(() => _selectedDebtType = value!),
+    );
+  }
+
+  Widget _buildPaymentModal(BuildContext context, bool isDarkMode, Color cardColor,
+      Color textPrimary, Color textSecondary, Color textMuted) {
     final selectedDebt = _debts.firstWhere((debt) => debt['id'] == _selectedDebtId);
-    final double currentBalance = selectedDebt['currentBalance'] as double;
-    final double minimumPayment = selectedDebt['minimumPayment'] as double;
-    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
-    final infoCardBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
-    final buttonCancelBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300;
-    final quickPaymentBg = isDarkMode ? SFMSTheme.darkAccentTeal.withOpacity(0.2) : Colors.blue.shade100;
-    final quickPaymentBorder = isDarkMode ? SFMSTheme.darkAccentTeal.withOpacity(0.3) : Colors.blue.shade300;
-    final quickPaymentText = isDarkMode ? SFMSTheme.darkAccentTeal : Colors.blue.shade700;
-    final successColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green;
+    final double currentBalance = selectedDebt['current_balance'] ?? 0.0;
+    final double minimumPayment = selectedDebt['minimum_payment'] ?? 0.0;
 
     return Container(
       color: Colors.black.withOpacity(0.5),
@@ -1046,33 +839,19 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 children: [
-                  Text(
-                    selectedDebt['emoji'] as String,
-                    style: const TextStyle(fontSize: 24),
-                  ),
+                  Text(_getDebtTypeEmoji(selectedDebt['debt_type']),
+                      style: const TextStyle(fontSize: 24)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Make Payment',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
-                        ),
-                        Text(
-                          selectedDebt['name'] as String,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textSecondary,
-                          ),
-                        ),
+                        Text('Make Payment',
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: textPrimary)),
+                        Text(selectedDebt['debt_name'],
+                            style: TextStyle(fontSize: 14, color: textSecondary)),
                       ],
                     ),
                   ),
@@ -1084,37 +863,25 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
               ),
               const SizedBox(height: 24),
 
-              // Current Balance
+              // Current Balance Info
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: infoCardBg,
+                  color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Current Balance:',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textSecondary,
-                      ),
-                    ),
-                    Text(
-                      'RM ${currentBalance.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
+                    Text('Current Balance:', style: TextStyle(fontSize: 14, color: textSecondary)),
+                    Text('RM ${currentBalance.toStringAsFixed(2)}',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textPrimary)),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Payment Amount
+              // Payment Amount Field
               TextFormField(
                 controller: _paymentAmountController,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1125,7 +892,7 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                   hintText: '0.00',
                   hintStyle: TextStyle(color: textMuted),
                   filled: true,
-                  fillColor: inputFillColor,
+                  fillColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -1154,16 +921,22 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: quickPaymentBg,
+                        color: isDarkMode
+                            ? SFMSTheme.accentTeal.withOpacity(0.2)
+                            : Colors.blue.shade100,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: quickPaymentBorder),
+                        border: Border.all(
+                          color: isDarkMode
+                              ? SFMSTheme.accentTeal.withOpacity(0.3)
+                              : Colors.blue.shade300,
+                        ),
                       ),
                       child: Text(
                         label,
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: quickPaymentText,
+                          color: isDarkMode ? SFMSTheme.accentTeal : Colors.blue.shade700,
                         ),
                       ),
                     ),
@@ -1179,13 +952,11 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                     child: ElevatedButton(
                       onPressed: () => setState(() => _showPaymentModal = false),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: buttonCancelBg,
+                        backgroundColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade300,
                         foregroundColor: textPrimary,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text('Cancel'),
                     ),
@@ -1200,13 +971,11 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: successColor,
+                        backgroundColor: SFMSTheme.successColor,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: const Text('Make Payment'),
                     ),

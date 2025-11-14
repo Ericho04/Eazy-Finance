@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/theme.dart';
 import '../providers/theme_provider.dart';
@@ -21,22 +22,18 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _calculatorController;
+  final supabase = Supabase.instance.client;
 
   String _selectedTaxYear = '2024';
   double _annualIncome = 0.0;
-  double _epfContribution = 0.0;
-  double _lifeInsurance = 0.0;
-  double _educationFees = 0.0;
-  double _medicalExpenses = 0.0;
+  double _totalDeductions = 0.0;
+
+  bool _isLoading = false;
+  Map<String, dynamic>? _taxData;
+  List<Map<String, dynamic>> _deductions = [];
 
   final _incomeController = TextEditingController();
-  final _epfController = TextEditingController();
-  final _insuranceController = TextEditingController();
-  final _educationController = TextEditingController();
-  final _medicalController = TextEditingController();
-
   bool _showCalculator = false;
-  bool _showDeductions = false;
 
   // Malaysia Tax Brackets for 2024
   final List<Map<String, dynamic>> _taxBrackets = [
@@ -53,52 +50,6 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     {'min': 1000001.0, 'max': double.infinity, 'rate': 0.28, 'amount': 237450.0},
   ];
 
-  // Common Tax Deductions in Malaysia
-  final List<Map<String, dynamic>> _deductionCategories = [
-    {
-      'title': 'EPF Contribution',
-      'icon': '🏦',
-      'maxAmount': 4000.0,
-      'description': 'Employee Provident Fund contributions',
-      'color': 0xFF4CAF50,
-    },
-    {
-      'title': 'Life Insurance',
-      'icon': '🛡️',
-      'maxAmount': 3000.0,
-      'description': 'Life insurance premiums',
-      'color': 0xFF2196F3,
-    },
-    {
-      'title': 'Education Fees',
-      'icon': '🎓',
-      'maxAmount': 7000.0,
-      'description': 'Education fees for self',
-      'color': 0xFF9C27B0,
-    },
-    {
-      'title': 'Medical Expenses',
-      'icon': '🏥',
-      'maxAmount': 8000.0,
-      'description': 'Medical expenses for self, spouse, children',
-      'color': 0xFFFF5722,
-    },
-    {
-      'title': 'Parent Medical',
-      'icon': '👴',
-      'maxAmount': 8000.0,
-      'description': 'Medical expenses for parents',
-      'color': 0xFFFF9800,
-    },
-    {
-      'title': 'Disabled Individual',
-      'icon': '♿',
-      'maxAmount': 6000.0,
-      'description': 'Expenses for disabled individual',
-      'color': 0xFF607D8B,
-    },
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -106,13 +57,12 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-
     _calculatorController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-
     _animationController.forward();
+    _fetchTaxData();
   }
 
   @override
@@ -120,34 +70,137 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     _animationController.dispose();
     _calculatorController.dispose();
     _incomeController.dispose();
-    _epfController.dispose();
-    _insuranceController.dispose();
-    _educationController.dispose();
-    _medicalController.dispose();
     super.dispose();
   }
 
+  Future<void> _fetchTaxData() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Fetch tax planning data
+      final taxResponse = await supabase
+          .from('tax_planning')
+          .select()
+          .eq('user_id', user.id)
+          .eq('tax_year', _selectedTaxYear)
+          .maybeSingle();
+
+      if (taxResponse != null) {
+        setState(() {
+          _taxData = taxResponse;
+          _annualIncome = taxResponse['annual_income'] ?? 0.0;
+          _totalDeductions = taxResponse['total_deductions'] ?? 0.0;
+          _incomeController.text = _annualIncome.toString();
+        });
+
+        // Fetch deductions
+        final deductionsResponse = await supabase
+            .from('tax_deductions')
+            .select()
+            .eq('tax_planning_id', taxResponse['id']);
+
+        setState(() {
+          _deductions = deductionsResponse as List<Map<String, dynamic>>;
+        });
+      }
+    } catch (e) {
+      print('Error fetching tax data: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveTaxData() async {
+    final user = supabase.auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final taxCalculation = _calculateTax();
+
+      // Insert or update tax_planning
+      final response = await supabase
+          .from('tax_planning')
+          .upsert({
+        'user_id': user.id,
+        'tax_year': _selectedTaxYear,
+        'annual_income': _annualIncome,
+        'estimated_tax': taxCalculation['totalTax'],
+        'total_deductions': _totalDeductions,
+        'taxable_income': taxCalculation['taxableIncome'],
+        'effective_rate': taxCalculation['effectiveRate'],
+      })
+          .select()
+          .single();
+
+      setState(() {
+        _taxData = response;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tax data saved successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save tax data: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  Future<void> _addDeduction(String category, String description, double amount, double maxAmount) async {
+    if (_taxData == null) {
+      // First save the tax planning data
+      await _saveTaxData();
+      if (_taxData == null) return;
+    }
+
+    try {
+      await supabase.from('tax_deductions').insert({
+        'tax_planning_id': _taxData!['id'],
+        'category': category,
+        'description': description,
+        'amount': amount,
+        'max_amount': maxAmount,
+        'is_claimable': true,
+      });
+
+      await _fetchTaxData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Deduction added successfully!')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to add deduction: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   Map<String, double> _calculateTax() {
-    final totalDeductions = _epfContribution + _lifeInsurance + _educationFees + _medicalExpenses;
-    final taxableIncome = math.max(0.0, _annualIncome - totalDeductions);
+    final taxableIncome = math.max(0.0, _annualIncome - _totalDeductions);
 
     double tax = 0.0;
-    double remainingIncome = taxableIncome;
 
     for (final bracket in _taxBrackets) {
-      if (remainingIncome <= 0) break;
-
       final double minAmount = (bracket['min'] as num).toDouble();
-      final double maxAmount = bracket['max'] == double.infinity
-          ? double.infinity
-          : (bracket['max'] as num).toDouble();
       final double rate = (bracket['rate'] as num).toDouble();
       final double baseAmount = (bracket['amount'] as num).toDouble();
 
       if (taxableIncome > minAmount) {
-        final taxableAtThisBracket = math.min(remainingIncome, maxAmount - minAmount);
-        tax = baseAmount + (taxableAtThisBracket * rate);
-        break; // Use the bracket amount directly
+        tax = baseAmount + ((taxableIncome - minAmount) * rate);
+        if (bracket['max'] != double.infinity && taxableIncome <= (bracket['max'] as num).toDouble()) {
+          break;
+        }
       }
     }
 
@@ -156,7 +209,7 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
 
     return {
       'grossIncome': _annualIncome,
-      'totalDeductions': totalDeductions,
+      'totalDeductions': _totalDeductions,
       'taxableIncome': taxableIncome,
       'totalTax': tax,
       'effectiveRate': effectiveRate,
@@ -167,22 +220,16 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
   void _updateCalculation() {
     setState(() {
       _annualIncome = double.tryParse(_incomeController.text) ?? 0.0;
-      _epfContribution = double.tryParse(_epfController.text) ?? 0.0;
-      _lifeInsurance = double.tryParse(_insuranceController.text) ?? 0.0;
-      _educationFees = double.tryParse(_educationController.text) ?? 0.0;
-      _medicalExpenses = double.tryParse(_medicalController.text) ?? 0.0;
+      _totalDeductions = _deductions.fold(0.0, (sum, d) => sum + (d['amount'] ?? 0.0));
     });
-
     _calculatorController.forward().then((_) => _calculatorController.reset());
   }
 
   @override
   Widget build(BuildContext context) {
-    // Dark Mode Support
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
 
-    // Theme-aware colors
     final bgColor = isDarkMode ? SFMSTheme.darkBgPrimary : SFMSTheme.backgroundColor;
     final textPrimary = isDarkMode ? SFMSTheme.darkTextPrimary : SFMSTheme.textPrimary;
     final textSecondary = isDarkMode ? SFMSTheme.darkTextSecondary : SFMSTheme.textSecondary;
@@ -197,22 +244,22 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
         decoration: BoxDecoration(
           gradient: isDarkMode
               ? LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    SFMSTheme.darkBgPrimary,
-                    SFMSTheme.darkBgSecondary,
-                  ],
-                )
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              SFMSTheme.darkBgPrimary,
+              SFMSTheme.darkBgSecondary,
+            ],
+          )
               : const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFDBEAFE),
-                    Color(0xFFFAF5FF),
-                    Color(0xFFFDF2F8),
-                  ],
-                ),
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFFDBEAFE),
+              Color(0xFFFAF5FF),
+              Color(0xFFFDF2F8),
+            ],
+          ),
         ),
         child: SafeArea(
           child: Column(
@@ -221,7 +268,13 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
               _buildHeader(context, isDarkMode, cardColor, textPrimary, textSecondary),
 
               Expanded(
-                child: SingleChildScrollView(
+                child: _isLoading
+                    ? Center(
+                  child: CircularProgressIndicator(
+                    color: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor,
+                  ),
+                )
+                    : SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Column(
                     children: [
@@ -229,29 +282,21 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
                       _buildTaxYearSelection(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
                       const SizedBox(height: 24),
 
-                      // Tax Summary Cards
-                      _buildTaxSummaryCards(context, taxCalculation, isDarkMode),
+                      // Tax Summary
+                      _buildTaxSummary(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow, taxCalculation),
                       const SizedBox(height: 24),
 
-                      // Quick Actions
-                      _buildQuickActions(context, isDarkMode),
+                      // Income Input
+                      _buildIncomeInput(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
                       const SizedBox(height: 24),
 
-                      // Tax Calculator
-                      if (_showCalculator) ...[
-                        _buildTaxCalculator(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
-                        const SizedBox(height: 24),
-                      ],
+                      // Deductions List
+                      _buildDeductionsList(context, isDarkMode, cardColor, textPrimary, textSecondary, textMuted, cardShadow),
+                      const SizedBox(height: 24),
 
-                      // Tax Deductions Guide
-                      if (_showDeductions) ...[
-                        _buildDeductionsGuide(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
-                        const SizedBox(height: 24),
-                      ],
-
-                      // Tax Tips
-                      _buildTaxTips(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
-                      const SizedBox(height: 32),
+                      // Quick Deduction Categories
+                      _buildQuickDeductions(context, isDarkMode, cardColor, textPrimary, textSecondary, cardShadow),
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),
@@ -259,6 +304,12 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _saveTaxData,
+        backgroundColor: isDarkMode ? SFMSTheme.accentTeal : SFMSTheme.primaryColor,
+        child: const Icon(Icons.save, color: Colors.white),
+        tooltip: 'Save Tax Data',
       ),
     );
   }
@@ -268,51 +319,34 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          ElevatedButton.icon(
+          IconButton(
             onPressed: widget.onBack,
-            icon: const Icon(Icons.arrow_back, size: 18),
-            label: const Text('Back'),
-            style: ElevatedButton.styleFrom(
+            icon: const Icon(Icons.arrow_back_rounded),
+            style: IconButton.styleFrom(
               backgroundColor: cardColor.withOpacity(0.9),
               foregroundColor: textPrimary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
             ),
           ),
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Text(
-                      '📊',
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Tax Planning',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
-                    ),
-                  ],
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tax Planning',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: textPrimary,
                 ),
-                Text(
-                  'Plan and calculate your taxes',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
-                  ),
+              ),
+              Text(
+                'Malaysia Tax Calculator',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textSecondary,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -320,78 +354,153 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
   }
 
   Widget _buildTaxYearSelection(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: cardShadow,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Tax Year',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: textPrimary,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: DropdownButton<String>(
+              value: _selectedTaxYear,
+              underline: const SizedBox(),
+              dropdownColor: cardColor,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+              items: ['2023', '2024', '2025'].map((year) {
+                return DropdownMenuItem(
+                  value: year,
+                  child: Text(year),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedTaxYear = value!;
+                });
+                _fetchTaxData();
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTaxSummary(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow, Map<String, double> taxCalculation) {
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 20 * (1 - _animationController.value)),
-          child: Opacity(
-            opacity: _animationController.value,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: cardShadow,
+        return Transform.scale(
+          scale: 0.8 + (_animationController.value * 0.2),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isDarkMode
+                    ? [SFMSTheme.accentTeal, SFMSTheme.accentEmerald]
+                    : [SFMSTheme.cartoonPurple, const Color(0xFFB39BC8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          SFMSTheme.cartoonBlue,
-                          SFMSTheme.cartoonCyan,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Icon(
-                      Icons.calendar_today,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: cardShadow,
+            ),
+            child: Column(
+              children: [
+                const Text(
+                  '📊',
+                  style: TextStyle(fontSize: 40),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Estimated Tax',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
                   ),
-                  const SizedBox(width: 16),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'RM ${taxCalculation['totalTax']!.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    Column(
                       children: [
                         Text(
-                          'Tax Year',
+                          'Take Home',
                           style: TextStyle(
-                            fontSize: 14,
-                            color: textSecondary,
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
                           ),
                         ),
                         const SizedBox(height: 4),
-                        DropdownButton<String>(
-                          value: _selectedTaxYear,
-                          onChanged: (value) => setState(() => _selectedTaxYear = value!),
-                          underline: const SizedBox(),
-                          dropdownColor: cardColor,
-                          items: ['2024', '2023', '2022'].map((year) {
-                            return DropdownMenuItem(
-                              value: year,
-                              child: Text(
-                                year,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: textPrimary,
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                        Text(
+                          'RM ${taxCalculation['takeHome']!.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                ],
-              ),
+                    Container(
+                      height: 40,
+                      width: 1,
+                      color: Colors.white24,
+                    ),
+                    Column(
+                      children: [
+                        Text(
+                          'Effective Rate',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${taxCalculation['effectiveRate']!.toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         );
@@ -399,232 +508,12 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildTaxSummaryCards(BuildContext context, Map<String, double> calculation, bool isDarkMode) {
-    final dangerColor = isDarkMode ? SFMSTheme.darkAccentCoral : Colors.red.shade400;
-    final successColor = isDarkMode ? SFMSTheme.darkAccentEmerald : Colors.green.shade400;
-
-    final cards = [
-      {
-        'title': 'Estimated Tax',
-        'value': 'RM ${calculation['totalTax']!.toStringAsFixed(2)}',
-        'icon': Icons.receipt_long,
-        'color': dangerColor,
-        'subtitle': '${calculation['effectiveRate']!.toStringAsFixed(1)}% effective rate',
-      },
-      {
-        'title': 'Take Home',
-        'value': 'RM ${calculation['takeHome']!.toStringAsFixed(2)}',
-        'icon': Icons.account_balance_wallet,
-        'color': successColor,
-        'subtitle': 'After tax income',
-      },
-      {
-        'title': 'Total Deductions',
-        'value': 'RM ${calculation['totalDeductions']!.toStringAsFixed(2)}',
-        'icon': Icons.savings,
-        'color': SFMSTheme.cartoonPurple,
-        'subtitle': 'Tax savings',
-      },
-    ];
-
-    return Column(
-      children: cards.asMap().entries.map((entry) {
-        final index = entry.key;
-        final card = entry.value;
-
-        return AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return Transform.translate(
-              offset: Offset(
-                50 * (1 - _animationController.value),
-                0,
-              ),
-              child: Opacity(
-                opacity: _animationController.value,
-                child: Container(
-                  margin: EdgeInsets.only(
-                    bottom: index < cards.length - 1 ? 16 : 0,
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        card['color'] as Color,
-                        (card['color'] as Color).withOpacity(0.8),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (card['color'] as Color).withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: Icon(
-                          card['icon'] as IconData,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              card['title'] as String,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              card['value'] as String,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              card['subtitle'] as String,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildQuickActions(BuildContext context, bool isDarkMode) {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _showCalculator = !_showCalculator),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    SFMSTheme.cartoonBlue,
-                    SFMSTheme.cartoonCyan,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: SFMSTheme.cartoonBlue.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.calculate,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Tax Calculator',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _showDeductions = !_showDeductions),
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    SFMSTheme.cartoonPurple,
-                    SFMSTheme.cartoonPink,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: SFMSTheme.cartoonPurple.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: const Column(
-                children: [
-                  Icon(
-                    Icons.receipt,
-                    color: Colors.white,
-                    size: 32,
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Deductions',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTaxCalculator(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
-    final inputFillColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
-
+  Widget _buildIncomeInput(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: cardShadow,
       ),
       child: Column(
@@ -632,136 +521,35 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
         children: [
           Row(
             children: [
-              const Text(
-                '🧮',
-                style: TextStyle(fontSize: 24),
-              ),
+              const Text('💼', style: TextStyle(fontSize: 24)),
               const SizedBox(width: 12),
               Text(
-                'Tax Calculator',
+                'Annual Income',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textPrimary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          // Annual Income
+          const SizedBox(height: 16),
           TextFormField(
             controller: _incomeController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: textPrimary),
+            style: TextStyle(color: textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
             decoration: InputDecoration(
-              labelText: 'Annual Income (RM)',
+              labelText: 'Gross Annual Income (RM)',
               labelStyle: TextStyle(color: textSecondary),
               hintText: '0.00',
               hintStyle: TextStyle(color: textMuted),
               filled: true,
-              fillColor: inputFillColor,
+              fillColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
               ),
-              prefixIcon: Icon(Icons.attach_money, color: textSecondary),
-            ),
-            onChanged: (_) => _updateCalculation(),
-          ),
-          const SizedBox(height: 16),
-
-          // EPF Contribution
-          TextFormField(
-            controller: _epfController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: textPrimary),
-            decoration: InputDecoration(
-              labelText: 'EPF Contribution (RM)',
-              labelStyle: TextStyle(color: textSecondary),
-              hintText: '0.00',
-              hintStyle: TextStyle(color: textMuted),
-              helperText: 'Max: RM 4,000',
-              helperStyle: TextStyle(color: textMuted),
-              filled: true,
-              fillColor: inputFillColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: Icon(Icons.savings, color: textSecondary),
-            ),
-            onChanged: (_) => _updateCalculation(),
-          ),
-          const SizedBox(height: 16),
-
-          // Life Insurance
-          TextFormField(
-            controller: _insuranceController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Life Insurance (RM)',
-              labelStyle: TextStyle(color: textSecondary),
-              hintText: '0.00',
-              hintStyle: TextStyle(color: textMuted),
-              helperText: 'Max: RM 3,000',
-              helperStyle: TextStyle(color: textMuted),
-              filled: true,
-              fillColor: inputFillColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: Icon(Icons.security, color: textSecondary),
-            ),
-            onChanged: (_) => _updateCalculation(),
-          ),
-          const SizedBox(height: 16),
-
-          // Education Fees
-          TextFormField(
-            controller: _educationController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Education Fees (RM)',
-              labelStyle: TextStyle(color: textSecondary),
-              hintText: '0.00',
-              hintStyle: TextStyle(color: textMuted),
-              helperText: 'Max: RM 7,000',
-              helperStyle: TextStyle(color: textMuted),
-              filled: true,
-              fillColor: inputFillColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: Icon(Icons.school, color: textSecondary),
-            ),
-            onChanged: (_) => _updateCalculation(),
-          ),
-          const SizedBox(height: 16),
-
-          // Medical Expenses
-          TextFormField(
-            controller: _medicalController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            style: TextStyle(color: textPrimary),
-            decoration: InputDecoration(
-              labelText: 'Medical Expenses (RM)',
-              labelStyle: TextStyle(color: textSecondary),
-              hintText: '0.00',
-              hintStyle: TextStyle(color: textMuted),
-              helperText: 'Max: RM 8,000',
-              helperStyle: TextStyle(color: textMuted),
-              filled: true,
-              fillColor: inputFillColor,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              prefixIcon: Icon(Icons.local_hospital, color: textSecondary),
+              prefix: Text('RM ', style: TextStyle(color: textPrimary)),
             ),
             onChanged: (_) => _updateCalculation(),
           ),
@@ -770,218 +558,239 @@ class _FinancialTaxScreenState extends State<FinancialTaxScreen>
     );
   }
 
-  Widget _buildDeductionsGuide(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
-    final neutralBg = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50;
-    final borderColor = isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade200;
+  Widget _buildDeductionsList(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, Color textMuted, List<BoxShadow> cardShadow) {
+    if (_deductions.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: cardShadow,
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.receipt_long_outlined, size: 48, color: textMuted),
+            const SizedBox(height: 16),
+            Text(
+              'No deductions added yet',
+              style: TextStyle(
+                fontSize: 16,
+                color: textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Add deductions below to reduce your taxable income',
+              style: TextStyle(fontSize: 14, color: textMuted),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                '📋',
-                style: TextStyle(fontSize: 24),
-              ),
-              const SizedBox(width: 12),
               Text(
-                'Tax Deductions Guide',
+                'Tax Deductions',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: textPrimary,
                 ),
               ),
+              Text(
+                'Total: RM ${_totalDeductions.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: SFMSTheme.successColor,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 24),
-
-          Column(
-            children: _deductionCategories.map((deduction) {
-              final double maxAmount = (deduction['maxAmount'] as num).toDouble();
-              final int colorValue = deduction['color'] as int;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: neutralBg,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: borderColor),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Color(colorValue).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Center(
-                        child: Text(
-                          deduction['icon'] as String,
-                          style: const TextStyle(fontSize: 20),
+          const SizedBox(height: 16),
+          ..._deductions.map((deduction) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        deduction['category'] ?? '',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
                         ),
                       ),
+                      if (deduction['description'] != null)
+                        Text(
+                          deduction['description'],
+                          style: TextStyle(fontSize: 12, color: textSecondary),
+                        ),
+                    ],
+                  ),
+                  Text(
+                    'RM ${(deduction['amount'] ?? 0.0).toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: SFMSTheme.successColor,
                     ),
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            deduction['title'] as String,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            deduction['description'] as String,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Text(
-                      'RM ${maxAmount.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Color(colorValue),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildTaxTips(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
-    final tips = [
-      {
-        'title': 'Keep Receipts',
-        'description': 'Always keep receipts for medical expenses, education fees, and other deductible items.',
-        'icon': '🧾',
-        'color': Colors.blue,
-      },
-      {
-        'title': 'Maximize EPF',
-        'description': 'Contribute to EPF to reduce taxable income and secure your retirement.',
-        'icon': '🏦',
-        'color': Colors.green,
-      },
-      {
-        'title': 'Plan Ahead',
-        'description': 'Make tax-deductible contributions before the year ends to optimize savings.',
-        'icon': '📅',
-        'color': Colors.orange,
-      },
-      {
-        'title': 'File Early',
-        'description': 'Submit your tax return by March 31st to avoid penalties.',
-        'icon': '⏰',
-        'color': Colors.red,
-      },
+  Widget _buildQuickDeductions(BuildContext context, bool isDarkMode, Color cardColor, Color textPrimary, Color textSecondary, List<BoxShadow> cardShadow) {
+    final quickDeductions = [
+      {'category': 'EPF', 'icon': '🏦', 'max': 4000.0, 'desc': 'EPF Contribution'},
+      {'category': 'Insurance', 'icon': '🛡️', 'max': 3000.0, 'desc': 'Life Insurance'},
+      {'category': 'Medical', 'icon': '🏥', 'max': 8000.0, 'desc': 'Medical Expenses'},
+      {'category': 'Education', 'icon': '🎓', 'max': 7000.0, 'desc': 'Education Fees'},
     ];
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              const Text(
-                '💡',
-                style: TextStyle(fontSize: 24),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Tax Planning Tips',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-            ],
+          Text(
+            'Quick Add Deductions',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: textPrimary,
+            ),
           ),
-          const SizedBox(height: 24),
-
-          Column(
-            children: tips.map((tip) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      (tip['color'] as Color).withOpacity(0.1),
-                      (tip['color'] as Color).withOpacity(0.05),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: (tip['color'] as Color).withOpacity(0.2),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      tip['icon'] as String,
-                      style: const TextStyle(fontSize: 24),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: quickDeductions.map((item) {
+              return GestureDetector(
+                onTap: () {
+                  // Show dialog to add amount
+                  showDialog(
+                    context: context,
+                    builder: (context) {
+                      final amountController = TextEditingController();
+                      return AlertDialog(
+                        backgroundColor: cardColor,
+                        title: Text('Add ${item['desc']}', style: TextStyle(color: textPrimary)),
+                        content: TextFormField(
+                          controller: amountController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          style: TextStyle(color: textPrimary),
+                          decoration: InputDecoration(
+                            labelText: 'Amount (Max: RM ${item['max']})',
+                            labelStyle: TextStyle(color: textSecondary),
+                            hintText: '0.00',
+                            filled: true,
+                            fillColor: isDarkMode ? SFMSTheme.darkBgTertiary : Colors.grey.shade50,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel', style: TextStyle(color: textSecondary)),
+                          ),
+                          ElevatedButton(
+                            onPressed: () {
+                              final amount = double.tryParse(amountController.text) ?? 0.0;
+                              if (amount > 0) {
+                                _addDeduction(
+                                  item['category'] as String,
+                                  item['desc'] as String,
+                                  math.min(amount, item['max'] as double),
+                                  item['max'] as double,
+                                );
+                                Navigator.pop(context);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: SFMSTheme.successColor,
+                            ),
+                            child: const Text('Add', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        SFMSTheme.primaryColor.withOpacity(0.8),
+                        SFMSTheme.primaryColor.withOpacity(0.6),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Column(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(item['icon'] as String, style: const TextStyle(fontSize: 20)),
+                      const SizedBox(width: 8),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            tip['title'] as String,
-                            style: TextStyle(
-                              fontSize: 14,
+                            item['category'] as String,
+                            style: const TextStyle(
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: textPrimary,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 4),
                           Text(
-                            tip['description'] as String,
+                            'Max: RM ${item['max']}',
                             style: TextStyle(
-                              fontSize: 12,
-                              color: textSecondary,
+                              fontSize: 10,
+                              color: Colors.white.withOpacity(0.8),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             }).toList(),
