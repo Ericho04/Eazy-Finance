@@ -172,7 +172,8 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
     try {
       // Get current debt details
       final debt = _debts.firstWhere((d) => d['id'] == debtId);
-      final newBalance = math.max(0.0, (debt['current_balance'] ?? 0.0) - amount);
+      final currentBalance = (debt['current_balance'] as num?)?.toDouble() ?? 0.0;
+      final newBalance = math.max<double>(0.0, currentBalance - amount);
 
       // Update in Supabase
       await supabase
@@ -518,9 +519,9 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
       List<BoxShadow> cardShadow) {
     return Column(
       children: _debts.map((debt) {
-        final currentBalance = debt['current_balance'] ?? 0.0;
-        final originalAmount = debt['original_amount'] ?? 1.0;
-        final progress = 1 - (currentBalance / originalAmount);
+        final currentBalance = (debt['current_balance'] as num?)?.toDouble() ?? 0.0;
+        final originalAmount = (debt['original_amount'] as num?)?.toDouble() ?? 1.0;
+        final progress = 1.0 - (currentBalance / originalAmount);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
@@ -797,13 +798,13 @@ class _FinancialDebtsScreenState extends State<FinancialDebtsScreen>
         ),
       ),
       items: _debtTypes.map((type) {
-        return DropdownMenuItem(
-          value: type['value'],
+        return DropdownMenuItem<String>(
+          value: type['value'] as String,
           child: Row(
             children: [
-              Text(type['icon'], style: const TextStyle(fontSize: 20)),
+              Text(type['icon'] as String, style: const TextStyle(fontSize: 20)),
               const SizedBox(width: 8),
-              Text(type['label']),
+              Text(type['label'] as String),
             ],
           ),
         );
